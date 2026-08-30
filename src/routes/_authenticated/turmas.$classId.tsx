@@ -53,10 +53,18 @@ function TurmaDetalhe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("id, student_id, profiles:student_id(full_name, email, avatar_url)")
+        .select("id, student_id")
         .eq("class_id", classId);
       if (error) throw error;
-      return data;
+      const ids = (data ?? []).map((e) => e.student_id);
+      if (ids.length === 0) return [];
+      const { data: profiles, error: pErr } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .in("id", ids);
+      if (pErr) throw pErr;
+      const map = new Map((profiles ?? []).map((p) => [p.id, p]));
+      return (data ?? []).map((e) => ({ ...e, profile: map.get(e.student_id) ?? null }));
     },
   });
 
@@ -88,7 +96,7 @@ function TurmaDetalhe() {
   }, [turma]);
 
   const nameById = new Map(
-    (members ?? []).map((m) => [m.student_id, m.profiles?.full_name || m.profiles?.email || "—"]),
+    (members ?? []).map((m) => [m.student_id, m.profile?.full_name || m.profile?.email || "—"]),
   );
 
   async function saveClass(e: React.FormEvent) {
@@ -234,8 +242,8 @@ function TurmaDetalhe() {
                   className="flex items-center justify-between gap-2 rounded-lg border border-border p-2"
                 >
                   <div className="text-sm">
-                    <div className="font-medium">{m.profiles?.full_name || "Sem nome"}</div>
-                    <div className="text-xs text-muted-foreground">{m.profiles?.email}</div>
+                    <div className="font-medium">{m.profile?.full_name || "Sem nome"}</div>
+                    <div className="text-xs text-muted-foreground">{m.profile?.email}</div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => removeStudent(m.id)}>
                     <Trash2 className="h-4 w-4 text-danger" />
@@ -299,7 +307,7 @@ function TurmaDetalhe() {
                     <SelectContent>
                       {(members ?? []).map((m) => (
                         <SelectItem key={m.student_id} value={m.student_id}>
-                          {m.profiles?.full_name || m.profiles?.email}
+                          {m.profile?.full_name || m.profile?.email}
                         </SelectItem>
                       ))}
                     </SelectContent>
