@@ -15,6 +15,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedTurmasIndexRouteImport } from './routes/_authenticated/turmas.index'
+import { Route as AuthenticatedTurmasClassIdRouteImport } from './routes/_authenticated/turmas.$classId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +47,18 @@ const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTurmasIndexRoute =
+  AuthenticatedTurmasIndexRouteImport.update({
+    id: '/turmas/',
+    path: '/turmas/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTurmasClassIdRoute =
+  AuthenticatedTurmasClassIdRouteImport.update({
+    id: '/turmas/$classId',
+    path: '/turmas/$classId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +66,8 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/turmas/$classId': typeof AuthenticatedTurmasClassIdRoute
+  '/turmas/': typeof AuthenticatedTurmasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +75,8 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/turmas/$classId': typeof AuthenticatedTurmasClassIdRoute
+  '/turmas': typeof AuthenticatedTurmasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +86,28 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/turmas/$classId': typeof AuthenticatedTurmasClassIdRoute
+  '/_authenticated/turmas/': typeof AuthenticatedTurmasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/reset-password' | '/dashboard' | '/perfil'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/perfil'
+    | '/turmas/$classId'
+    | '/turmas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/dashboard' | '/perfil'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/perfil'
+    | '/turmas/$classId'
+    | '/turmas'
   id:
     | '__root__'
     | '/'
@@ -82,6 +116,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/dashboard'
     | '/_authenticated/perfil'
+    | '/_authenticated/turmas/$classId'
+    | '/_authenticated/turmas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,17 +171,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/turmas/': {
+      id: '/_authenticated/turmas/'
+      path: '/turmas'
+      fullPath: '/turmas/'
+      preLoaderRoute: typeof AuthenticatedTurmasIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/turmas/$classId': {
+      id: '/_authenticated/turmas/$classId'
+      path: '/turmas/$classId'
+      fullPath: '/turmas/$classId'
+      preLoaderRoute: typeof AuthenticatedTurmasClassIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedTurmasClassIdRoute: typeof AuthenticatedTurmasClassIdRoute
+  AuthenticatedTurmasIndexRoute: typeof AuthenticatedTurmasIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedTurmasClassIdRoute: AuthenticatedTurmasClassIdRoute,
+  AuthenticatedTurmasIndexRoute: AuthenticatedTurmasIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

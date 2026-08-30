@@ -48,7 +48,10 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     navigate({ to: "/dashboard", replace: true });
   }
 
@@ -64,7 +67,10 @@ function AuthPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     if (!data.session) {
       toast.success("Conta criada. Confirme seu e-mail para acessar.");
       return;
@@ -73,11 +79,17 @@ function AuthPage() {
   }
 
   async function forgotPassword() {
-    if (!email) return toast.error("Informe seu e-mail primeiro.");
+    if (!email) {
+      toast.error("Informe seu e-mail primeiro.");
+      return;
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Enviamos um link de recuperação para seu e-mail.");
   }
 
