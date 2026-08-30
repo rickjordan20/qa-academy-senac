@@ -43,14 +43,8 @@ function AuthCallback() {
         return;
       }
 
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-      const list = (roles ?? []).map((r) => r.role as AppRole);
-      const role: AppRole = list.includes("instructor") ? "instructor" : "student";
       if (!active) return;
-      navigate({ to: homeForRole(role), replace: true });
+      navigate({ to: "/dashboard", replace: true });
     })();
     return () => {
       active = false;
