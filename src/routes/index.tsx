@@ -21,17 +21,13 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexRedirect() {
-  const { loading, session, role } = useAuth();
+  const { loading, session } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
-    if (!session) {
-      navigate({ to: "/login", replace: true });
-      return;
-    }
-    if (role) navigate({ to: homeForRole(role), replace: true });
-  }, [loading, session, role, navigate]);
+    navigate({ to: session ? "/dashboard" : "/login", replace: true });
+  }, [loading, session, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
