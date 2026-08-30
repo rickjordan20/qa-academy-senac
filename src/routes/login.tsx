@@ -37,22 +37,27 @@ function LoginPage() {
   const [fullName, setFullName] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
-  // Redireciona automaticamente pelo papel salvo no banco.
+  // Único ponto de decisão: /dashboard resolve o papel e envia para a área certa.
   useEffect(() => {
-    if (loading || !session || !role) return;
-    navigate({ to: homeForRole(role), replace: true });
-  }, [loading, session, role, navigate]);
+    if (loading || !session) return;
+    navigate({ to: "/dashboard", replace: true });
+  }, [loading, session, navigate]);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      console.info("[auth] login concluído", { userId: data.user?.id, email: data.user?.email });
+      toast.success("Bem-vindo de volta!");
+      navigate({ to: "/dashboard", replace: true });
+    } finally {
+      setBusy(false);
     }
-    toast.success("Bem-vindo de volta!");
   }
 
   async function signUpStudent(e: React.FormEvent) {
