@@ -20,6 +20,11 @@ import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/e
 import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
 import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
 import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
+import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
+import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
+import { Route as StudentJourneyRouteImport } from './routes/student/journey'
+import { Route as StudentProfileRouteImport } from './routes/student/profile'
+import { Route as StudentProgressRouteImport } from './routes/student/progress'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
 
@@ -78,6 +83,31 @@ const InstructorStudentsRoute = InstructorStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
+const StudentDashboardRoute = StudentDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentEvaluationRoute = StudentEvaluationRouteImport.update({
+  id: '/evaluation',
+  path: '/evaluation',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentJourneyRoute = StudentJourneyRouteImport.update({
+  id: '/journey',
+  path: '/journey',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentProfileRoute = StudentProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentProgressRoute = StudentProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const InstructorClassesIndexRoute = InstructorClassesIndexRouteImport.update({
   id: '/classes/',
   path: '/classes/',
@@ -93,7 +123,7 @@ const InstructorClassesClassIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRouteRouteWithChildren
-  '/student': typeof StudentRouteRoute
+  '/student': typeof StudentRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -102,13 +132,18 @@ export interface FileRoutesByFullPath {
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/students': typeof InstructorStudentsRoute
+  '/student/dashboard': typeof StudentDashboardRoute
+  '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/journey': typeof StudentJourneyRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/progress': typeof StudentProgressRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRouteRouteWithChildren
-  '/student': typeof StudentRouteRoute
+  '/student': typeof StudentRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -117,6 +152,11 @@ export interface FileRoutesByTo {
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/students': typeof InstructorStudentsRoute
+  '/student/dashboard': typeof StudentDashboardRoute
+  '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/journey': typeof StudentJourneyRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/progress': typeof StudentProgressRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
 }
@@ -124,7 +164,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRouteRouteWithChildren
-  '/student': typeof StudentRouteRoute
+  '/student': typeof StudentRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -133,6 +173,11 @@ export interface FileRoutesById {
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/students': typeof InstructorStudentsRoute
+  '/student/dashboard': typeof StudentDashboardRoute
+  '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/journey': typeof StudentJourneyRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/progress': typeof StudentProgressRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
 }
@@ -150,6 +195,11 @@ export interface FileRouteTypes {
     | '/instructor/groups'
     | '/instructor/profile'
     | '/instructor/students'
+    | '/student/dashboard'
+    | '/student/evaluation'
+    | '/student/journey'
+    | '/student/profile'
+    | '/student/progress'
     | '/instructor/classes/$classId'
     | '/instructor/classes/'
   fileRoutesByTo: FileRoutesByTo
@@ -165,6 +215,11 @@ export interface FileRouteTypes {
     | '/instructor/groups'
     | '/instructor/profile'
     | '/instructor/students'
+    | '/student/dashboard'
+    | '/student/evaluation'
+    | '/student/journey'
+    | '/student/profile'
+    | '/student/progress'
     | '/instructor/classes/$classId'
     | '/instructor/classes'
   id:
@@ -180,6 +235,11 @@ export interface FileRouteTypes {
     | '/instructor/groups'
     | '/instructor/profile'
     | '/instructor/students'
+    | '/student/dashboard'
+    | '/student/evaluation'
+    | '/student/journey'
+    | '/student/profile'
+    | '/student/progress'
     | '/instructor/classes/$classId'
     | '/instructor/classes/'
   fileRoutesById: FileRoutesById
@@ -187,7 +247,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InstructorRouteRoute: typeof InstructorRouteRouteWithChildren
-  StudentRouteRoute: typeof StudentRouteRoute
+  StudentRouteRoute: typeof StudentRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -272,6 +332,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorStudentsRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/student/dashboard': {
+      id: '/student/dashboard'
+      path: '/dashboard'
+      fullPath: '/student/dashboard'
+      preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/evaluation': {
+      id: '/student/evaluation'
+      path: '/evaluation'
+      fullPath: '/student/evaluation'
+      preLoaderRoute: typeof StudentEvaluationRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/journey': {
+      id: '/student/journey'
+      path: '/journey'
+      fullPath: '/student/journey'
+      preLoaderRoute: typeof StudentJourneyRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/profile': {
+      id: '/student/profile'
+      path: '/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentProfileRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/progress': {
+      id: '/student/progress'
+      path: '/progress'
+      fullPath: '/student/progress'
+      preLoaderRoute: typeof StudentProgressRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/instructor/classes/': {
       id: '/instructor/classes/'
       path: '/classes'
@@ -313,10 +408,30 @@ const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
   InstructorRouteRouteChildren,
 )
 
+interface StudentRouteRouteChildren {
+  StudentDashboardRoute: typeof StudentDashboardRoute
+  StudentEvaluationRoute: typeof StudentEvaluationRoute
+  StudentJourneyRoute: typeof StudentJourneyRoute
+  StudentProfileRoute: typeof StudentProfileRoute
+  StudentProgressRoute: typeof StudentProgressRoute
+}
+
+const StudentRouteRouteChildren: StudentRouteRouteChildren = {
+  StudentDashboardRoute: StudentDashboardRoute,
+  StudentEvaluationRoute: StudentEvaluationRoute,
+  StudentJourneyRoute: StudentJourneyRoute,
+  StudentProfileRoute: StudentProfileRoute,
+  StudentProgressRoute: StudentProgressRoute,
+}
+
+const StudentRouteRouteWithChildren = StudentRouteRoute._addFileChildren(
+  StudentRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InstructorRouteRoute: InstructorRouteRouteWithChildren,
-  StudentRouteRoute: StudentRouteRoute,
+  StudentRouteRoute: StudentRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AuthCallbackRoute: AuthCallbackRoute,
