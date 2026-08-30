@@ -280,6 +280,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      enroll_student_by_email: {
+        Args: { _class_id: string; _email: string }
+        Returns: string
+      }
       group_class_id: { Args: { _group_id: string }; Returns: string }
       has_role: {
         Args: {
