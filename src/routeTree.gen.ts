@@ -10,26 +10,37 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
+import { Route as InstructorRouteRouteImport } from './routes/instructor/route'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
-import { Route as AuthenticatedTurmasIndexRouteImport } from './routes/_authenticated/turmas.index'
-import { Route as AuthenticatedTurmasClassIdRouteImport } from './routes/_authenticated/turmas.$classId'
+import { Route as StudentRouteRouteImport } from './routes/student/route'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
+import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/evaluations'
+import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
+import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
+import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
+import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
+import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
+import { Route as StudentJourneyRouteImport } from './routes/student/journey'
+import { Route as StudentProfileRouteImport } from './routes/student/profile'
+import { Route as StudentProgressRouteImport } from './routes/student/progress'
+import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
+import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const InstructorRouteRoute = InstructorRouteRouteImport.update({
+  id: '/instructor',
+  path: '/instructor',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -37,94 +48,209 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+const StudentRouteRoute = StudentRouteRouteImport.update({
+  id: '/student',
+  path: '/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstructorDashboardRoute = InstructorDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => InstructorRouteRoute,
 } as any)
-const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const InstructorEvaluationsRoute = InstructorEvaluationsRouteImport.update({
+  id: '/evaluations',
+  path: '/evaluations',
+  getParentRoute: () => InstructorRouteRoute,
 } as any)
-const AuthenticatedTurmasIndexRoute =
-  AuthenticatedTurmasIndexRouteImport.update({
-    id: '/turmas/',
-    path: '/turmas/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTurmasClassIdRoute =
-  AuthenticatedTurmasClassIdRouteImport.update({
-    id: '/turmas/$classId',
-    path: '/turmas/$classId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const InstructorGroupsRoute = InstructorGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorProfileRoute = InstructorProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorStudentsRoute = InstructorStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const StudentDashboardRoute = StudentDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentEvaluationRoute = StudentEvaluationRouteImport.update({
+  id: '/evaluation',
+  path: '/evaluation',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentJourneyRoute = StudentJourneyRouteImport.update({
+  id: '/journey',
+  path: '/journey',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentProfileRoute = StudentProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentProgressRoute = StudentProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const InstructorClassesIndexRoute = InstructorClassesIndexRouteImport.update({
+  id: '/classes/',
+  path: '/classes/',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorClassesClassIdRoute =
+  InstructorClassesClassIdRouteImport.update({
+    id: '/classes/$classId',
+    path: '/classes/$classId',
+    getParentRoute: () => InstructorRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/instructor': typeof InstructorRouteRouteWithChildren
+  '/student': typeof StudentRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/perfil': typeof AuthenticatedPerfilRoute
-  '/turmas/$classId': typeof AuthenticatedTurmasClassIdRoute
-  '/turmas/': typeof AuthenticatedTurmasIndexRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/dashboard': typeof InstructorDashboardRoute
+  '/instructor/evaluations': typeof InstructorEvaluationsRoute
+  '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/profile': typeof InstructorProfileRoute
+  '/instructor/students': typeof InstructorStudentsRoute
+  '/student/dashboard': typeof StudentDashboardRoute
+  '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/journey': typeof StudentJourneyRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/progress': typeof StudentProgressRoute
+  '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/instructor/classes/': typeof InstructorClassesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/instructor': typeof InstructorRouteRouteWithChildren
+  '/student': typeof StudentRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/perfil': typeof AuthenticatedPerfilRoute
-  '/turmas/$classId': typeof AuthenticatedTurmasClassIdRoute
-  '/turmas': typeof AuthenticatedTurmasIndexRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/dashboard': typeof InstructorDashboardRoute
+  '/instructor/evaluations': typeof InstructorEvaluationsRoute
+  '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/profile': typeof InstructorProfileRoute
+  '/instructor/students': typeof InstructorStudentsRoute
+  '/student/dashboard': typeof StudentDashboardRoute
+  '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/journey': typeof StudentJourneyRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/progress': typeof StudentProgressRoute
+  '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/instructor/classes': typeof InstructorClassesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/instructor': typeof InstructorRouteRouteWithChildren
+  '/student': typeof StudentRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
-  '/_authenticated/turmas/$classId': typeof AuthenticatedTurmasClassIdRoute
-  '/_authenticated/turmas/': typeof AuthenticatedTurmasIndexRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/dashboard': typeof InstructorDashboardRoute
+  '/instructor/evaluations': typeof InstructorEvaluationsRoute
+  '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/profile': typeof InstructorProfileRoute
+  '/instructor/students': typeof InstructorStudentsRoute
+  '/student/dashboard': typeof StudentDashboardRoute
+  '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/journey': typeof StudentJourneyRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/progress': typeof StudentProgressRoute
+  '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/instructor/classes/': typeof InstructorClassesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
+    | '/instructor'
+    | '/student'
+    | '/login'
     | '/reset-password'
-    | '/dashboard'
-    | '/perfil'
-    | '/turmas/$classId'
-    | '/turmas/'
+    | '/auth/callback'
+    | '/instructor/dashboard'
+    | '/instructor/evaluations'
+    | '/instructor/groups'
+    | '/instructor/profile'
+    | '/instructor/students'
+    | '/student/dashboard'
+    | '/student/evaluation'
+    | '/student/journey'
+    | '/student/profile'
+    | '/student/progress'
+    | '/instructor/classes/$classId'
+    | '/instructor/classes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
+    | '/instructor'
+    | '/student'
+    | '/login'
     | '/reset-password'
-    | '/dashboard'
-    | '/perfil'
-    | '/turmas/$classId'
-    | '/turmas'
+    | '/auth/callback'
+    | '/instructor/dashboard'
+    | '/instructor/evaluations'
+    | '/instructor/groups'
+    | '/instructor/profile'
+    | '/instructor/students'
+    | '/student/dashboard'
+    | '/student/evaluation'
+    | '/student/journey'
+    | '/student/profile'
+    | '/student/progress'
+    | '/instructor/classes/$classId'
+    | '/instructor/classes'
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
-    | '/auth'
+    | '/instructor'
+    | '/student'
+    | '/login'
     | '/reset-password'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/perfil'
-    | '/_authenticated/turmas/$classId'
-    | '/_authenticated/turmas/'
+    | '/auth/callback'
+    | '/instructor/dashboard'
+    | '/instructor/evaluations'
+    | '/instructor/groups'
+    | '/instructor/profile'
+    | '/instructor/students'
+    | '/student/dashboard'
+    | '/student/evaluation'
+    | '/student/journey'
+    | '/student/profile'
+    | '/student/progress'
+    | '/instructor/classes/$classId'
+    | '/instructor/classes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  InstructorRouteRoute: typeof InstructorRouteRouteWithChildren
+  StudentRouteRoute: typeof StudentRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -136,18 +262,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+    '/instructor': {
+      id: '/instructor'
+      path: '/instructor'
+      fullPath: '/instructor'
+      preLoaderRoute: typeof InstructorRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -157,59 +283,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
+    '/student': {
+      id: '/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof StudentRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/instructor/dashboard': {
+      id: '/instructor/dashboard'
       path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      fullPath: '/instructor/dashboard'
+      preLoaderRoute: typeof InstructorDashboardRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
-    '/_authenticated/perfil': {
-      id: '/_authenticated/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/instructor/evaluations': {
+      id: '/instructor/evaluations'
+      path: '/evaluations'
+      fullPath: '/instructor/evaluations'
+      preLoaderRoute: typeof InstructorEvaluationsRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
-    '/_authenticated/turmas/': {
-      id: '/_authenticated/turmas/'
-      path: '/turmas'
-      fullPath: '/turmas/'
-      preLoaderRoute: typeof AuthenticatedTurmasIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/instructor/groups': {
+      id: '/instructor/groups'
+      path: '/groups'
+      fullPath: '/instructor/groups'
+      preLoaderRoute: typeof InstructorGroupsRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
-    '/_authenticated/turmas/$classId': {
-      id: '/_authenticated/turmas/$classId'
-      path: '/turmas/$classId'
-      fullPath: '/turmas/$classId'
-      preLoaderRoute: typeof AuthenticatedTurmasClassIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/instructor/profile': {
+      id: '/instructor/profile'
+      path: '/profile'
+      fullPath: '/instructor/profile'
+      preLoaderRoute: typeof InstructorProfileRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/students': {
+      id: '/instructor/students'
+      path: '/students'
+      fullPath: '/instructor/students'
+      preLoaderRoute: typeof InstructorStudentsRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/student/dashboard': {
+      id: '/student/dashboard'
+      path: '/dashboard'
+      fullPath: '/student/dashboard'
+      preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/evaluation': {
+      id: '/student/evaluation'
+      path: '/evaluation'
+      fullPath: '/student/evaluation'
+      preLoaderRoute: typeof StudentEvaluationRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/journey': {
+      id: '/student/journey'
+      path: '/journey'
+      fullPath: '/student/journey'
+      preLoaderRoute: typeof StudentJourneyRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/profile': {
+      id: '/student/profile'
+      path: '/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentProfileRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/progress': {
+      id: '/student/progress'
+      path: '/progress'
+      fullPath: '/student/progress'
+      preLoaderRoute: typeof StudentProgressRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/instructor/classes/': {
+      id: '/instructor/classes/'
+      path: '/classes'
+      fullPath: '/instructor/classes/'
+      preLoaderRoute: typeof InstructorClassesIndexRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/classes/$classId': {
+      id: '/instructor/classes/$classId'
+      path: '/classes/$classId'
+      fullPath: '/instructor/classes/$classId'
+      preLoaderRoute: typeof InstructorClassesClassIdRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
-  AuthenticatedTurmasClassIdRoute: typeof AuthenticatedTurmasClassIdRoute
-  AuthenticatedTurmasIndexRoute: typeof AuthenticatedTurmasIndexRoute
+interface InstructorRouteRouteChildren {
+  InstructorDashboardRoute: typeof InstructorDashboardRoute
+  InstructorEvaluationsRoute: typeof InstructorEvaluationsRoute
+  InstructorGroupsRoute: typeof InstructorGroupsRoute
+  InstructorProfileRoute: typeof InstructorProfileRoute
+  InstructorStudentsRoute: typeof InstructorStudentsRoute
+  InstructorClassesClassIdRoute: typeof InstructorClassesClassIdRoute
+  InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
 }
 
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
-  AuthenticatedTurmasClassIdRoute: AuthenticatedTurmasClassIdRoute,
-  AuthenticatedTurmasIndexRoute: AuthenticatedTurmasIndexRoute,
+const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
+  InstructorDashboardRoute: InstructorDashboardRoute,
+  InstructorEvaluationsRoute: InstructorEvaluationsRoute,
+  InstructorGroupsRoute: InstructorGroupsRoute,
+  InstructorProfileRoute: InstructorProfileRoute,
+  InstructorStudentsRoute: InstructorStudentsRoute,
+  InstructorClassesClassIdRoute: InstructorClassesClassIdRoute,
+  InstructorClassesIndexRoute: InstructorClassesIndexRoute,
 }
 
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
+  InstructorRouteRouteChildren,
+)
+
+interface StudentRouteRouteChildren {
+  StudentDashboardRoute: typeof StudentDashboardRoute
+  StudentEvaluationRoute: typeof StudentEvaluationRoute
+  StudentJourneyRoute: typeof StudentJourneyRoute
+  StudentProfileRoute: typeof StudentProfileRoute
+  StudentProgressRoute: typeof StudentProgressRoute
+}
+
+const StudentRouteRouteChildren: StudentRouteRouteChildren = {
+  StudentDashboardRoute: StudentDashboardRoute,
+  StudentEvaluationRoute: StudentEvaluationRoute,
+  StudentJourneyRoute: StudentJourneyRoute,
+  StudentProfileRoute: StudentProfileRoute,
+  StudentProgressRoute: StudentProgressRoute,
+}
+
+const StudentRouteRouteWithChildren = StudentRouteRoute._addFileChildren(
+  StudentRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  InstructorRouteRoute: InstructorRouteRouteWithChildren,
+  StudentRouteRoute: StudentRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

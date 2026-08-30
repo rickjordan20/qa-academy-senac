@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/turmas/$classId")({
+export const Route = createFileRoute("/instructor/classes/$classId")({
   head: () => ({
     meta: [
       { title: "Detalhes da turma | QA Academy" },
@@ -28,10 +28,10 @@ export const Route = createFileRoute("/_authenticated/turmas/$classId")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: TurmaDetalhe,
+  component: ClassDetail,
 });
 
-function TurmaDetalhe() {
+function ClassDetail() {
   const { classId } = Route.useParams();
   const queryClient = useQueryClient();
 
@@ -127,6 +127,7 @@ function TurmaDetalhe() {
     setEmail("");
     toast.success("Aluno cadastrado na turma.");
     queryClient.invalidateQueries({ queryKey: ["class-members", classId] });
+    queryClient.invalidateQueries({ queryKey: ["my-classes"] });
   }
 
   async function removeStudent(enrollmentId: string) {
@@ -187,7 +188,7 @@ function TurmaDetalhe() {
 
   return (
     <div className="space-y-6">
-      <Link to="/turmas" className="text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/instructor/classes" className="text-sm text-muted-foreground hover:text-foreground">
         ← Voltar para turmas
       </Link>
       <h1 className="text-2xl font-bold">{turma?.name ?? "Turma"}</h1>

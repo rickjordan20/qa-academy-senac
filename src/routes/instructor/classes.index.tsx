@@ -1,16 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { useMyClasses } from "@/lib/uc10";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/_authenticated/turmas/")({
+export const Route = createFileRoute("/instructor/classes/")({
   head: () => ({
     meta: [
       { title: "Turmas | QA Academy" },
@@ -21,37 +22,27 @@ export const Route = createFileRoute("/_authenticated/turmas/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: TurmasPage,
+  component: ClassesPage,
 });
 
-function TurmasPage() {
-  const { user } = useSession();
+function ClassesPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: classes } = useMyClasses(user?.id ?? null);
   const [name, setName] = useState("");
   const [period, setPeriod] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data: classes } = useQuery({
-    queryKey: ["my-classes", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id, name, period, description, enrollments(id), groups(id)")
-        .eq("instructor_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
   async function createClass(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const { error } = await supabase
-      .from("classes")
-      .insert({ name, period: period || null, description: description || null, instructor_id: user!.id });
+    const { error } = await supabase.from("classes").insert({
+      name,
+      period: period || null,
+      description: description || null,
+      instructor_id: user!.id,
+    });
     setSaving(false);
     if (error) {
       toast.error(error.message);
@@ -75,7 +66,7 @@ function TurmasPage() {
           {(classes ?? []).map((c) => (
             <Link
               key={c.id}
-              to="/turmas/$classId"
+              to="/instructor/classes/$classId"
               params={{ classId: c.id }}
               className="block rounded-xl border border-border bg-surface p-4 hover:border-primary"
             >

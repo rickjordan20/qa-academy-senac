@@ -36,7 +36,7 @@ function ResetPassword() {
       return;
     }
     toast.success("Senha atualizada com sucesso.");
-    navigate({ to: "/dashboard", replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   return (

@@ -2,80 +2,83 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth, homeForRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Entrar | QA Academy — UC10" },
       {
         name: "description",
         content:
-          "Acesse a plataforma QA Academy para acompanhar a UC10 – Realizar testes nas aplicações desenvolvidas.",
+          "Acesse a QA Academy para acompanhar a UC10 – Realizar testes nas aplicações desenvolvidas.",
       },
       { property: "og:title", content: "Entrar | QA Academy — UC10" },
-      {
-        property: "og:description",
-        content: "Login de alunos e instrutores da plataforma QA Academy.",
-      },
+      { property: "og:description", content: "Login de alunos e do instrutor da QA Academy." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: AuthPage,
+  component: LoginPage,
 });
 
-function AuthPage() {
+function LoginPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { session, role, loading } = useAuth();
+  const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"student" | "instructor">("student");
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
+  // Redireciona automaticamente pelo papel salvo no banco.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
-    });
-  }, [navigate]);
+    if (loading || !session || !role) return;
+    navigate({ to: homeForRole(role), replace: true });
+  }, [loading, session, role, navigate]);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    navigate({ to: "/dashboard", replace: true });
+    toast.success("Bem-vindo de volta!");
   }
 
-  async function signUp(e: React.FormEvent) {
+  async function signUpStudent(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    if (password !== confirmPassword) {
+      toast.error("As senhas não conferem.");
+      return;
+    }
+    setBusy(true);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, role },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { full_name: fullName },
       },
     });
-    setLoading(false);
+    setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
     if (!data.session) {
-      toast.success("Conta criada. Confirme seu e-mail para acessar.");
-      return;
+      setAwaitingConfirm(true);
+      toast.success("Conta de aluno criada. Confirme seu e-mail para acessar.");
     }
-    navigate({ to: "/dashboard", replace: true });
   }
 
   async function forgotPassword() {
@@ -111,7 +114,7 @@ function AuthPage() {
             <Tabs defaultValue="login">
               <TabsList className="mb-4 grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Criar conta</TabsTrigger>
+                <TabsTrigger value="signup">Criar conta de aluno</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -136,7 +139,7 @@ function AuthPage() {
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
-                  <Button className="w-full" disabled={loading} type="submit">
+                  <Button className="w-full" disabled={busy} type="submit">
                     Entrar
                   </Button>
                   <button
@@ -150,56 +153,65 @@ function AuthPage() {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form className="space-y-4" onSubmit={signUp}>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome completo</Label>
-                    <Input
-                      id="name"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                    />
+                {awaitingConfirm ? (
+                  <div className="space-y-2 rounded-lg border border-border p-4 text-sm">
+                    <p className="font-medium">Confirme seu e-mail</p>
+                    <p className="text-muted-foreground">
+                      Enviamos um link para <strong>{email}</strong>. Após confirmar, você volta para
+                      a QA Academy automaticamente.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email2">E-mail</Label>
-                    <Input
-                      id="email2"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password2">Senha</Label>
-                    <Input
-                      id="password2"
-                      type="password"
-                      required
-                      minLength={6}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Perfil</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(["student", "instructor"] as const).map((r) => (
-                        <Button
-                          key={r}
-                          type="button"
-                          variant={role === r ? "default" : "secondary"}
-                          onClick={() => setRole(r)}
-                        >
-                          {r === "student" ? "Aluno" : "Instrutor"}
-                        </Button>
-                      ))}
+                ) : (
+                  <form className="space-y-4" onSubmit={signUpStudent}>
+                    <p className="rounded-md border border-border p-3 text-xs text-muted-foreground">
+                      Criar conta de aluno — o cadastro público cria apenas contas de aluno.
+                    </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome completo</Label>
+                      <Input
+                        id="name"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
                     </div>
-                  </div>
-                  <Button className="w-full" disabled={loading} type="submit">
-                    Criar conta
-                  </Button>
-                </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="email2">E-mail</Label>
+                      <Input
+                        id="email2"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password2">Senha</Label>
+                      <Input
+                        id="password2"
+                        type="password"
+                        required
+                        minLength={6}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password3">Confirmar senha</Label>
+                      <Input
+                        id="password3"
+                        type="password"
+                        required
+                        minLength={6}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                    </div>
+                    <Button className="w-full" disabled={busy} type="submit">
+                      Criar conta de aluno
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>

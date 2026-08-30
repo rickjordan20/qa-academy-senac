@@ -1,33 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useRole, useSession } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { useMyEnrollment } from "@/lib/uc10";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/_authenticated/perfil")({
+export const Route = createFileRoute("/student/profile")({
   head: () => ({
     meta: [
       { title: "Meu perfil | QA Academy" },
-      { name: "description", content: "Atualize nome, avatar e veja sua turma e perfil de acesso." },
+      { name: "description", content: "Nome, e-mail, turma e tipo de conta do aluno." },
       { property: "og:title", content: "Meu perfil | QA Academy" },
-      { property: "og:description", content: "Dados pessoais, turma e perfil na QA Academy." },
+      { property: "og:description", content: "Dados pessoais e turma na QA Academy." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: PerfilPage,
+  component: StudentProfile,
 });
 
-function PerfilPage() {
-  const { user } = useSession();
-  const { data: profile } = useProfile();
-  const { data: role } = useRole();
-  const queryClient = useQueryClient();
+function StudentProfile() {
+  const { user, profile, refresh } = useAuth();
+  const { data: enrollment } = useMyEnrollment(user?.id ?? null);
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -38,20 +36,6 @@ function PerfilPage() {
       setAvatarUrl(profile.avatar_url ?? "");
     }
   }, [profile]);
-
-  const { data: turma } = useQuery({
-    queryKey: ["my-class", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("enrollments")
-        .select("classes(name)")
-        .eq("student_id", user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +50,7 @@ function PerfilPage() {
       return;
     }
     toast.success("Perfil atualizado.");
-    queryClient.invalidateQueries({ queryKey: ["profile"] });
+    refresh();
   }
 
   return (
@@ -107,11 +91,14 @@ function PerfilPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Turma</Label>
-                <Input value={turma?.classes?.name ?? "—"} disabled />
+                <Input value={enrollment?.classes?.name ?? "—"} disabled />
+                <p className="text-xs text-muted-foreground">
+                  A turma é definida pelo instrutor.
+                </p>
               </div>
               <div className="space-y-2">
-                <Label>Perfil</Label>
-                <Input value={role === "instructor" ? "Instrutor" : "Aluno"} disabled />
+                <Label>Tipo de conta</Label>
+                <Input value="Aluno" disabled />
               </div>
             </div>
             <Button type="submit" disabled={saving}>
