@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as InstructorRouteRouteImport } from './routes/instructor/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -31,6 +32,11 @@ import { Route as InstructorClassesClassIdRouteImport } from './routes/instructo
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InstructorRouteRoute = InstructorRouteRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRouteRouteWithChildren
   '/student': typeof StudentRouteRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRouteRouteWithChildren
   '/student': typeof StudentRouteRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/instructor': typeof InstructorRouteRouteWithChildren
   '/student': typeof StudentRouteRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/instructor'
     | '/student'
+    | '/dashboard'
     | '/login'
     | '/reset-password'
     | '/auth/callback'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/'
     | '/instructor'
     | '/student'
+    | '/dashboard'
     | '/login'
     | '/reset-password'
     | '/auth/callback'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/'
     | '/instructor'
     | '/student'
+    | '/dashboard'
     | '/login'
     | '/reset-password'
     | '/auth/callback'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InstructorRouteRoute: typeof InstructorRouteRouteWithChildren
   StudentRouteRoute: typeof StudentRouteRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/instructor': {
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InstructorRouteRoute: InstructorRouteRouteWithChildren,
   StudentRouteRoute: StudentRouteRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AuthCallbackRoute: AuthCallbackRoute,

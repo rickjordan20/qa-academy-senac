@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, homeForRole } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { session, role, loading } = useAuth();
+  const { session, loading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,22 +37,27 @@ function LoginPage() {
   const [fullName, setFullName] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
-  // Redireciona automaticamente pelo papel salvo no banco.
+  // Único ponto de decisão: /dashboard resolve o papel e envia para a área certa.
   useEffect(() => {
-    if (loading || !session || !role) return;
-    navigate({ to: homeForRole(role), replace: true });
-  }, [loading, session, role, navigate]);
+    if (loading || !session) return;
+    navigate({ to: "/dashboard", replace: true });
+  }, [loading, session, navigate]);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      console.info("[auth] login concluído", { userId: data.user?.id, email: data.user?.email });
+      toast.success("Bem-vindo de volta!");
+      navigate({ to: "/dashboard", replace: true });
+    } finally {
+      setBusy(false);
     }
-    toast.success("Bem-vindo de volta!");
   }
 
   async function signUpStudent(e: React.FormEvent) {
