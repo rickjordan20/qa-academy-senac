@@ -16,9 +16,12 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
+import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/evaluations'
 import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
+import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
 import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
+import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -55,9 +58,19 @@ const InstructorDashboardRoute = InstructorDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
+const InstructorEvaluationsRoute = InstructorEvaluationsRouteImport.update({
+  id: '/evaluations',
+  path: '/evaluations',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
 const InstructorGroupsRoute = InstructorGroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorProfileRoute = InstructorProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorStudentsRoute = InstructorStudentsRouteImport.update({
@@ -70,6 +83,12 @@ const InstructorClassesIndexRoute = InstructorClassesIndexRouteImport.update({
   path: '/classes/',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
+const InstructorClassesClassIdRoute =
+  InstructorClassesClassIdRouteImport.update({
+    id: '/classes/$classId',
+    path: '/classes/$classId',
+    getParentRoute: () => InstructorRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,8 +98,11 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
+  '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/students': typeof InstructorStudentsRoute
+  '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -91,8 +113,11 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
+  '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/students': typeof InstructorStudentsRoute
+  '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
 }
 export interface FileRoutesById {
@@ -104,8 +129,11 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
+  '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/students': typeof InstructorStudentsRoute
+  '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
 }
 export interface FileRouteTypes {
@@ -118,8 +146,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/auth/callback'
     | '/instructor/dashboard'
+    | '/instructor/evaluations'
     | '/instructor/groups'
+    | '/instructor/profile'
     | '/instructor/students'
+    | '/instructor/classes/$classId'
     | '/instructor/classes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -130,8 +161,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/auth/callback'
     | '/instructor/dashboard'
+    | '/instructor/evaluations'
     | '/instructor/groups'
+    | '/instructor/profile'
     | '/instructor/students'
+    | '/instructor/classes/$classId'
     | '/instructor/classes'
   id:
     | '__root__'
@@ -142,8 +176,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/auth/callback'
     | '/instructor/dashboard'
+    | '/instructor/evaluations'
     | '/instructor/groups'
+    | '/instructor/profile'
     | '/instructor/students'
+    | '/instructor/classes/$classId'
     | '/instructor/classes/'
   fileRoutesById: FileRoutesById
 }
@@ -207,11 +244,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorDashboardRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/instructor/evaluations': {
+      id: '/instructor/evaluations'
+      path: '/evaluations'
+      fullPath: '/instructor/evaluations'
+      preLoaderRoute: typeof InstructorEvaluationsRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
     '/instructor/groups': {
       id: '/instructor/groups'
       path: '/groups'
       fullPath: '/instructor/groups'
       preLoaderRoute: typeof InstructorGroupsRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/profile': {
+      id: '/instructor/profile'
+      path: '/profile'
+      fullPath: '/instructor/profile'
+      preLoaderRoute: typeof InstructorProfileRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/students': {
@@ -228,20 +279,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorClassesIndexRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/instructor/classes/$classId': {
+      id: '/instructor/classes/$classId'
+      path: '/classes/$classId'
+      fullPath: '/instructor/classes/$classId'
+      preLoaderRoute: typeof InstructorClassesClassIdRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
   }
 }
 
 interface InstructorRouteRouteChildren {
   InstructorDashboardRoute: typeof InstructorDashboardRoute
+  InstructorEvaluationsRoute: typeof InstructorEvaluationsRoute
   InstructorGroupsRoute: typeof InstructorGroupsRoute
+  InstructorProfileRoute: typeof InstructorProfileRoute
   InstructorStudentsRoute: typeof InstructorStudentsRoute
+  InstructorClassesClassIdRoute: typeof InstructorClassesClassIdRoute
   InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
 }
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorDashboardRoute: InstructorDashboardRoute,
+  InstructorEvaluationsRoute: InstructorEvaluationsRoute,
   InstructorGroupsRoute: InstructorGroupsRoute,
+  InstructorProfileRoute: InstructorProfileRoute,
   InstructorStudentsRoute: InstructorStudentsRoute,
+  InstructorClassesClassIdRoute: InstructorClassesClassIdRoute,
   InstructorClassesIndexRoute: InstructorClassesIndexRoute,
 }
 
