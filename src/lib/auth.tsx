@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .insert({
             id: userId!,
-            full_name: (meta.full_name as string) ?? "",
+            full_name: (meta["full_name"] as string) ?? "",
             email: session?.user?.email ?? "",
           })
           .select("id, full_name, email, avatar_url")
