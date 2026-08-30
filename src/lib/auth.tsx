@@ -18,6 +18,9 @@ type AuthValue = {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
+  /** true quando a busca de perfil/papel terminou (com sucesso ou erro). */
+  resolved: boolean;
+  error: string | null;
   refresh: () => void;
 };
 
