@@ -92,16 +92,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? "student"
           : null;
 
+      console.info("[auth] perfil carregado", {
+        userId,
+        email: session?.user?.email,
+        hasProfile: !!profile,
+        role,
+      });
+
       return { profile, role };
     },
+    retry: 1,
   });
+
+  const loading = sessionLoading || (!!userId && account.isPending);
+  const profile = account.data?.profile ?? null;
+  const role = account.data?.role ?? null;
+
+  let error: string | null = null;
+  if (!loading && userId) {
+    if (account.isError) error = "Não foi possível carregar seu perfil. Entre em contato com o administrador.";
+    else if (!profile) error = "Não foi possível carregar seu perfil. Entre em contato com o administrador.";
+    else if (!role) error = "Seu perfil não possui um tipo de acesso válido.";
+  }
 
   const value: AuthValue = {
     session,
     user: session?.user ?? null,
-    profile: account.data?.profile ?? null,
-    role: account.data?.role ?? null,
-    loading: sessionLoading || (!!userId && account.isPending),
+    profile,
+    role,
+    loading,
+    resolved: !loading,
+    error,
     refresh: () => queryClient.invalidateQueries({ queryKey: ["account", userId] }),
   };
 
