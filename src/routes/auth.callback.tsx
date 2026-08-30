@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { homeForRole, type AppRole } from "@/lib/auth";
+
 
 export const Route = createFileRoute("/auth/callback")({
   ssr: false,
