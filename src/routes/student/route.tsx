@@ -6,6 +6,7 @@ const items = [
   { to: "/student/dashboard", label: "Início" },
   { to: "/student/journey", label: "Minha Jornada" },
   { to: "/student/missions", label: "Minhas Missões" },
+  { to: "/student/cafe", label: "Café Central" },
   { to: "/student/records", label: "Meus Registros" },
   { to: "/student/evidences", label: "Minhas Evidências" },
   { to: "/student/progress", label: "Meu Progresso" },
