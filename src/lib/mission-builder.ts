@@ -598,7 +598,7 @@ export function newSection(kind: BlockKind, template: MissionTemplate): Section 
     xp: 0,
     indicator_codes: [],
     visible: true,
-    accepts: kind === "evidence" ? ["Imagem", "Documento", "Link", "Texto", "Vídeo", "Log"] : undefined,
+    accepts: undefined,
   };
 }
 
