@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as InstructorCafeRouteImport } from './routes/instructor/cafe'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
 import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/evaluations'
 import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
@@ -30,6 +31,8 @@ import { Route as StudentProgressRouteImport } from './routes/student/progress'
 import { Route as StudentRecordsRouteImport } from './routes/student/records'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
+import { Route as StudentCafeIndexRouteImport } from './routes/student/cafe.index'
+import { Route as StudentCafeGroupIdRouteImport } from './routes/student/cafe.$groupId'
 import { Route as StudentMissionsIndexRouteImport } from './routes/student/missions.index'
 import { Route as StudentMissionsCodeRouteImport } from './routes/student/missions.$code'
 
@@ -67,6 +70,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const InstructorCafeRoute = InstructorCafeRouteImport.update({
+  id: '/cafe',
+  path: '/cafe',
+  getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorDashboardRoute = InstructorDashboardRouteImport.update({
   id: '/dashboard',
@@ -139,6 +147,16 @@ const InstructorClassesClassIdRoute =
     path: '/classes/$classId',
     getParentRoute: () => InstructorRouteRoute,
   } as any)
+const StudentCafeIndexRoute = StudentCafeIndexRouteImport.update({
+  id: '/cafe/',
+  path: '/cafe/',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentCafeGroupIdRoute = StudentCafeGroupIdRouteImport.update({
+  id: '/cafe/$groupId',
+  path: '/cafe/$groupId',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const StudentMissionsIndexRoute = StudentMissionsIndexRouteImport.update({
   id: '/missions/',
   path: '/missions/',
@@ -158,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
@@ -171,8 +190,10 @@ export interface FileRoutesByFullPath {
   '/student/progress': typeof StudentProgressRoute
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -183,6 +204,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
@@ -196,8 +218,10 @@ export interface FileRoutesByTo {
   '/student/progress': typeof StudentProgressRoute
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
+  '/student/cafe': typeof StudentCafeIndexRoute
   '/student/missions': typeof StudentMissionsIndexRoute
 }
 export interface FileRoutesById {
@@ -209,6 +233,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
@@ -222,8 +247,10 @@ export interface FileRoutesById {
   '/student/progress': typeof StudentProgressRoute
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
 export interface FileRouteTypes {
@@ -236,6 +263,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/evaluations'
     | '/instructor/groups'
@@ -249,8 +277,10 @@ export interface FileRouteTypes {
     | '/student/progress'
     | '/student/records'
     | '/instructor/classes/$classId'
+    | '/student/cafe/$groupId'
     | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/student/cafe/'
     | '/student/missions/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -261,6 +291,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/evaluations'
     | '/instructor/groups'
@@ -274,8 +305,10 @@ export interface FileRouteTypes {
     | '/student/progress'
     | '/student/records'
     | '/instructor/classes/$classId'
+    | '/student/cafe/$groupId'
     | '/student/missions/$code'
     | '/instructor/classes'
+    | '/student/cafe'
     | '/student/missions'
   id:
     | '__root__'
@@ -286,6 +319,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/evaluations'
     | '/instructor/groups'
@@ -299,8 +333,10 @@ export interface FileRouteTypes {
     | '/student/progress'
     | '/student/records'
     | '/instructor/classes/$classId'
+    | '/student/cafe/$groupId'
     | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/student/cafe/'
     | '/student/missions/'
   fileRoutesById: FileRoutesById
 }
@@ -364,6 +400,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/instructor/cafe': {
+      id: '/instructor/cafe'
+      path: '/cafe'
+      fullPath: '/instructor/cafe'
+      preLoaderRoute: typeof InstructorCafeRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/dashboard': {
       id: '/instructor/dashboard'
@@ -463,6 +506,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorClassesClassIdRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/student/cafe/': {
+      id: '/student/cafe/'
+      path: '/cafe'
+      fullPath: '/student/cafe/'
+      preLoaderRoute: typeof StudentCafeIndexRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/cafe/$groupId': {
+      id: '/student/cafe/$groupId'
+      path: '/cafe/$groupId'
+      fullPath: '/student/cafe/$groupId'
+      preLoaderRoute: typeof StudentCafeGroupIdRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/student/missions/': {
       id: '/student/missions/'
       path: '/missions'
@@ -481,6 +538,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface InstructorRouteRouteChildren {
+  InstructorCafeRoute: typeof InstructorCafeRoute
   InstructorDashboardRoute: typeof InstructorDashboardRoute
   InstructorEvaluationsRoute: typeof InstructorEvaluationsRoute
   InstructorGroupsRoute: typeof InstructorGroupsRoute
@@ -491,6 +549,7 @@ interface InstructorRouteRouteChildren {
 }
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
+  InstructorCafeRoute: InstructorCafeRoute,
   InstructorDashboardRoute: InstructorDashboardRoute,
   InstructorEvaluationsRoute: InstructorEvaluationsRoute,
   InstructorGroupsRoute: InstructorGroupsRoute,
@@ -512,7 +571,9 @@ interface StudentRouteRouteChildren {
   StudentProfileRoute: typeof StudentProfileRoute
   StudentProgressRoute: typeof StudentProgressRoute
   StudentRecordsRoute: typeof StudentRecordsRoute
+  StudentCafeGroupIdRoute: typeof StudentCafeGroupIdRoute
   StudentMissionsCodeRoute: typeof StudentMissionsCodeRoute
+  StudentCafeIndexRoute: typeof StudentCafeIndexRoute
   StudentMissionsIndexRoute: typeof StudentMissionsIndexRoute
 }
 
@@ -524,7 +585,9 @@ const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentProfileRoute: StudentProfileRoute,
   StudentProgressRoute: StudentProgressRoute,
   StudentRecordsRoute: StudentRecordsRoute,
+  StudentCafeGroupIdRoute: StudentCafeGroupIdRoute,
   StudentMissionsCodeRoute: StudentMissionsCodeRoute,
+  StudentCafeIndexRoute: StudentCafeIndexRoute,
   StudentMissionsIndexRoute: StudentMissionsIndexRoute,
 }
 
