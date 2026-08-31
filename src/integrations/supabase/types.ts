@@ -545,6 +545,309 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_bugs: {
+        Row: {
+          assignee_id: string | null
+          author_id: string
+          context: string
+          created_at: string
+          description: string
+          environment: string
+          expected_result: string
+          group_id: string | null
+          id: string
+          mission_id: string | null
+          obtained_result: string
+          priority: string
+          project: string
+          severity: string
+          status: string
+          steps: string
+          test_case_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          author_id: string
+          context?: string
+          created_at?: string
+          description?: string
+          environment?: string
+          expected_result?: string
+          group_id?: string | null
+          id?: string
+          mission_id?: string | null
+          obtained_result?: string
+          priority?: string
+          project?: string
+          severity?: string
+          status?: string
+          steps?: string
+          test_case_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          author_id?: string
+          context?: string
+          created_at?: string
+          description?: string
+          environment?: string
+          expected_result?: string
+          group_id?: string | null
+          id?: string
+          mission_id?: string | null
+          obtained_result?: string
+          priority?: string
+          project?: string
+          severity?: string
+          status?: string
+          steps?: string
+          test_case_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_bugs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_bugs_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_bugs_test_case_id_fkey"
+            columns: ["test_case_id"]
+            isOneToOne: false
+            referencedRelation: "qa_test_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_evidences: {
+        Row: {
+          author_id: string
+          bug_id: string | null
+          content: string | null
+          context: string
+          created_at: string
+          description: string
+          file_path: string | null
+          group_id: string | null
+          id: string
+          kind: string
+          link: string | null
+          mission_id: string | null
+          project: string
+          retest_id: string | null
+          test_case_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          bug_id?: string | null
+          content?: string | null
+          context?: string
+          created_at?: string
+          description?: string
+          file_path?: string | null
+          group_id?: string | null
+          id?: string
+          kind?: string
+          link?: string | null
+          mission_id?: string | null
+          project?: string
+          retest_id?: string | null
+          test_case_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          bug_id?: string | null
+          content?: string | null
+          context?: string
+          created_at?: string
+          description?: string
+          file_path?: string | null
+          group_id?: string | null
+          id?: string
+          kind?: string
+          link?: string | null
+          mission_id?: string | null
+          project?: string
+          retest_id?: string | null
+          test_case_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_evidences_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "qa_bugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_evidences_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_evidences_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_evidences_retest_id_fkey"
+            columns: ["retest_id"]
+            isOneToOne: false
+            referencedRelation: "qa_retests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_evidences_test_case_id_fkey"
+            columns: ["test_case_id"]
+            isOneToOne: false
+            referencedRelation: "qa_test_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_retests: {
+        Row: {
+          bug_id: string
+          created_at: string
+          id: string
+          notes: string
+          result: string
+          tested_at: string
+          tester_id: string
+        }
+        Insert: {
+          bug_id: string
+          created_at?: string
+          id?: string
+          notes?: string
+          result: string
+          tested_at?: string
+          tester_id: string
+        }
+        Update: {
+          bug_id?: string
+          created_at?: string
+          id?: string
+          notes?: string
+          result?: string
+          tested_at?: string
+          tester_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_retests_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "qa_bugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_test_cases: {
+        Row: {
+          assignee_id: string | null
+          author_id: string
+          context: string
+          created_at: string
+          executed_at: string | null
+          executed_by: string | null
+          expected_result: string
+          feature: string
+          group_id: string | null
+          id: string
+          input_data: string
+          mission_id: string | null
+          obtained_result: string
+          precondition: string
+          project: string
+          status: string
+          steps: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          author_id: string
+          context?: string
+          created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          expected_result?: string
+          feature?: string
+          group_id?: string | null
+          id?: string
+          input_data?: string
+          mission_id?: string | null
+          obtained_result?: string
+          precondition?: string
+          project?: string
+          status?: string
+          steps?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          author_id?: string
+          context?: string
+          created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          expected_result?: string
+          feature?: string
+          group_id?: string | null
+          id?: string
+          input_data?: string
+          mission_id?: string | null
+          obtained_result?: string
+          precondition?: string
+          project?: string
+          status?: string
+          steps?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_test_cases_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_test_cases_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       techeduca_bug_reports: {
         Row: {
           classification: string
@@ -826,6 +1129,18 @@ export type Database = {
       }
       is_group_qa_lead: {
         Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      qa_can_edit: {
+        Args: { _author: string; _group_id: string; _viewer: string }
+        Returns: boolean
+      }
+      qa_can_view: {
+        Args: { _author: string; _group_id: string; _viewer: string }
+        Returns: boolean
+      }
+      qa_is_instructor_of: {
+        Args: { _student: string; _viewer: string }
         Returns: boolean
       }
       shares_class: {
