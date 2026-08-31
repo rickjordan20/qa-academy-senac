@@ -75,6 +75,13 @@ function StudentDashboard() {
         </Card>
       </div>
 
+      <div className="mb-6">
+        <XpOverview
+          userId={user?.id ?? null}
+          groupIds={(groups ?? []).map((g) => g.id)}
+        />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Indicadores I1 – I6</CardTitle>
