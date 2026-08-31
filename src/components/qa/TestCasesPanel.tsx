@@ -227,11 +227,9 @@ export function TestCasesPanel({
               <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
                 <span>Projeto: {c.project || projectLabel(project)}</span>
                 <span>
-                  Funcionalidade:{" "}
-                  {(features ?? []).find((f) => f.id === c.feature_id)
-                    ? `${(features ?? []).find((f) => f.id === c.feature_id)!.code} — ${(features ?? []).find((f) => f.id === c.feature_id)!.name}`
-                    : "—"}
+                  Módulo/Funcionalidade: {featureTrace(modules, features, c.feature_id)}
                 </span>
+
                 <span>Tipo de teste: {testTypeLabel(c.test_type)}</span>
                 <span>Missão: {missionTitle(c.mission_id) ?? "—"}</span>
                 <span>Autor: {names?.[c.author_id] ?? "—"}</span>
