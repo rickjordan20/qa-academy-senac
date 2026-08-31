@@ -69,7 +69,10 @@ function GroupsPage() {
   async function createGroup(e: React.FormEvent) {
     e.preventDefault();
     const classId = newClass || (classes ?? [])[0]?.id;
-    if (!classId) return toast.error("Crie uma turma primeiro.");
+    if (!classId) {
+      toast.error("Crie uma turma primeiro.");
+      return;
+    }
     await saveGroup.mutateAsync({ values: { class_id: classId, name: newName, status: "active" } });
     setNewName("");
     toast.success("Grupo criado.");
