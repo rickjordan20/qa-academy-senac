@@ -942,15 +942,7 @@ export function useCreateEntry(runId: string) {
       status: string;
       data: Record<string, string>;
       link?: string | null;
-      file?: File | null;
     }) => {
-      let filePath: string | null = null;
-      if (input.file) {
-        const path = `${input.authorId}/builder/${runId}/${Date.now()}-${input.file.name}`;
-        const { error: upErr } = await supabase.storage.from("evidencias").upload(path, input.file);
-        if (upErr) throw upErr;
-        filePath = path;
-      }
       const { error } = await supabase.from("builder_mission_entries").insert({
         run_id: runId,
         mission_id: input.missionId,
@@ -962,7 +954,7 @@ export function useCreateEntry(runId: string) {
         status: input.status,
         data: input.data as never,
         link: input.link ?? null,
-        file_path: filePath,
+        file_path: null,
       } as never);
       if (error) throw error;
     },
