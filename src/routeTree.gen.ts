@@ -19,6 +19,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as InstructorCafeRouteImport } from './routes/instructor/cafe'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
 import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/evaluations'
+import { Route as InstructorGamificationRouteImport } from './routes/instructor/gamification'
 import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
 import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
 import { Route as InstructorQaRouteImport } from './routes/instructor/qa'
@@ -87,6 +88,11 @@ const InstructorDashboardRoute = InstructorDashboardRouteImport.update({
 const InstructorEvaluationsRoute = InstructorEvaluationsRouteImport.update({
   id: '/evaluations',
   path: '/evaluations',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorGamificationRoute = InstructorGamificationRouteImport.update({
+  id: '/gamification',
+  path: '/gamification',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorGroupsRoute = InstructorGroupsRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
+  '/instructor/gamification': typeof InstructorGamificationRoute
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
+  '/instructor/gamification': typeof InstructorGamificationRoute
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
+  '/instructor/gamification': typeof InstructorGamificationRoute
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/evaluations'
+    | '/instructor/gamification'
     | '/instructor/groups'
     | '/instructor/profile'
     | '/instructor/qa'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/evaluations'
+    | '/instructor/gamification'
     | '/instructor/groups'
     | '/instructor/profile'
     | '/instructor/qa'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/evaluations'
+    | '/instructor/gamification'
     | '/instructor/groups'
     | '/instructor/profile'
     | '/instructor/qa'
@@ -456,6 +468,13 @@ declare module '@tanstack/react-router' {
       path: '/evaluations'
       fullPath: '/instructor/evaluations'
       preLoaderRoute: typeof InstructorEvaluationsRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/gamification': {
+      id: '/instructor/gamification'
+      path: '/gamification'
+      fullPath: '/instructor/gamification'
+      preLoaderRoute: typeof InstructorGamificationRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/groups': {
@@ -598,6 +617,7 @@ interface InstructorRouteRouteChildren {
   InstructorCafeRoute: typeof InstructorCafeRoute
   InstructorDashboardRoute: typeof InstructorDashboardRoute
   InstructorEvaluationsRoute: typeof InstructorEvaluationsRoute
+  InstructorGamificationRoute: typeof InstructorGamificationRoute
   InstructorGroupsRoute: typeof InstructorGroupsRoute
   InstructorProfileRoute: typeof InstructorProfileRoute
   InstructorQaRoute: typeof InstructorQaRoute
@@ -610,6 +630,7 @@ const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorCafeRoute: InstructorCafeRoute,
   InstructorDashboardRoute: InstructorDashboardRoute,
   InstructorEvaluationsRoute: InstructorEvaluationsRoute,
+  InstructorGamificationRoute: InstructorGamificationRoute,
   InstructorGroupsRoute: InstructorGroupsRoute,
   InstructorProfileRoute: InstructorProfileRoute,
   InstructorQaRoute: InstructorQaRoute,
