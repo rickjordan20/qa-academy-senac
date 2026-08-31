@@ -218,6 +218,52 @@ function FeaturesPage() {
     }
   }
 
+  function renderFeature(f: ManagedFeature) {
+    return (
+      <div key={f.id} className="rounded-xl border border-border bg-surface p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">{f.code}</span>
+              <h2 className="font-semibold">{f.name}</h2>
+              <Badge variant={f.status === "active" ? "default" : "secondary"}>
+                {labelOf(FEATURE_STATUS, f.status)}
+              </Badge>
+              {f.group_id ? <Badge variant="outline">grupo</Badge> : null}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {labelOf(FEATURE_CATEGORY, f.category)} · {labelOf(FEATURE_ORIGIN, f.origin)}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => move(f, -1)} aria-label="Subir">
+              <ArrowUp className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => move(f, 1)} aria-label="Descer">
+              <ArrowDown className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => startEdit(f)}>
+              Editar
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => hardDelete(f)} aria-label="Excluir">
+              <Trash2 className="h-4 w-4 text-danger" />
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 max-w-xs">
+          <NativeSelect
+            id={`st-${f.id}`}
+            value={f.status}
+            onChange={(v) => setStatus(f, v)}
+            options={FEATURE_STATUS.map((s) => ({ ...s }))}
+          />
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="space-y-6">
       <div>
