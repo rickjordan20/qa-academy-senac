@@ -1,22 +1,32 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field } from "@/components/qa/TestCasesPanel";
+import { Field, NativeSelect } from "@/components/qa/TestCasesPanel";
 import {
   PROJECT_SCOPE,
   featureKindLabel,
+  groupByModule,
   projectLabel,
   useCreateFeature,
   useDeleteFeature,
   useFeatures,
+  useModules,
+  useSaveModule,
   type AppProject,
 } from "@/lib/inventory";
 import { useBugs, useTestCases, type QaScope } from "@/lib/qa";
 
-const empty = { code: "", name: "", description: "", origin: "Melhoria implementada pelo grupo" };
+const empty = {
+  code: "",
+  name: "",
+  description: "",
+  origin: "Melhoria implementada pelo grupo",
+  module_id: "",
+};
 
 export function InventoryPanel({
   project,
@@ -32,16 +42,20 @@ export function InventoryPanel({
   scope?: QaScope;
 }) {
   const { data: features, isPending } = useFeatures(project, groupId);
+  const { data: modules } = useModules(project, groupId);
   const create = useCreateFeature(project, groupId, userId);
+  const saveModule = useSaveModule();
   const remove = useDeleteFeature();
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
+  const [moduleName, setModuleName] = useState("");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const coverageScope: QaScope = scope ?? { context: "techeduca", groupId: null };
   const { data: cases } = useTestCases(coverageScope, userId);
   const { data: bugs } = useBugs(coverageScope, userId);
 
-  const base = (features ?? []).filter((f) => f.kind === "base");
+  const { tree, orphans } = groupByModule(modules ?? [], features ?? []);
   const extra = (features ?? []).filter((f) => f.kind === "additional");
   const testedIds = new Set(
     [...(cases ?? []), ...(bugs ?? [])]
@@ -57,16 +71,40 @@ export function InventoryPanel({
       toast.error("Informe código e nome da funcionalidade.");
       return;
     }
+    if (!form.module_id) {
+      toast.error("Selecione o Módulo/Tela da funcionalidade.");
+      return;
+    }
     try {
       await create.mutateAsync({
         code: form.code.trim(),
         name: form.name.trim(),
         description: form.description.trim(),
         origin: form.origin.trim(),
+        module_id: form.module_id,
       });
       setForm({ ...empty });
       setOpen(false);
       toast.success("Funcionalidade adicional cadastrada.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
+    }
+  }
+
+  async function addModule() {
+    if (!moduleName.trim()) return;
+    try {
+      await saveModule.mutateAsync({
+        values: {
+          project,
+          group_id: groupId,
+          name: moduleName.trim(),
+          position: (modules ?? []).length + 1,
+          created_by: userId,
+        },
+      });
+      setModuleName("");
+      toast.success("Módulo/Tela criado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
     }
@@ -82,35 +120,58 @@ export function InventoryPanel({
           <p>Modalidade: {PROJECT_SCOPE[project].modality}</p>
           <p>{PROJECT_SCOPE[project].note}</p>
           <p className="text-xs">
+            Hierarquia: Projeto → Módulo/Tela → Funcionalidade → Caso de teste → Execução → Bug →
+            Evidência → Reteste.
+          </p>
+          <p className="text-xs">
             A ausência de uma funcionalidade que nunca fez parte do escopo não é bug e não gera PA ou NA.
           </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Funcionalidades-base</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {isPending && <p className="text-sm text-muted-foreground">Carregando...</p>}
-          {base.map((f) => (
-            <FeatureRow key={f.id} code={f.code} name={f.name} description={f.description} kind={f.kind} />
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm text-muted-foreground">Funcionalidades adicionais</CardTitle>
-          {canManage && groupId && (
+          <CardTitle className="text-sm text-muted-foreground">Módulos/Telas e funcionalidades</CardTitle>
+          {canManage && (
             <Button size="sm" variant="outline" onClick={() => setOpen((o) => !o)}>
-              {open ? "Fechar" : "+ Adicionar funcionalidade"}
+              {open ? "Fechar" : "+ Nova funcionalidade"}
             </Button>
           )}
         </CardHeader>
         <CardContent className="space-y-3">
-          {open && canManage && groupId && (
+          {isPending && <p className="text-sm text-muted-foreground">Carregando...</p>}
+
+          {canManage && (
+            <div className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-3">
+              <div className="min-w-[220px] flex-1">
+                <Field label="Novo Módulo/Tela" id="inv-mod-name">
+                  <Input
+                    id="inv-mod-name"
+                    value={moduleName}
+                    onChange={(e) => setModuleName(e.target.value)}
+                    placeholder="Ex.: Cadastro"
+                  />
+                </Field>
+              </div>
+              <Button size="sm" onClick={addModule} disabled={saveModule.isPending}>
+                + Novo Módulo/Tela
+              </Button>
+            </div>
+          )}
+
+          {open && canManage && (
             <form onSubmit={submit} className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-2">
+              <Field label="Módulo/Tela" id="ft-module">
+                <NativeSelect
+                  id="ft-module"
+                  value={form.module_id}
+                  onChange={(v) => setForm((f) => ({ ...f, module_id: v }))}
+                  options={[
+                    { value: "", label: "Selecione..." },
+                    ...(modules ?? []).map((m) => ({ value: m.id, label: m.name })),
+                  ]}
+                />
+              </Field>
               <Field label="Código" id="ft-code">
                 <Input
                   id="ft-code"
@@ -119,12 +180,12 @@ export function InventoryPanel({
                   placeholder="Ex.: CF-08"
                 />
               </Field>
-              <Field label="Nome" id="ft-name">
+              <Field label="Nome da funcionalidade" id="ft-name">
                 <Input
                   id="ft-name"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Ex.: Carrinho"
+                  placeholder="Ex.: Cadastrar usuário"
                 />
               </Field>
               <Field label="Origem" id="ft-origin">
@@ -144,36 +205,93 @@ export function InventoryPanel({
               </Field>
               <div className="sm:col-span-2">
                 <Button type="submit" disabled={create.isPending}>
-                  {create.isPending ? "Salvando..." : "Cadastrar funcionalidade adicional"}
+                  {create.isPending ? "Salvando..." : "Cadastrar funcionalidade"}
                 </Button>
               </div>
             </form>
           )}
 
-          {extra.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma funcionalidade adicional cadastrada. Isso é normal: funcionalidades extras são opcionais.
-            </p>
+          {tree.length === 0 && !isPending && (
+            <p className="text-sm text-muted-foreground">Nenhum Módulo/Tela cadastrado neste projeto.</p>
           )}
-          {extra.map((f) => (
-            <FeatureRow
-              key={f.id}
-              code={f.code}
-              name={f.name}
-              description={f.description}
-              kind={f.kind}
-              origin={f.origin}
-              onDelete={
-                canManage
-                  ? () =>
-                      remove.mutate(f.id, {
-                        onSuccess: () => toast.success("Funcionalidade removida."),
-                        onError: (e) => toast.error(e.message),
-                      })
-                  : undefined
-              }
-            />
-          ))}
+
+          {tree.map(({ module, features: list }) => {
+            const isClosed = collapsed[module.id] ?? false;
+            return (
+              <div key={module.id} className="rounded-lg border border-border">
+                <button
+                  type="button"
+                  onClick={() => setCollapsed((c) => ({ ...c, [module.id]: !isClosed }))}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    {isClosed ? (
+                      <ChevronRight className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                    📄 {module.name}
+                    {module.status !== "active" && (
+                      <span className="rounded-md bg-secondary px-2 py-0.5 text-xs">Inativo</span>
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {list.length} funcionalidade(s)
+                  </span>
+                </button>
+                {!isClosed && (
+                  <div className="space-y-2 border-t border-border p-3">
+                    {module.description && (
+                      <p className="text-xs text-muted-foreground">{module.description}</p>
+                    )}
+                    {list.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Nenhuma funcionalidade cadastrada neste módulo.
+                      </p>
+                    )}
+                    {list.map((f) => (
+                      <FeatureRow
+                        key={f.id}
+                        code={f.code}
+                        name={f.name}
+                        description={f.description}
+                        kind={f.kind}
+                        origin={f.kind === "additional" ? f.origin : undefined}
+                        onDelete={
+                          canManage && f.kind === "additional"
+                            ? () =>
+                                remove.mutate(f.id, {
+                                  onSuccess: () => toast.success("Funcionalidade removida."),
+                                  onError: (e) => toast.error(e.message),
+                                })
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {orphans.length > 0 && (
+            <div className="rounded-lg border border-dashed border-border p-3">
+              <p className="mb-2 text-xs text-muted-foreground">
+                Sem Módulo/Tela associado — o instrutor pode fazer a associação manualmente.
+              </p>
+              <div className="space-y-2">
+                {orphans.map((f) => (
+                  <FeatureRow
+                    key={f.id}
+                    code={f.code}
+                    name={f.name}
+                    description={f.description}
+                    kind={f.kind}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -182,6 +300,7 @@ export function InventoryPanel({
           <CardTitle className="text-sm text-muted-foreground">Escopo dos testes</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
+          <p>Módulos/Telas: {(modules ?? []).length}</p>
           <p>Funcionalidades previstas: {(features ?? []).length}</p>
           <p>Funcionalidades adicionais: {extra.length}</p>
           <p>Funcionalidades testadas: {tested.map((f) => f.code).join(", ") || "—"}</p>
