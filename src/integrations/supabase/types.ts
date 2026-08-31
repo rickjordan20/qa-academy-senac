@@ -14,6 +14,297 @@ export type Database = {
   }
   public: {
     Tables: {
+      cafe_contributions: {
+        Row: {
+          created_at: string
+          description: string
+          group_id: string
+          id: string
+          kind: string
+          link: string | null
+          run_id: string
+          student_id: string
+          task_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          group_id: string
+          id?: string
+          kind?: string
+          link?: string | null
+          run_id: string
+          student_id: string
+          task_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          group_id?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          run_id?: string
+          student_id?: string
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_contributions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_contributions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_group_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_contributions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cafe_evidence_requests: {
+        Row: {
+          created_at: string
+          fulfilled_contribution_id: string | null
+          group_id: string
+          id: string
+          message: string
+          requested_by: string
+          requested_from: string
+          run_id: string
+          status: string
+          task_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fulfilled_contribution_id?: string | null
+          group_id: string
+          id?: string
+          message?: string
+          requested_by: string
+          requested_from: string
+          run_id: string
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fulfilled_contribution_id?: string | null
+          group_id?: string
+          id?: string
+          message?: string
+          requested_by?: string
+          requested_from?: string
+          run_id?: string
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_evidence_requests_fulfilled_contribution_id_fkey"
+            columns: ["fulfilled_contribution_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_contributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_evidence_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_evidence_requests_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_group_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_evidence_requests_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cafe_group_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          deliverable: string
+          group_id: string
+          id: string
+          mission_id: string
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deliverable?: string
+          group_id: string
+          id?: string
+          mission_id: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deliverable?: string
+          group_id?: string
+          id?: string
+          mission_id?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_group_runs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_group_runs_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cafe_task_collaborators: {
+        Row: {
+          added_by: string
+          created_at: string
+          group_id: string
+          id: string
+          student_id: string
+          task_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          group_id: string
+          id?: string
+          student_id: string
+          task_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          student_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_task_collaborators_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_task_collaborators_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cafe_tasks: {
+        Row: {
+          area: string
+          assignee_id: string | null
+          created_at: string
+          created_by: string
+          description: string
+          group_id: string
+          id: string
+          position: number
+          run_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string
+          assignee_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string
+          group_id: string
+          id?: string
+          position?: number
+          run_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          group_id?: string
+          id?: string
+          position?: number
+          run_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_tasks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_tasks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "cafe_group_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           created_at: string
@@ -501,6 +792,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_group: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_group: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
       enroll_student_by_email: {
         Args: { _class_id: string; _email: string }
         Returns: string
@@ -519,6 +818,14 @@ export type Database = {
       }
       is_class_member: {
         Args: { _class_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_qa_lead: {
+        Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
       shares_class: {
