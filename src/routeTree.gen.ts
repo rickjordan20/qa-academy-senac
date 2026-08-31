@@ -23,6 +23,7 @@ import { Route as InstructorProfileRouteImport } from './routes/instructor/profi
 import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
+import { Route as StudentEvidencesRouteImport } from './routes/student/evidences'
 import { Route as StudentJourneyRouteImport } from './routes/student/journey'
 import { Route as StudentProfileRouteImport } from './routes/student/profile'
 import { Route as StudentProgressRouteImport } from './routes/student/progress'
@@ -102,6 +103,11 @@ const StudentEvaluationRoute = StudentEvaluationRouteImport.update({
   path: '/evaluation',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const StudentEvidencesRoute = StudentEvidencesRouteImport.update({
+  id: '/evidences',
+  path: '/evidences',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const StudentJourneyRoute = StudentJourneyRouteImport.update({
   id: '/journey',
   path: '/journey',
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
+    | '/student/evidences'
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
+    | '/student/evidences'
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
+    | '/student/evidences'
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
@@ -402,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentEvaluationRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/student/evidences': {
+      id: '/student/evidences'
+      path: '/evidences'
+      fullPath: '/student/evidences'
+      preLoaderRoute: typeof StudentEvidencesRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/student/journey': {
       id: '/student/journey'
       path: '/journey'
@@ -488,6 +507,7 @@ const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
 interface StudentRouteRouteChildren {
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentEvaluationRoute: typeof StudentEvaluationRoute
+  StudentEvidencesRoute: typeof StudentEvidencesRoute
   StudentJourneyRoute: typeof StudentJourneyRoute
   StudentProfileRoute: typeof StudentProfileRoute
   StudentProgressRoute: typeof StudentProgressRoute
@@ -499,6 +519,7 @@ interface StudentRouteRouteChildren {
 const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentDashboardRoute: StudentDashboardRoute,
   StudentEvaluationRoute: StudentEvaluationRoute,
+  StudentEvidencesRoute: StudentEvidencesRoute,
   StudentJourneyRoute: StudentJourneyRoute,
   StudentProfileRoute: StudentProfileRoute,
   StudentProgressRoute: StudentProgressRoute,
