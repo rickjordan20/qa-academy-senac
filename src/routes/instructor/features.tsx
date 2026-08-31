@@ -407,6 +407,19 @@ function FeaturesPage() {
             <CardContent>
               <form className="space-y-3" onSubmit={submit}>
                 <div className="space-y-1">
+                  <Label htmlFor="mod">Módulo/Tela</Label>
+                  <NativeSelect
+                    id="mod"
+                    value={form.module_id}
+                    onChange={(v) => setForm({ ...form, module_id: v })}
+                    options={[
+                      { value: "", label: "Sem módulo" },
+                      ...(modules ?? []).map((m) => ({ value: m.id, label: m.name })),
+                    ]}
+                  />
+                </div>
+                <div className="space-y-1">
+
                   <Label htmlFor="c">Código</Label>
                   <Input
                     id="c"
