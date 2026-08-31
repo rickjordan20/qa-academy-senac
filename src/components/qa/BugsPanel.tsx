@@ -23,12 +23,15 @@ import {
   useUpdateBug,
   type QaScope,
 } from "@/lib/qa";
-import { projectLabel, useFeatures, type AppProject } from "@/lib/inventory";
+import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
+import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 
 const empty = {
   title: "",
   project: "",
+  module_id: "",
   feature_id: "",
+
   mission_id: "",
   test_case_id: "",
   assignee_id: "",
