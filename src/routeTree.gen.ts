@@ -33,6 +33,7 @@ import { Route as StudentDashboardRouteImport } from './routes/student/dashboard
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
 import { Route as StudentEvidencesRouteImport } from './routes/student/evidences'
 import { Route as StudentJourneyRouteImport } from './routes/student/journey'
+import { Route as StudentPortfolioRouteImport } from './routes/student/portfolio'
 import { Route as StudentProfileRouteImport } from './routes/student/profile'
 import { Route as StudentProgressRouteImport } from './routes/student/progress'
 import { Route as StudentQaRouteImport } from './routes/student/qa'
@@ -165,6 +166,11 @@ const StudentJourneyRoute = StudentJourneyRouteImport.update({
   path: '/journey',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const StudentPortfolioRoute = StudentPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const StudentProfileRoute = StudentProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
+  '/student/portfolio': typeof StudentPortfolioRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
   '/student/qa': typeof StudentQaRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
+  '/student/portfolio': typeof StudentPortfolioRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
   '/student/qa': typeof StudentQaRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
+  '/student/portfolio': typeof StudentPortfolioRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
   '/student/qa': typeof StudentQaRoute
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/student/evaluation'
     | '/student/evidences'
     | '/student/journey'
+    | '/student/portfolio'
     | '/student/profile'
     | '/student/progress'
     | '/student/qa'
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/student/evaluation'
     | '/student/evidences'
     | '/student/journey'
+    | '/student/portfolio'
     | '/student/profile'
     | '/student/progress'
     | '/student/qa'
@@ -435,6 +446,7 @@ export interface FileRouteTypes {
     | '/student/evaluation'
     | '/student/evidences'
     | '/student/journey'
+    | '/student/portfolio'
     | '/student/profile'
     | '/student/progress'
     | '/student/qa'
@@ -628,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentJourneyRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/student/portfolio': {
+      id: '/student/portfolio'
+      path: '/portfolio'
+      fullPath: '/student/portfolio'
+      preLoaderRoute: typeof StudentPortfolioRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/student/profile': {
       id: '/student/profile'
       path: '/profile'
@@ -753,6 +772,7 @@ interface StudentRouteRouteChildren {
   StudentEvaluationRoute: typeof StudentEvaluationRoute
   StudentEvidencesRoute: typeof StudentEvidencesRoute
   StudentJourneyRoute: typeof StudentJourneyRoute
+  StudentPortfolioRoute: typeof StudentPortfolioRoute
   StudentProfileRoute: typeof StudentProfileRoute
   StudentProgressRoute: typeof StudentProgressRoute
   StudentQaRoute: typeof StudentQaRoute
@@ -769,6 +789,7 @@ const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentEvaluationRoute: StudentEvaluationRoute,
   StudentEvidencesRoute: StudentEvidencesRoute,
   StudentJourneyRoute: StudentJourneyRoute,
+  StudentPortfolioRoute: StudentPortfolioRoute,
   StudentProfileRoute: StudentProfileRoute,
   StudentProgressRoute: StudentProgressRoute,
   StudentQaRoute: StudentQaRoute,
