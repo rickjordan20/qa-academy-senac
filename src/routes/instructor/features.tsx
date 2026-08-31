@@ -156,6 +156,7 @@ function FeaturesPage() {
       origin: f.origin,
       status: f.status,
       notes: f.notes ?? "",
+      module_id: f.module_id ?? "",
     });
   }
 
@@ -167,13 +168,14 @@ function FeaturesPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const position = editing ? editing.position : ((features ?? []).length + 1);
+    const base = { ...form, module_id: form.module_id || null };
     try {
       await save.mutateAsync({
         id: editing?.id,
         values: editing
-          ? { ...form }
+          ? base
           : {
-              ...form,
+              ...base,
               project,
               group_id: groupId,
               kind: groupId ? "additional" : "base",
@@ -181,6 +183,7 @@ function FeaturesPage() {
               created_by: userId,
             },
       });
+
       toast.success(editing ? "Funcionalidade atualizada." : "Funcionalidade cadastrada.");
       reset();
     } catch (err) {
