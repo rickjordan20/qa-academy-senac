@@ -30,6 +30,7 @@ import { Route as StudentProgressRouteImport } from './routes/student/progress'
 import { Route as StudentRecordsRouteImport } from './routes/student/records'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
+import { Route as StudentCafeIndexRouteImport } from './routes/student/cafe.index'
 import { Route as StudentMissionsIndexRouteImport } from './routes/student/missions.index'
 import { Route as StudentMissionsCodeRouteImport } from './routes/student/missions.$code'
 
@@ -139,6 +140,11 @@ const InstructorClassesClassIdRoute =
     path: '/classes/$classId',
     getParentRoute: () => InstructorRouteRoute,
   } as any)
+const StudentCafeIndexRoute = StudentCafeIndexRouteImport.update({
+  id: '/cafe/',
+  path: '/cafe/',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const StudentMissionsIndexRoute = StudentMissionsIndexRouteImport.update({
   id: '/missions/',
   path: '/missions/',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
+  '/student/cafe': typeof StudentCafeIndexRoute
   '/student/missions': typeof StudentMissionsIndexRoute
 }
 export interface FileRoutesById {
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
 export interface FileRouteTypes {
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/instructor/classes/$classId'
     | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/student/cafe/'
     | '/student/missions/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/instructor/classes/$classId'
     | '/student/missions/$code'
     | '/instructor/classes'
+    | '/student/cafe'
     | '/student/missions'
   id:
     | '__root__'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/instructor/classes/$classId'
     | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/student/cafe/'
     | '/student/missions/'
   fileRoutesById: FileRoutesById
 }
@@ -463,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorClassesClassIdRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/student/cafe/': {
+      id: '/student/cafe/'
+      path: '/cafe'
+      fullPath: '/student/cafe/'
+      preLoaderRoute: typeof StudentCafeIndexRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/student/missions/': {
       id: '/student/missions/'
       path: '/missions'
@@ -513,6 +532,7 @@ interface StudentRouteRouteChildren {
   StudentProgressRoute: typeof StudentProgressRoute
   StudentRecordsRoute: typeof StudentRecordsRoute
   StudentMissionsCodeRoute: typeof StudentMissionsCodeRoute
+  StudentCafeIndexRoute: typeof StudentCafeIndexRoute
   StudentMissionsIndexRoute: typeof StudentMissionsIndexRoute
 }
 
@@ -525,6 +545,7 @@ const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentProgressRoute: StudentProgressRoute,
   StudentRecordsRoute: StudentRecordsRoute,
   StudentMissionsCodeRoute: StudentMissionsCodeRoute,
+  StudentCafeIndexRoute: StudentCafeIndexRoute,
   StudentMissionsIndexRoute: StudentMissionsIndexRoute,
 }
 
