@@ -13,7 +13,7 @@ import {
   type IndicatorRow,
   type StudentInfo,
 } from "@/lib/assessment";
-import { ClassPicker } from "./evaluations";
+import { ClassPicker } from "@/components/eval/ClassPicker";
 import { IndicatorDialog } from "@/components/eval/IndicatorDialog";
 import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";

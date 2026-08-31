@@ -12,7 +12,7 @@ import {
   type EvaluationRow,
   type IndicatorRow,
 } from "@/lib/assessment";
-import { ClassPicker } from "./evaluations";
+import { ClassPicker } from "@/components/eval/ClassPicker";
 import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
