@@ -315,32 +315,51 @@ function MissionBuilderPage() {
             </div>
           </div>
 
-          <div className="sm:col-span-3 space-y-1">
-            <Label className="text-xs">Funcionalidades do inventário</Label>
-            <div className="flex flex-wrap gap-2">
-              {(features ?? []).map((f) => {
-                const on = draft.feature_ids.includes(f.id);
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() =>
-                      patch({
-                        feature_ids: on
-                          ? draft.feature_ids.filter((x) => x !== f.id)
-                          : [...draft.feature_ids, f.id],
-                      })
-                    }
-                    className={`rounded-md px-2 py-1 text-xs ${
-                      on ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                    }`}
-                  >
-                    {f.name}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="sm:col-span-3 space-y-2">
+            <Label className="text-xs">Funcionalidades do inventário (por Módulo/Tela)</Label>
+            {[
+              ...groupByModule(modules ?? [], features ?? []).tree.map((g) => ({
+                key: g.module.id,
+                name: g.module.name,
+                items: g.features,
+              })),
+              {
+                key: "__none",
+                name: "Sem Módulo/Tela",
+                items: groupByModule(modules ?? [], features ?? []).orphans,
+              },
+            ]
+              .filter((g) => g.items.length > 0)
+              .map((g) => (
+                <div key={g.key} className="space-y-1">
+                  <p className="text-xs text-muted-foreground">📄 {g.name}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {g.items.map((f) => {
+                      const on = draft.feature_ids.includes(f.id);
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() =>
+                            patch({
+                              feature_ids: on
+                                ? draft.feature_ids.filter((x) => x !== f.id)
+                                : [...draft.feature_ids, f.id],
+                            })
+                          }
+                          className={`rounded-md px-2 py-1 text-xs ${
+                            on ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                          }`}
+                        >
+                          {f.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
           </div>
+
 
           <div className="sm:col-span-3 space-y-1">
             <Label className="text-xs">Turmas com acesso (vazio = todas as turmas)</Label>
