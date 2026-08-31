@@ -68,7 +68,10 @@ function MissionsListPage() {
   }, [missions, filters]);
 
   async function handleCreate() {
-    if (!form.title.trim()) return toast.error("Informe o título da missão.");
+    if (!form.title.trim()) {
+      toast.error("Informe o título da missão.");
+      return;
+    }
     const preset = PRESETS.find((p) => p.id === form.preset);
     const sections = (preset?.blocks ?? []).map((k) => newSection(k, form.template));
     const created = await create.mutateAsync({

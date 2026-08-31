@@ -43,6 +43,7 @@ import { Route as StudentRankingRouteImport } from './routes/student/ranking'
 import { Route as StudentRecordsRouteImport } from './routes/student/records'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
+import { Route as InstructorMissionsIndexRouteImport } from './routes/instructor/missions.index'
 import { Route as StudentCafeIndexRouteImport } from './routes/student/cafe.index'
 import { Route as StudentCafeGroupIdRouteImport } from './routes/student/cafe.$groupId'
 import { Route as StudentMissionsIndexRouteImport } from './routes/student/missions.index'
@@ -219,6 +220,11 @@ const InstructorClassesClassIdRoute =
     path: '/classes/$classId',
     getParentRoute: () => InstructorRouteRoute,
   } as any)
+const InstructorMissionsIndexRoute = InstructorMissionsIndexRouteImport.update({
+  id: '/missions/',
+  path: '/missions/',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
 const StudentCafeIndexRoute = StudentCafeIndexRouteImport.update({
   id: '/cafe/',
   path: '/cafe/',
@@ -277,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/instructor/missions/': typeof InstructorMissionsIndexRoute
   '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
+  '/instructor/missions': typeof InstructorMissionsIndexRoute
   '/student/cafe': typeof StudentCafeIndexRoute
   '/student/missions': typeof StudentMissionsIndexRoute
 }
@@ -358,6 +366,7 @@ export interface FileRoutesById {
   '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
   '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/instructor/missions/': typeof InstructorMissionsIndexRoute
   '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
@@ -400,6 +409,7 @@ export interface FileRouteTypes {
     | '/student/cafe/$groupId'
     | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/instructor/missions/'
     | '/student/cafe/'
     | '/student/missions/'
   fileRoutesByTo: FileRoutesByTo
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/student/cafe/$groupId'
     | '/student/missions/$code'
     | '/instructor/classes'
+    | '/instructor/missions'
     | '/student/cafe'
     | '/student/missions'
   id:
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/student/cafe/$groupId'
     | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/instructor/missions/'
     | '/student/cafe/'
     | '/student/missions/'
   fileRoutesById: FileRoutesById
@@ -734,6 +746,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorClassesClassIdRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/instructor/missions/': {
+      id: '/instructor/missions/'
+      path: '/missions'
+      fullPath: '/instructor/missions/'
+      preLoaderRoute: typeof InstructorMissionsIndexRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
     '/student/cafe/': {
       id: '/student/cafe/'
       path: '/cafe'
@@ -782,6 +801,7 @@ interface InstructorRouteRouteChildren {
   InstructorStudentsRoute: typeof InstructorStudentsRoute
   InstructorClassesClassIdRoute: typeof InstructorClassesClassIdRoute
   InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
+  InstructorMissionsIndexRoute: typeof InstructorMissionsIndexRoute
 }
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
@@ -801,6 +821,7 @@ const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorStudentsRoute: InstructorStudentsRoute,
   InstructorClassesClassIdRoute: InstructorClassesClassIdRoute,
   InstructorClassesIndexRoute: InstructorClassesIndexRoute,
+  InstructorMissionsIndexRoute: InstructorMissionsIndexRoute,
 }
 
 const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
