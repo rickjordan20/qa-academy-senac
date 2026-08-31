@@ -2002,6 +2002,10 @@ export type Database = {
         Args: { _class_id: string; _email: string }
         Returns: string
       }
+      feature_suggestion_can_review: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
       gam_ranking_individual: {
         Args: never
         Returns: {
