@@ -17,13 +17,22 @@ import {
   useUpdateTestCase,
   type QaScope,
 } from "@/lib/qa";
-import { TEST_TYPES, projectLabel, testTypeLabel, useFeatures, type AppProject } from "@/lib/inventory";
+import {
+  TEST_TYPES,
+  projectLabel,
+  testTypeLabel,
+  useFeatures,
+  useModules,
+  type AppProject,
+} from "@/lib/inventory";
+import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 
 export type PersonOption = { id: string; name: string };
 
 const empty = {
   title: "",
   project: "",
+  module_id: "",
   feature_id: "",
   test_type: "funcional",
   mission_id: "",
@@ -36,6 +45,7 @@ const empty = {
   obtained_result: "",
   status: "nao_executado",
 };
+
 
 export function TestCasesPanel({
   scope,
@@ -50,6 +60,8 @@ export function TestCasesPanel({
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
+  const { data: modules } = useModules(project, scope.groupId);
+
   const { data: cases, isPending } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateTestCase(scope, userId);
@@ -74,8 +86,9 @@ export function TestCasesPanel({
       return;
     }
     try {
+      const { module_id: _module, ...values } = form;
       await create.mutateAsync({
-        ...form,
+        ...values,
         title: form.title.trim(),
         project: form.project || projectLabel(project),
         feature_id: form.feature_id || null,
@@ -83,6 +96,7 @@ export function TestCasesPanel({
         assignee_id: form.assignee_id || null,
       });
       setForm({ ...empty });
+
       setOpen(false);
       toast.success("Caso de teste criado.");
     } catch (err) {
@@ -109,20 +123,17 @@ export function TestCasesPanel({
                 <Field label="Projeto" id="tc-project">
                   <Input id="tc-project" value={projectLabel(project)} readOnly />
                 </Field>
-                <Field label="Funcionalidade (inventário)" id="tc-feature-id">
-                  <NativeSelect
-                    id="tc-feature-id"
-                    value={form.feature_id}
-                    onChange={(v) => set("feature_id", v)}
-                    options={[
-                      { value: "", label: "Não relacionada" },
-                      ...(features ?? []).map((f) => ({
-                        value: f.id,
-                        label: `${f.code} — ${f.name}${f.kind === "additional" ? " (adicional)" : ""}`,
-                      })),
-                    ]}
-                  />
-                </Field>
+                <ModuleFeatureSelect
+                  idPrefix="tc"
+                  project={project}
+                  groupId={scope.groupId}
+                  moduleId={form.module_id}
+                  featureId={form.feature_id}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))
+                  }
+                />
+
                 <Field label="Tipo de teste" id="tc-type">
                   <NativeSelect
                     id="tc-type"
@@ -216,11 +227,9 @@ export function TestCasesPanel({
               <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
                 <span>Projeto: {c.project || projectLabel(project)}</span>
                 <span>
-                  Funcionalidade:{" "}
-                  {(features ?? []).find((f) => f.id === c.feature_id)
-                    ? `${(features ?? []).find((f) => f.id === c.feature_id)!.code} — ${(features ?? []).find((f) => f.id === c.feature_id)!.name}`
-                    : "—"}
+                  Módulo/Funcionalidade: {featureTrace(modules, features, c.feature_id)}
                 </span>
+
                 <span>Tipo de teste: {testTypeLabel(c.test_type)}</span>
                 <span>Missão: {missionTitle(c.mission_id) ?? "—"}</span>
                 <span>Autor: {names?.[c.author_id] ?? "—"}</span>

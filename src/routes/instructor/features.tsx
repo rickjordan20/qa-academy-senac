@@ -25,6 +25,14 @@ import {
   useSaveFeature,
   type ManagedFeature,
 } from "@/lib/admin";
+import {
+  useDeleteModule,
+  useModules,
+  useSaveModule,
+  type AppModule,
+  type AppProject,
+} from "@/lib/inventory";
+
 
 export const Route = createFileRoute("/instructor/features")({
   head: () => ({
@@ -55,6 +63,7 @@ const EMPTY = {
   origin: "instrutor",
   status: "active",
   notes: "",
+  module_id: "",
 };
 
 function FeaturesPage() {
@@ -64,23 +73,78 @@ function FeaturesPage() {
   const [scope, setScope] = useState("techeduca");
 
   const groupId = scope.startsWith("cafe:") ? scope.replace("cafe:", "") : null;
-  const project = groupId ? "cafe_central" : scope === "cafe_central" ? "cafe_central" : "techeduca";
+  const project: AppProject =
+    groupId ? "cafe_central" : scope === "cafe_central" ? "cafe_central" : "techeduca";
 
   const { data: features } = useManagedFeatures(project, groupId);
+  const { data: modules } = useModules(project, groupId);
   const { data: suggestions } = useFeatureSuggestions(project, groupId);
   const save = useSaveFeature();
   const reorder = useReorderFeature();
   const removeSafe = useDeleteFeatureSafe();
   const review = useReviewSuggestion(userId);
+  const saveModule = useSaveModule();
+  const deleteModule = useDeleteModule();
 
   const [editing, setEditing] = useState<ManagedFeature | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
   const [statusFilter, setStatusFilter] = useState("all");
+  const [moduleName, setModuleName] = useState("");
+  const [editingModule, setEditingModule] = useState<AppModule | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const list = useMemo(
     () => (features ?? []).filter((f) => statusFilter === "all" || f.status === statusFilter),
     [features, statusFilter],
   );
+
+  const tree = useMemo(() => {
+    const mods = modules ?? [];
+    const grouped = mods.map((m) => ({
+      module: m,
+      items: list.filter((f) => f.module_id === m.id).sort((a, b) => a.position - b.position),
+    }));
+    const orphans = list.filter((f) => !f.module_id || !mods.some((m) => m.id === f.module_id));
+    return { grouped, orphans };
+  }, [modules, list]);
+
+  async function submitModule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!moduleName.trim()) return;
+    try {
+      await saveModule.mutateAsync({
+        id: editingModule?.id,
+        values: editingModule
+          ? { name: moduleName.trim() }
+          : {
+              project,
+              group_id: groupId,
+              name: moduleName.trim(),
+              position: (modules ?? []).length + 1,
+              created_by: userId,
+            },
+      });
+      toast.success(editingModule ? "Módulo/Tela atualizado." : "Módulo/Tela criado.");
+      setModuleName("");
+      setEditingModule(null);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
+  async function removeModule(m: AppModule) {
+    if ((features ?? []).some((f) => f.module_id === m.id)) {
+      toast.error("Módulo/Tela possui funcionalidades vinculadas. Mova-as antes de excluir.");
+      return;
+    }
+    try {
+      await deleteModule.mutateAsync(m.id);
+      toast.success("Módulo/Tela excluído.");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
 
   function startEdit(f: ManagedFeature) {
     setEditing(f);
@@ -92,6 +156,7 @@ function FeaturesPage() {
       origin: f.origin,
       status: f.status,
       notes: f.notes ?? "",
+      module_id: f.module_id ?? "",
     });
   }
 
@@ -103,13 +168,14 @@ function FeaturesPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const position = editing ? editing.position : ((features ?? []).length + 1);
+    const base = { ...form, module_id: form.module_id || null };
     try {
       await save.mutateAsync({
         id: editing?.id,
         values: editing
-          ? { ...form }
+          ? base
           : {
-              ...form,
+              ...base,
               project,
               group_id: groupId,
               kind: groupId ? "additional" : "base",
@@ -117,6 +183,7 @@ function FeaturesPage() {
               created_by: userId,
             },
       });
+
       toast.success(editing ? "Funcionalidade atualizada." : "Funcionalidade cadastrada.");
       reset();
     } catch (err) {
@@ -151,6 +218,52 @@ function FeaturesPage() {
     }
   }
 
+  function renderFeature(f: ManagedFeature) {
+    return (
+      <div key={f.id} className="rounded-xl border border-border bg-surface p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">{f.code}</span>
+              <h2 className="font-semibold">{f.name}</h2>
+              <Badge variant={f.status === "active" ? "default" : "secondary"}>
+                {labelOf(FEATURE_STATUS, f.status)}
+              </Badge>
+              {f.group_id ? <Badge variant="outline">grupo</Badge> : null}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {labelOf(FEATURE_CATEGORY, f.category)} · {labelOf(FEATURE_ORIGIN, f.origin)}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => move(f, -1)} aria-label="Subir">
+              <ArrowUp className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => move(f, 1)} aria-label="Descer">
+              <ArrowDown className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => startEdit(f)}>
+              Editar
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => hardDelete(f)} aria-label="Excluir">
+              <Trash2 className="h-4 w-4 text-danger" />
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 max-w-xs">
+          <NativeSelect
+            id={`st-${f.id}`}
+            value={f.status}
+            onChange={(v) => setStatus(f, v)}
+            options={FEATURE_STATUS.map((s) => ({ ...s }))}
+          />
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -182,53 +295,109 @@ function FeaturesPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
         <div className="space-y-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Módulos/Telas do projeto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="flex flex-wrap items-end gap-2" onSubmit={submitModule}>
+                <div className="min-w-[220px] flex-1 space-y-1">
+                  <Label htmlFor="mod-name">
+                    {editingModule ? "Renomear Módulo/Tela" : "Novo Módulo/Tela"}
+                  </Label>
+                  <Input
+                    id="mod-name"
+                    value={moduleName}
+                    onChange={(e) => setModuleName(e.target.value)}
+                    placeholder="Ex.: Login"
+                  />
+                </div>
+                <Button type="submit" size="sm" disabled={saveModule.isPending}>
+                  {editingModule ? "Salvar" : "+ Novo Módulo/Tela"}
+                </Button>
+                {editingModule && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingModule(null);
+                      setModuleName("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+
           {list.length === 0 && (
             <p className="text-sm text-muted-foreground">Nenhuma funcionalidade neste filtro.</p>
           )}
-          {list.map((f) => (
-            <div key={f.id} className="rounded-xl border border-border bg-surface p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs text-muted-foreground">{f.code}</span>
-                    <h2 className="font-semibold">{f.name}</h2>
-                    <Badge variant={f.status === "active" ? "default" : "secondary"}>
-                      {labelOf(FEATURE_STATUS, f.status)}
-                    </Badge>
-                    {f.group_id ? <Badge variant="outline">grupo</Badge> : null}
+
+          {tree.grouped.map(({ module, items }) => {
+            const isClosed = collapsed[module.id] ?? false;
+            return (
+              <div key={module.id} className="rounded-xl border border-border bg-surface">
+                <div className="flex flex-wrap items-center justify-between gap-2 p-3">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 text-left text-sm font-semibold"
+                    onClick={() => setCollapsed((c) => ({ ...c, [module.id]: !isClosed }))}
+                  >
+                    {isClosed ? "▶" : "▼"} 📄 {module.name}
+                    <span className="text-xs font-normal text-muted-foreground">
+                      ({items.length})
+                    </span>
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingModule(module);
+                        setModuleName(module.name);
+                      }}
+                    >
+                      Renomear
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Excluir módulo"
+                      onClick={() => removeModule(module)}
+                    >
+                      <Trash2 className="h-4 w-4 text-danger" />
+                    </Button>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {labelOf(FEATURE_CATEGORY, f.category)} · {labelOf(FEATURE_ORIGIN, f.origin)}
-                  </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => move(f, -1)} aria-label="Subir">
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => move(f, 1)} aria-label="Descer">
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => startEdit(f)}>
-                    Editar
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => hardDelete(f)} aria-label="Excluir">
-                    <Trash2 className="h-4 w-4 text-danger" />
-                  </Button>
-                </div>
+                {!isClosed && (
+                  <div className="space-y-3 border-t border-border p-3">
+                    {items.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Nenhuma funcionalidade neste Módulo/Tela.
+                      </p>
+                    )}
+                    {items.map((f) => renderFeature(f))}
+                  </div>
+                )}
               </div>
-              <div className="mt-3 max-w-xs">
-                <NativeSelect
-                  id={`st-${f.id}`}
-                  value={f.status}
-                  onChange={(v) => setStatus(f, v)}
-                  options={FEATURE_STATUS.map((s) => ({ ...s }))}
-                />
-              </div>
+            );
+          })}
+
+          {tree.orphans.length > 0 && (
+            <div className="space-y-3 rounded-xl border border-dashed border-border p-3">
+              <p className="text-xs text-muted-foreground">
+                Sem Módulo/Tela — edite a funcionalidade e associe a um módulo.
+              </p>
+              {tree.orphans.map((f) => renderFeature(f))}
             </div>
-          ))}
+          )}
         </div>
+
 
         <div className="space-y-6">
           <Card className="h-fit">
@@ -238,6 +407,19 @@ function FeaturesPage() {
             <CardContent>
               <form className="space-y-3" onSubmit={submit}>
                 <div className="space-y-1">
+                  <Label htmlFor="mod">Módulo/Tela</Label>
+                  <NativeSelect
+                    id="mod"
+                    value={form.module_id}
+                    onChange={(v) => setForm({ ...form, module_id: v })}
+                    options={[
+                      { value: "", label: "Sem módulo" },
+                      ...(modules ?? []).map((m) => ({ value: m.id, label: m.name })),
+                    ]}
+                  />
+                </div>
+                <div className="space-y-1">
+
                   <Label htmlFor="c">Código</Label>
                   <Input
                     id="c"

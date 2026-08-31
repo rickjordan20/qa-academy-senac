@@ -41,15 +41,30 @@ export function testTypeLabel(v: string | null | undefined) {
   return TEST_TYPES.find((t) => t.value === v)?.label ?? v ?? "—";
 }
 
+export type AppModule = {
+  id: string;
+  project: string;
+  group_id: string | null;
+  name: string;
+  description: string;
+  status: string;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AppFeature = {
   id: string;
   project: string;
   group_id: string | null;
+  module_id: string | null;
   code: string;
   name: string;
   description: string;
   kind: "base" | "additional" | string;
   origin: string;
+  status: string;
   position: number;
   created_by: string | null;
   created_at: string;
@@ -57,6 +72,31 @@ export type AppFeature = {
 
 export function featureKindLabel(kind: string) {
   return kind === "additional" ? "Funcionalidade adicional" : "Funcionalidade-base";
+}
+
+/** Módulos/Telas do projeto (e do grupo, no Café Central). */
+export function useModules(project: AppProject, groupId: string | null) {
+  return useQuery({
+    queryKey: ["inventory-modules", project, groupId ?? "base"],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      let q = supabase.from("app_modules").select("*").eq("project", project);
+      q = groupId ? q.or(`group_id.is.null,group_id.eq.${groupId}`) : q.is("group_id", null);
+      const { data, error } = await q.order("position").order("name");
+      if (error) throw error;
+      return (data ?? []) as unknown as AppModule[];
+    },
+  });
+}
+
+/** Agrupa as funcionalidades por Módulo/Tela, preservando as ainda não associadas. */
+export function groupByModule(modules: AppModule[], features: AppFeature[]) {
+  const tree = modules.map((m) => ({
+    module: m,
+    features: features.filter((f) => f.module_id === m.id),
+  }));
+  const orphans = features.filter((f) => !f.module_id || !modules.some((m) => m.id === f.module_id));
+  return { tree, orphans };
 }
 
 /**
@@ -77,11 +117,13 @@ export function useFeatures(project: AppProject, groupId: string | null) {
   });
 }
 
+
 export type FeatureInput = {
   code: string;
   name: string;
   description: string;
   origin: string;
+  module_id?: string | null;
 };
 
 export function useCreateFeature(project: AppProject, groupId: string | null, userId: string | null) {
@@ -90,6 +132,7 @@ export function useCreateFeature(project: AppProject, groupId: string | null, us
     mutationFn: async (input: FeatureInput) => {
       const { error } = await supabase.from("app_features").insert({
         ...input,
+        module_id: input.module_id || null,
         project,
         group_id: groupId,
         kind: "additional",
@@ -97,9 +140,54 @@ export function useCreateFeature(project: AppProject, groupId: string | null, us
       } as never);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["inventory"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+    },
   });
 }
+
+/** CRUD de Módulos/Telas — instrutor em qualquer escopo; QA Lead no próprio grupo. */
+export function useSaveModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, values }: { id?: string | undefined; values: Partial<AppModule> }) => {
+      const { error } = id
+        ? await supabase.from("app_modules").update(values as never).eq("id", id)
+        : await supabase.from("app_modules").insert(values as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+    },
+  });
+}
+
+export function useDeleteModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { count, error: cErr } = await supabase
+        .from("app_features")
+        .select("id", { count: "exact", head: true })
+        .eq("module_id", id);
+      if (cErr) throw cErr;
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Exclusão bloqueada: o módulo possui ${count} funcionalidade(s) vinculada(s). Prefira inativar.`,
+        );
+      }
+      const { error } = await supabase.from("app_modules").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+    },
+  });
+}
+
 
 export function useDeleteFeature() {
   const qc = useQueryClient();
