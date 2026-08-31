@@ -364,6 +364,203 @@ export type Database = {
           },
         ]
       }
+      gam_actions: {
+        Row: {
+          code: string
+          context: string
+          created_at: string
+          description: string
+          enabled: boolean
+          kind: string
+          label: string
+          position: number
+          requires_validation: boolean
+          updated_at: string
+          xp: number
+        }
+        Insert: {
+          code: string
+          context?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          kind?: string
+          label: string
+          position?: number
+          requires_validation?: boolean
+          updated_at?: string
+          xp?: number
+        }
+        Update: {
+          code?: string
+          context?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          kind?: string
+          label?: string
+          position?: number
+          requires_validation?: boolean
+          updated_at?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      gam_badges: {
+        Row: {
+          code: string
+          created_at: string
+          criteria: string
+          description: string
+          icon: string
+          name: string
+          position: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          criteria?: string
+          description: string
+          icon?: string
+          name: string
+          position?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          criteria?: string
+          description?: string
+          icon?: string
+          name?: string
+          position?: number
+        }
+        Relationships: []
+      }
+      gam_settings: {
+        Row: {
+          created_at: string
+          id: boolean
+          ranking_individual_enabled: boolean
+          ranking_teams_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: boolean
+          ranking_individual_enabled?: boolean
+          ranking_teams_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: boolean
+          ranking_individual_enabled?: boolean
+          ranking_teams_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gam_student_badges: {
+        Row: {
+          awarded_at: string
+          badge_code: string
+          created_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_code: string
+          created_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_code?: string
+          created_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gam_student_badges_badge_code_fkey"
+            columns: ["badge_code"]
+            isOneToOne: false
+            referencedRelation: "gam_badges"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      gam_xp_events: {
+        Row: {
+          action_code: string
+          context: string
+          created_at: string
+          group_id: string | null
+          id: string
+          kind: string
+          note: string
+          ref_id: string | null
+          ref_kind: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string | null
+          updated_at: string
+          xp: number
+        }
+        Insert: {
+          action_code: string
+          context: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          note?: string
+          ref_id?: string | null
+          ref_kind?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string | null
+          updated_at?: string
+          xp?: number
+        }
+        Update: {
+          action_code?: string
+          context?: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          note?: string
+          ref_id?: string | null
+          ref_kind?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string | null
+          updated_at?: string
+          xp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gam_xp_events_action_code_fkey"
+            columns: ["action_code"]
+            isOneToOne: false
+            referencedRelation: "gam_actions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "gam_xp_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           created_at: string
@@ -1106,6 +1303,22 @@ export type Database = {
       enroll_student_by_email: {
         Args: { _class_id: string; _email: string }
         Returns: string
+      }
+      gam_ranking_individual: {
+        Args: never
+        Returns: {
+          full_name: string
+          student_id: string
+          xp: number
+        }[]
+      }
+      gam_ranking_teams: {
+        Args: never
+        Returns: {
+          group_id: string
+          group_name: string
+          xp: number
+        }[]
       }
       group_class_id: { Args: { _group_id: string }; Returns: string }
       has_role: {
