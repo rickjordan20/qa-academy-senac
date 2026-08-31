@@ -63,6 +63,7 @@ const EMPTY = {
   origin: "instrutor",
   status: "active",
   notes: "",
+  module_id: "",
 };
 
 function FeaturesPage() {
@@ -72,23 +73,78 @@ function FeaturesPage() {
   const [scope, setScope] = useState("techeduca");
 
   const groupId = scope.startsWith("cafe:") ? scope.replace("cafe:", "") : null;
-  const project = groupId ? "cafe_central" : scope === "cafe_central" ? "cafe_central" : "techeduca";
+  const project: AppProject =
+    groupId ? "cafe_central" : scope === "cafe_central" ? "cafe_central" : "techeduca";
 
   const { data: features } = useManagedFeatures(project, groupId);
+  const { data: modules } = useModules(project, groupId);
   const { data: suggestions } = useFeatureSuggestions(project, groupId);
   const save = useSaveFeature();
   const reorder = useReorderFeature();
   const removeSafe = useDeleteFeatureSafe();
   const review = useReviewSuggestion(userId);
+  const saveModule = useSaveModule();
+  const deleteModule = useDeleteModule();
 
   const [editing, setEditing] = useState<ManagedFeature | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
   const [statusFilter, setStatusFilter] = useState("all");
+  const [moduleName, setModuleName] = useState("");
+  const [editingModule, setEditingModule] = useState<AppModule | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const list = useMemo(
     () => (features ?? []).filter((f) => statusFilter === "all" || f.status === statusFilter),
     [features, statusFilter],
   );
+
+  const tree = useMemo(() => {
+    const mods = modules ?? [];
+    const grouped = mods.map((m) => ({
+      module: m,
+      items: list.filter((f) => f.module_id === m.id).sort((a, b) => a.position - b.position),
+    }));
+    const orphans = list.filter((f) => !f.module_id || !mods.some((m) => m.id === f.module_id));
+    return { grouped, orphans };
+  }, [modules, list]);
+
+  async function submitModule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!moduleName.trim()) return;
+    try {
+      await saveModule.mutateAsync({
+        id: editingModule?.id,
+        values: editingModule
+          ? { name: moduleName.trim() }
+          : {
+              project,
+              group_id: groupId,
+              name: moduleName.trim(),
+              position: (modules ?? []).length + 1,
+              created_by: userId,
+            },
+      });
+      toast.success(editingModule ? "Módulo/Tela atualizado." : "Módulo/Tela criado.");
+      setModuleName("");
+      setEditingModule(null);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
+  async function removeModule(m: AppModule) {
+    if ((features ?? []).some((f) => f.module_id === m.id)) {
+      toast.error("Módulo/Tela possui funcionalidades vinculadas. Mova-as antes de excluir.");
+      return;
+    }
+    try {
+      await deleteModule.mutateAsync(m.id);
+      toast.success("Módulo/Tela excluído.");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
 
   function startEdit(f: ManagedFeature) {
     setEditing(f);
