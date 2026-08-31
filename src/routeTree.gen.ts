@@ -21,6 +21,7 @@ import { Route as InstructorDashboardRouteImport } from './routes/instructor/das
 import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/evaluations'
 import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
 import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
+import { Route as InstructorQaRouteImport } from './routes/instructor/qa'
 import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
@@ -95,6 +96,11 @@ const InstructorGroupsRoute = InstructorGroupsRouteImport.update({
 const InstructorProfileRoute = InstructorProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorQaRoute = InstructorQaRouteImport.update({
+  id: '/qa',
+  path: '/qa',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorStudentsRoute = InstructorStudentsRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
+  '/instructor/qa': typeof InstructorQaRoute
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
+  '/instructor/qa': typeof InstructorQaRoute
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/instructor/evaluations': typeof InstructorEvaluationsRoute
   '/instructor/groups': typeof InstructorGroupsRoute
   '/instructor/profile': typeof InstructorProfileRoute
+  '/instructor/qa': typeof InstructorQaRoute
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/instructor/evaluations'
     | '/instructor/groups'
     | '/instructor/profile'
+    | '/instructor/qa'
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/instructor/evaluations'
     | '/instructor/groups'
     | '/instructor/profile'
+    | '/instructor/qa'
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/instructor/evaluations'
     | '/instructor/groups'
     | '/instructor/profile'
+    | '/instructor/qa'
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -446,6 +458,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/instructor/profile'
       preLoaderRoute: typeof InstructorProfileRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/qa': {
+      id: '/instructor/qa'
+      path: '/qa'
+      fullPath: '/instructor/qa'
+      preLoaderRoute: typeof InstructorQaRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/students': {
@@ -562,6 +581,7 @@ interface InstructorRouteRouteChildren {
   InstructorEvaluationsRoute: typeof InstructorEvaluationsRoute
   InstructorGroupsRoute: typeof InstructorGroupsRoute
   InstructorProfileRoute: typeof InstructorProfileRoute
+  InstructorQaRoute: typeof InstructorQaRoute
   InstructorStudentsRoute: typeof InstructorStudentsRoute
   InstructorClassesClassIdRoute: typeof InstructorClassesClassIdRoute
   InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
@@ -573,6 +593,7 @@ const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorEvaluationsRoute: InstructorEvaluationsRoute,
   InstructorGroupsRoute: InstructorGroupsRoute,
   InstructorProfileRoute: InstructorProfileRoute,
+  InstructorQaRoute: InstructorQaRoute,
   InstructorStudentsRoute: InstructorStudentsRoute,
   InstructorClassesClassIdRoute: InstructorClassesClassIdRoute,
   InstructorClassesIndexRoute: InstructorClassesIndexRoute,
