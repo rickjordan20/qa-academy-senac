@@ -10,7 +10,12 @@ const items = [
   { to: "/instructor/cafe", label: "Café Central" },
   { to: "/instructor/qa", label: "Módulos QA" },
   { to: "/instructor/gamification", label: "Gamificação" },
-  { to: "/instructor/evaluations", label: "Avaliações" },
+  { to: "/instructor/evaluations", label: "Matriz de Avaliação" },
+  { to: "/instructor/dossier", label: "Dossiê do Aluno" },
+  { to: "/instructor/final", label: "Avaliação Final" },
+  { to: "/instructor/recovery", label: "Recuperação" },
+  { to: "/instructor/portfolios", label: "Portfólios" },
+  { to: "/instructor/reports", label: "Relatórios" },
   { to: "/instructor/profile", label: "Perfil" },
 ];
 
