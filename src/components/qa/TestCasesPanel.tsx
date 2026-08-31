@@ -60,6 +60,8 @@ export function TestCasesPanel({
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
+  const { data: modules } = useModules(project, scope.groupId);
+
   const { data: cases, isPending } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateTestCase(scope, userId);
@@ -84,8 +86,9 @@ export function TestCasesPanel({
       return;
     }
     try {
+      const { module_id: _module, ...values } = form;
       await create.mutateAsync({
-        ...form,
+        ...values,
         title: form.title.trim(),
         project: form.project || projectLabel(project),
         feature_id: form.feature_id || null,
@@ -93,6 +96,7 @@ export function TestCasesPanel({
         assignee_id: form.assignee_id || null,
       });
       setForm({ ...empty });
+
       setOpen(false);
       toast.success("Caso de teste criado.");
     } catch (err) {
