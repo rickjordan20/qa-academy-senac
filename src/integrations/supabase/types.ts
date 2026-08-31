@@ -254,6 +254,227 @@ export type Database = {
         }
         Relationships: []
       }
+      techeduca_bug_reports: {
+        Row: {
+          classification: string
+          created_at: string
+          expected_result: string
+          feature: string
+          id: string
+          mission_id: string | null
+          note: string | null
+          obtained_result: string
+          problem: string
+          run_id: string | null
+          steps: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          classification?: string
+          created_at?: string
+          expected_result?: string
+          feature: string
+          id?: string
+          mission_id?: string | null
+          note?: string | null
+          obtained_result?: string
+          problem: string
+          run_id?: string | null
+          steps?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          classification?: string
+          created_at?: string
+          expected_result?: string
+          feature?: string
+          id?: string
+          mission_id?: string | null
+          note?: string | null
+          obtained_result?: string
+          problem?: string
+          run_id?: string | null
+          steps?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "techeduca_bug_reports_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "techeduca_bug_reports_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_mission_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      techeduca_evidences: {
+        Row: {
+          bug_report_id: string | null
+          created_at: string
+          description: string | null
+          file_path: string | null
+          id: string
+          link: string | null
+          run_id: string | null
+          student_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bug_report_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          link?: string | null
+          run_id?: string | null
+          student_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bug_report_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          link?: string | null
+          run_id?: string | null
+          student_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "techeduca_evidences_bug_report_id_fkey"
+            columns: ["bug_report_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_bug_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "techeduca_evidences_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_mission_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      techeduca_mission_runs: {
+        Row: {
+          checklist_state: Json
+          checkpoint_answers: Json
+          completed_at: string | null
+          created_at: string
+          id: string
+          mission_id: string
+          reflection: string | null
+          started_at: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_state?: Json
+          checkpoint_answers?: Json
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mission_id: string
+          reflection?: string | null
+          started_at?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_state?: Json
+          checkpoint_answers?: Json
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mission_id?: string
+          reflection?: string | null
+          started_at?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "techeduca_mission_runs_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      techeduca_missions: {
+        Row: {
+          checklist: Json
+          checkpoint: Json
+          code: string
+          created_at: string
+          id: string
+          indicator_codes: string[]
+          kind: string
+          objective: string
+          position: number
+          practice: Json
+          published: boolean
+          summary: Json
+          title: string
+          track: string
+          updated_at: string
+        }
+        Insert: {
+          checklist?: Json
+          checkpoint?: Json
+          code: string
+          created_at?: string
+          id?: string
+          indicator_codes?: string[]
+          kind?: string
+          objective: string
+          position?: number
+          practice?: Json
+          published?: boolean
+          summary?: Json
+          title: string
+          track?: string
+          updated_at?: string
+        }
+        Update: {
+          checklist?: Json
+          checkpoint?: Json
+          code?: string
+          created_at?: string
+          id?: string
+          indicator_codes?: string[]
+          kind?: string
+          objective?: string
+          position?: number
+          practice?: Json
+          published?: boolean
+          summary?: Json
+          title?: string
+          track?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
