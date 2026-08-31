@@ -41,15 +41,30 @@ export function testTypeLabel(v: string | null | undefined) {
   return TEST_TYPES.find((t) => t.value === v)?.label ?? v ?? "—";
 }
 
+export type AppModule = {
+  id: string;
+  project: string;
+  group_id: string | null;
+  name: string;
+  description: string;
+  status: string;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AppFeature = {
   id: string;
   project: string;
   group_id: string | null;
+  module_id: string | null;
   code: string;
   name: string;
   description: string;
   kind: "base" | "additional" | string;
   origin: string;
+  status: string;
   position: number;
   created_by: string | null;
   created_at: string;
@@ -57,6 +72,31 @@ export type AppFeature = {
 
 export function featureKindLabel(kind: string) {
   return kind === "additional" ? "Funcionalidade adicional" : "Funcionalidade-base";
+}
+
+/** Módulos/Telas do projeto (e do grupo, no Café Central). */
+export function useModules(project: AppProject, groupId: string | null) {
+  return useQuery({
+    queryKey: ["inventory-modules", project, groupId ?? "base"],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      let q = supabase.from("app_modules").select("*").eq("project", project);
+      q = groupId ? q.or(`group_id.is.null,group_id.eq.${groupId}`) : q.is("group_id", null);
+      const { data, error } = await q.order("position").order("name");
+      if (error) throw error;
+      return (data ?? []) as unknown as AppModule[];
+    },
+  });
+}
+
+/** Agrupa as funcionalidades por Módulo/Tela, preservando as ainda não associadas. */
+export function groupByModule(modules: AppModule[], features: AppFeature[]) {
+  const tree = modules.map((m) => ({
+    module: m,
+    features: features.filter((f) => f.module_id === m.id),
+  }));
+  const orphans = features.filter((f) => !f.module_id || !modules.some((m) => m.id === f.module_id));
+  return { tree, orphans };
 }
 
 /**
@@ -76,6 +116,7 @@ export function useFeatures(project: AppProject, groupId: string | null) {
     },
   });
 }
+
 
 export type FeatureInput = {
   code: string;
