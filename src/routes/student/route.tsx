@@ -5,6 +5,9 @@ import { RoleGate } from "@/components/RoleGate";
 const items = [
   { to: "/student/dashboard", label: "Início" },
   { to: "/student/journey", label: "Minha Jornada" },
+  { to: "/student/missions", label: "Minhas Missões" },
+  { to: "/student/records", label: "Meus Registros" },
+  { to: "/student/evidences", label: "Minhas Evidências" },
   { to: "/student/progress", label: "Meu Progresso" },
   { to: "/student/evaluation", label: "Minha Avaliação" },
   { to: "/student/profile", label: "Perfil" },

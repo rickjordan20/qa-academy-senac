@@ -23,11 +23,15 @@ import { Route as InstructorProfileRouteImport } from './routes/instructor/profi
 import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
+import { Route as StudentEvidencesRouteImport } from './routes/student/evidences'
 import { Route as StudentJourneyRouteImport } from './routes/student/journey'
 import { Route as StudentProfileRouteImport } from './routes/student/profile'
 import { Route as StudentProgressRouteImport } from './routes/student/progress'
+import { Route as StudentRecordsRouteImport } from './routes/student/records'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
+import { Route as StudentMissionsIndexRouteImport } from './routes/student/missions.index'
+import { Route as StudentMissionsCodeRouteImport } from './routes/student/missions.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -99,6 +103,11 @@ const StudentEvaluationRoute = StudentEvaluationRouteImport.update({
   path: '/evaluation',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const StudentEvidencesRoute = StudentEvidencesRouteImport.update({
+  id: '/evidences',
+  path: '/evidences',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const StudentJourneyRoute = StudentJourneyRouteImport.update({
   id: '/journey',
   path: '/journey',
@@ -114,6 +123,11 @@ const StudentProgressRoute = StudentProgressRouteImport.update({
   path: '/progress',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const StudentRecordsRoute = StudentRecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const InstructorClassesIndexRoute = InstructorClassesIndexRouteImport.update({
   id: '/classes/',
   path: '/classes/',
@@ -125,6 +139,16 @@ const InstructorClassesClassIdRoute =
     path: '/classes/$classId',
     getParentRoute: () => InstructorRouteRoute,
   } as any)
+const StudentMissionsIndexRoute = StudentMissionsIndexRouteImport.update({
+  id: '/missions/',
+  path: '/missions/',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentMissionsCodeRoute = StudentMissionsCodeRouteImport.update({
+  id: '/missions/$code',
+  path: '/missions/$code',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,11 +165,15 @@ export interface FileRoutesByFullPath {
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
+  '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/student/missions/': typeof StudentMissionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,11 +190,15 @@ export interface FileRoutesByTo {
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
+  '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
+  '/student/missions': typeof StudentMissionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -184,11 +216,15 @@ export interface FileRoutesById {
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
+  '/student/evidences': typeof StudentEvidencesRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
+  '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
+  '/student/missions/': typeof StudentMissionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -207,11 +243,15 @@ export interface FileRouteTypes {
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
+    | '/student/evidences'
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
+    | '/student/records'
     | '/instructor/classes/$classId'
+    | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/student/missions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,11 +268,15 @@ export interface FileRouteTypes {
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
+    | '/student/evidences'
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
+    | '/student/records'
     | '/instructor/classes/$classId'
+    | '/student/missions/$code'
     | '/instructor/classes'
+    | '/student/missions'
   id:
     | '__root__'
     | '/'
@@ -249,11 +293,15 @@ export interface FileRouteTypes {
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
+    | '/student/evidences'
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
+    | '/student/records'
     | '/instructor/classes/$classId'
+    | '/student/missions/$code'
     | '/instructor/classes/'
+    | '/student/missions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentEvaluationRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/student/evidences': {
+      id: '/student/evidences'
+      path: '/evidences'
+      fullPath: '/student/evidences'
+      preLoaderRoute: typeof StudentEvidencesRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/student/journey': {
       id: '/student/journey'
       path: '/journey'
@@ -387,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentProgressRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/student/records': {
+      id: '/student/records'
+      path: '/records'
+      fullPath: '/student/records'
+      preLoaderRoute: typeof StudentRecordsRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/instructor/classes/': {
       id: '/instructor/classes/'
       path: '/classes'
@@ -400,6 +462,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/instructor/classes/$classId'
       preLoaderRoute: typeof InstructorClassesClassIdRouteImport
       parentRoute: typeof InstructorRouteRoute
+    }
+    '/student/missions/': {
+      id: '/student/missions/'
+      path: '/missions'
+      fullPath: '/student/missions/'
+      preLoaderRoute: typeof StudentMissionsIndexRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/missions/$code': {
+      id: '/student/missions/$code'
+      path: '/missions/$code'
+      fullPath: '/student/missions/$code'
+      preLoaderRoute: typeof StudentMissionsCodeRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
   }
 }
@@ -431,17 +507,25 @@ const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
 interface StudentRouteRouteChildren {
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentEvaluationRoute: typeof StudentEvaluationRoute
+  StudentEvidencesRoute: typeof StudentEvidencesRoute
   StudentJourneyRoute: typeof StudentJourneyRoute
   StudentProfileRoute: typeof StudentProfileRoute
   StudentProgressRoute: typeof StudentProgressRoute
+  StudentRecordsRoute: typeof StudentRecordsRoute
+  StudentMissionsCodeRoute: typeof StudentMissionsCodeRoute
+  StudentMissionsIndexRoute: typeof StudentMissionsIndexRoute
 }
 
 const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentDashboardRoute: StudentDashboardRoute,
   StudentEvaluationRoute: StudentEvaluationRoute,
+  StudentEvidencesRoute: StudentEvidencesRoute,
   StudentJourneyRoute: StudentJourneyRoute,
   StudentProfileRoute: StudentProfileRoute,
   StudentProgressRoute: StudentProgressRoute,
+  StudentRecordsRoute: StudentRecordsRoute,
+  StudentMissionsCodeRoute: StudentMissionsCodeRoute,
+  StudentMissionsIndexRoute: StudentMissionsIndexRoute,
 }
 
 const StudentRouteRouteWithChildren = StudentRouteRoute._addFileChildren(
