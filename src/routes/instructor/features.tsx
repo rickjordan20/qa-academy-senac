@@ -25,6 +25,14 @@ import {
   useSaveFeature,
   type ManagedFeature,
 } from "@/lib/admin";
+import {
+  useDeleteModule,
+  useModules,
+  useSaveModule,
+  type AppModule,
+  type AppProject,
+} from "@/lib/inventory";
+
 
 export const Route = createFileRoute("/instructor/features")({
   head: () => ({
