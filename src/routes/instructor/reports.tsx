@@ -146,8 +146,10 @@ function ReportsPage() {
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
 
       <div className="space-y-6">
-        {reports.map((r) => (
-          <Card key={r.file}>
+        {reports.map((r) => {
+          const header = r.rows[0] ?? [];
+          return (
+            <Card key={r.file}>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-base">{r.title}</CardTitle>
               <Button size="sm" variant="outline" onClick={() => downloadCsv(r.file, r.rows)}>
@@ -158,7 +160,7 @@ function ReportsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase text-muted-foreground">
-                    {r.rows[0].map((h, i) => (
+                    {header.map((h, i) => (
                       <th key={i} className="p-2">
                         {h}
                       </th>
@@ -185,8 +187,9 @@ function ReportsPage() {
                 </tbody>
               </table>
             </CardContent>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

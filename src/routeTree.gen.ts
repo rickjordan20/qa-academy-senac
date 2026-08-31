@@ -23,9 +23,11 @@ import { Route as InstructorEvaluationsRouteImport } from './routes/instructor/e
 import { Route as InstructorFinalRouteImport } from './routes/instructor/final'
 import { Route as InstructorGamificationRouteImport } from './routes/instructor/gamification'
 import { Route as InstructorGroupsRouteImport } from './routes/instructor/groups'
+import { Route as InstructorPortfoliosRouteImport } from './routes/instructor/portfolios'
 import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
 import { Route as InstructorQaRouteImport } from './routes/instructor/qa'
 import { Route as InstructorRecoveryRouteImport } from './routes/instructor/recovery'
+import { Route as InstructorReportsRouteImport } from './routes/instructor/reports'
 import { Route as InstructorStudentsRouteImport } from './routes/instructor/students'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
@@ -113,6 +115,11 @@ const InstructorGroupsRoute = InstructorGroupsRouteImport.update({
   path: '/groups',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
+const InstructorPortfoliosRoute = InstructorPortfoliosRouteImport.update({
+  id: '/portfolios',
+  path: '/portfolios',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
 const InstructorProfileRoute = InstructorProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -126,6 +133,11 @@ const InstructorQaRoute = InstructorQaRouteImport.update({
 const InstructorRecoveryRoute = InstructorRecoveryRouteImport.update({
   id: '/recovery',
   path: '/recovery',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorReportsRoute = InstructorReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorStudentsRoute = InstructorStudentsRouteImport.update({
@@ -225,9 +237,11 @@ export interface FileRoutesByFullPath {
   '/instructor/final': typeof InstructorFinalRoute
   '/instructor/gamification': typeof InstructorGamificationRoute
   '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/portfolios': typeof InstructorPortfoliosRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
+  '/instructor/reports': typeof InstructorReportsRoute
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -260,9 +274,11 @@ export interface FileRoutesByTo {
   '/instructor/final': typeof InstructorFinalRoute
   '/instructor/gamification': typeof InstructorGamificationRoute
   '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/portfolios': typeof InstructorPortfoliosRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
+  '/instructor/reports': typeof InstructorReportsRoute
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -296,9 +312,11 @@ export interface FileRoutesById {
   '/instructor/final': typeof InstructorFinalRoute
   '/instructor/gamification': typeof InstructorGamificationRoute
   '/instructor/groups': typeof InstructorGroupsRoute
+  '/instructor/portfolios': typeof InstructorPortfoliosRoute
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
+  '/instructor/reports': typeof InstructorReportsRoute
   '/instructor/students': typeof InstructorStudentsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -333,9 +351,11 @@ export interface FileRouteTypes {
     | '/instructor/final'
     | '/instructor/gamification'
     | '/instructor/groups'
+    | '/instructor/portfolios'
     | '/instructor/profile'
     | '/instructor/qa'
     | '/instructor/recovery'
+    | '/instructor/reports'
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -368,9 +388,11 @@ export interface FileRouteTypes {
     | '/instructor/final'
     | '/instructor/gamification'
     | '/instructor/groups'
+    | '/instructor/portfolios'
     | '/instructor/profile'
     | '/instructor/qa'
     | '/instructor/recovery'
+    | '/instructor/reports'
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -403,9 +425,11 @@ export interface FileRouteTypes {
     | '/instructor/final'
     | '/instructor/gamification'
     | '/instructor/groups'
+    | '/instructor/portfolios'
     | '/instructor/profile'
     | '/instructor/qa'
     | '/instructor/recovery'
+    | '/instructor/reports'
     | '/instructor/students'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -534,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorGroupsRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/instructor/portfolios': {
+      id: '/instructor/portfolios'
+      path: '/portfolios'
+      fullPath: '/instructor/portfolios'
+      preLoaderRoute: typeof InstructorPortfoliosRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
     '/instructor/profile': {
       id: '/instructor/profile'
       path: '/profile'
@@ -553,6 +584,13 @@ declare module '@tanstack/react-router' {
       path: '/recovery'
       fullPath: '/instructor/recovery'
       preLoaderRoute: typeof InstructorRecoveryRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/reports': {
+      id: '/instructor/reports'
+      path: '/reports'
+      fullPath: '/instructor/reports'
+      preLoaderRoute: typeof InstructorReportsRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/students': {
@@ -678,9 +716,11 @@ interface InstructorRouteRouteChildren {
   InstructorFinalRoute: typeof InstructorFinalRoute
   InstructorGamificationRoute: typeof InstructorGamificationRoute
   InstructorGroupsRoute: typeof InstructorGroupsRoute
+  InstructorPortfoliosRoute: typeof InstructorPortfoliosRoute
   InstructorProfileRoute: typeof InstructorProfileRoute
   InstructorQaRoute: typeof InstructorQaRoute
   InstructorRecoveryRoute: typeof InstructorRecoveryRoute
+  InstructorReportsRoute: typeof InstructorReportsRoute
   InstructorStudentsRoute: typeof InstructorStudentsRoute
   InstructorClassesClassIdRoute: typeof InstructorClassesClassIdRoute
   InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
@@ -694,9 +734,11 @@ const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorFinalRoute: InstructorFinalRoute,
   InstructorGamificationRoute: InstructorGamificationRoute,
   InstructorGroupsRoute: InstructorGroupsRoute,
+  InstructorPortfoliosRoute: InstructorPortfoliosRoute,
   InstructorProfileRoute: InstructorProfileRoute,
   InstructorQaRoute: InstructorQaRoute,
   InstructorRecoveryRoute: InstructorRecoveryRoute,
+  InstructorReportsRoute: InstructorReportsRoute,
   InstructorStudentsRoute: InstructorStudentsRoute,
   InstructorClassesClassIdRoute: InstructorClassesClassIdRoute,
   InstructorClassesIndexRoute: InstructorClassesIndexRoute,
