@@ -25,10 +25,10 @@ export type FieldDef = {
   key: string;
   label: string;
   type: FieldType;
-  options?: string[];
-  required?: boolean;
-  placeholder?: string;
-  description?: string;
+  options?: string[] | undefined;
+  required?: boolean | undefined;
+  placeholder?: string | undefined;
+  description?: string | undefined;
 };
 
 export type QuestionDef = FieldDef & { id: string };
@@ -42,21 +42,21 @@ export type Section = {
   title: string;
   description: string;
   /** conteúdo teórico / instruções (texto rico simples em markdown leve) */
-  body?: string;
+  body?: string | undefined;
   /** itens de material de apoio, perguntas, checklist, campos personalizados, métricas */
-  items?: (ChecklistItemDef | QuestionDef | MaterialItem)[];
+  items?: (ChecklistItemDef | QuestionDef | MaterialItem)[] | undefined;
   required: boolean;
   scope: "individual" | "group";
-  minItems?: number;
-  maxItems?: number;
+  minItems?: number | undefined;
+  maxItems?: number | undefined;
   xp: number;
   indicator_codes: string[];
   visible: boolean;
   /** tipos de evidência aceitos (bloco evidência) */
-  accepts?: string[];
+  accepts?: string[] | undefined;
 };
 
-export type MaterialItem = { id: string; label: string; description?: string; link?: string };
+export type MaterialItem = { id: string; label: string; description?: string | undefined; link?: string | undefined };
 
 export type BuilderMission = {
   id: string;
