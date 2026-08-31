@@ -16,7 +16,7 @@ import {
   useUpdateEnrollment,
 } from "@/lib/admin";
 
-export const Route = createFileRoute("/instructor/students")({
+export const Route = createFileRoute("/instructor/students/")({
   head: () => ({
     meta: [
       { title: "Alunos | QA Academy" },
