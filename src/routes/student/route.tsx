@@ -13,6 +13,7 @@ const items = [
   { to: "/student/ranking", label: "Ranking" },
   { to: "/student/progress", label: "Meu Progresso" },
   { to: "/student/evaluation", label: "Minha Avaliação" },
+  { to: "/student/portfolio", label: "Meu Portfólio" },
   { to: "/student/profile", label: "Perfil" },
 ];
 
