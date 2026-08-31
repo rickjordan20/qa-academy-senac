@@ -123,6 +123,7 @@ export type FeatureInput = {
   name: string;
   description: string;
   origin: string;
+  module_id?: string | null;
 };
 
 export function useCreateFeature(project: AppProject, groupId: string | null, userId: string | null) {
@@ -131,6 +132,7 @@ export function useCreateFeature(project: AppProject, groupId: string | null, us
     mutationFn: async (input: FeatureInput) => {
       const { error } = await supabase.from("app_features").insert({
         ...input,
+        module_id: input.module_id || null,
         project,
         group_id: groupId,
         kind: "additional",
@@ -138,9 +140,54 @@ export function useCreateFeature(project: AppProject, groupId: string | null, us
       } as never);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["inventory"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+    },
   });
 }
+
+/** CRUD de Módulos/Telas — instrutor em qualquer escopo; QA Lead no próprio grupo. */
+export function useSaveModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, values }: { id?: string | undefined; values: Partial<AppModule> }) => {
+      const { error } = id
+        ? await supabase.from("app_modules").update(values as never).eq("id", id)
+        : await supabase.from("app_modules").insert(values as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+    },
+  });
+}
+
+export function useDeleteModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { count, error: cErr } = await supabase
+        .from("app_features")
+        .select("id", { count: "exact", head: true })
+        .eq("module_id", id);
+      if (cErr) throw cErr;
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Exclusão bloqueada: o módulo possui ${count} funcionalidade(s) vinculada(s). Prefira inativar.`,
+        );
+      }
+      const { error } = await supabase.from("app_modules").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+    },
+  });
+}
+
 
 export function useDeleteFeature() {
   const qc = useQueryClient();
