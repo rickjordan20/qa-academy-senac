@@ -123,20 +123,17 @@ export function TestCasesPanel({
                 <Field label="Projeto" id="tc-project">
                   <Input id="tc-project" value={projectLabel(project)} readOnly />
                 </Field>
-                <Field label="Funcionalidade (inventário)" id="tc-feature-id">
-                  <NativeSelect
-                    id="tc-feature-id"
-                    value={form.feature_id}
-                    onChange={(v) => set("feature_id", v)}
-                    options={[
-                      { value: "", label: "Não relacionada" },
-                      ...(features ?? []).map((f) => ({
-                        value: f.id,
-                        label: `${f.code} — ${f.name}${f.kind === "additional" ? " (adicional)" : ""}`,
-                      })),
-                    ]}
-                  />
-                </Field>
+                <ModuleFeatureSelect
+                  idPrefix="tc"
+                  project={project}
+                  groupId={scope.groupId}
+                  moduleId={form.module_id}
+                  featureId={form.feature_id}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))
+                  }
+                />
+
                 <Field label="Tipo de teste" id="tc-type">
                   <NativeSelect
                     id="tc-type"
