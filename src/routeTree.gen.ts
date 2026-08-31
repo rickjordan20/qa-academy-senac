@@ -29,6 +29,7 @@ import { Route as StudentProgressRouteImport } from './routes/student/progress'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
 import { Route as StudentMissionsIndexRouteImport } from './routes/student/missions.index'
+import { Route as StudentMissionsCodeRouteImport } from './routes/student/missions.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -131,6 +132,11 @@ const StudentMissionsIndexRoute = StudentMissionsIndexRouteImport.update({
   path: '/missions/',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const StudentMissionsCodeRoute = StudentMissionsCodeRouteImport.update({
+  id: '/missions/$code',
+  path: '/missions/$code',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
   '/student/missions': typeof StudentMissionsIndexRoute
 }
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
+  '/student/missions/$code': typeof StudentMissionsCodeRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
 }
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/student/progress'
     | '/instructor/classes/$classId'
+    | '/student/missions/$code'
     | '/instructor/classes/'
     | '/student/missions/'
   fileRoutesByTo: FileRoutesByTo
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/student/progress'
     | '/instructor/classes/$classId'
+    | '/student/missions/$code'
     | '/instructor/classes'
     | '/student/missions'
   id:
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/student/profile'
     | '/student/progress'
     | '/instructor/classes/$classId'
+    | '/student/missions/$code'
     | '/instructor/classes/'
     | '/student/missions/'
   fileRoutesById: FileRoutesById
@@ -420,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentMissionsIndexRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/student/missions/$code': {
+      id: '/student/missions/$code'
+      path: '/missions/$code'
+      fullPath: '/student/missions/$code'
+      preLoaderRoute: typeof StudentMissionsCodeRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
   }
 }
 
@@ -453,6 +472,7 @@ interface StudentRouteRouteChildren {
   StudentJourneyRoute: typeof StudentJourneyRoute
   StudentProfileRoute: typeof StudentProfileRoute
   StudentProgressRoute: typeof StudentProgressRoute
+  StudentMissionsCodeRoute: typeof StudentMissionsCodeRoute
   StudentMissionsIndexRoute: typeof StudentMissionsIndexRoute
 }
 
@@ -462,6 +482,7 @@ const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentJourneyRoute: StudentJourneyRoute,
   StudentProfileRoute: StudentProfileRoute,
   StudentProgressRoute: StudentProgressRoute,
+  StudentMissionsCodeRoute: StudentMissionsCodeRoute,
   StudentMissionsIndexRoute: StudentMissionsIndexRoute,
 }
 
