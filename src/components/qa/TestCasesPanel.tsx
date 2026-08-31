@@ -17,13 +17,22 @@ import {
   useUpdateTestCase,
   type QaScope,
 } from "@/lib/qa";
-import { TEST_TYPES, projectLabel, testTypeLabel, useFeatures, type AppProject } from "@/lib/inventory";
+import {
+  TEST_TYPES,
+  projectLabel,
+  testTypeLabel,
+  useFeatures,
+  useModules,
+  type AppProject,
+} from "@/lib/inventory";
+import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 
 export type PersonOption = { id: string; name: string };
 
 const empty = {
   title: "",
   project: "",
+  module_id: "",
   feature_id: "",
   test_type: "funcional",
   mission_id: "",
@@ -36,6 +45,7 @@ const empty = {
   obtained_result: "",
   status: "nao_executado",
 };
+
 
 export function TestCasesPanel({
   scope,
