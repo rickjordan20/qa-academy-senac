@@ -13,7 +13,7 @@ export function NativeSelect({
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
-  disabled?: boolean;
+  disabled?: boolean | undefined;
 }) {
   return (
     <select
@@ -36,7 +36,7 @@ export function FieldInput({
   field: FieldDef;
   value: string;
   onChange: (v: string) => void;
-  disabled?: boolean;
+  disabled?: boolean | undefined;
 }) {
   const common = { disabled, placeholder: field.placeholder ?? "" };
   return (
