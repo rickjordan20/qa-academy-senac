@@ -28,6 +28,7 @@ import { Route as StudentEvidencesRouteImport } from './routes/student/evidences
 import { Route as StudentJourneyRouteImport } from './routes/student/journey'
 import { Route as StudentProfileRouteImport } from './routes/student/profile'
 import { Route as StudentProgressRouteImport } from './routes/student/progress'
+import { Route as StudentQaRouteImport } from './routes/student/qa'
 import { Route as StudentRecordsRouteImport } from './routes/student/records'
 import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/classes.index'
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
@@ -131,6 +132,11 @@ const StudentProgressRoute = StudentProgressRouteImport.update({
   path: '/progress',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const StudentQaRoute = StudentQaRouteImport.update({
+  id: '/qa',
+  path: '/qa',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 const StudentRecordsRoute = StudentRecordsRouteImport.update({
   id: '/records',
   path: '/records',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
+  '/student/qa': typeof StudentQaRoute
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
+  '/student/qa': typeof StudentQaRoute
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/student/journey': typeof StudentJourneyRoute
   '/student/profile': typeof StudentProfileRoute
   '/student/progress': typeof StudentProgressRoute
+  '/student/qa': typeof StudentQaRoute
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/student/cafe/$groupId': typeof StudentCafeGroupIdRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
+    | '/student/qa'
     | '/student/records'
     | '/instructor/classes/$classId'
     | '/student/cafe/$groupId'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
+    | '/student/qa'
     | '/student/records'
     | '/instructor/classes/$classId'
     | '/student/cafe/$groupId'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/student/journey'
     | '/student/profile'
     | '/student/progress'
+    | '/student/qa'
     | '/student/records'
     | '/instructor/classes/$classId'
     | '/student/cafe/$groupId'
@@ -485,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentProgressRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/student/qa': {
+      id: '/student/qa'
+      path: '/qa'
+      fullPath: '/student/qa'
+      preLoaderRoute: typeof StudentQaRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
     '/student/records': {
       id: '/student/records'
       path: '/records'
@@ -570,6 +589,7 @@ interface StudentRouteRouteChildren {
   StudentJourneyRoute: typeof StudentJourneyRoute
   StudentProfileRoute: typeof StudentProfileRoute
   StudentProgressRoute: typeof StudentProgressRoute
+  StudentQaRoute: typeof StudentQaRoute
   StudentRecordsRoute: typeof StudentRecordsRoute
   StudentCafeGroupIdRoute: typeof StudentCafeGroupIdRoute
   StudentMissionsCodeRoute: typeof StudentMissionsCodeRoute
@@ -584,6 +604,7 @@ const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentJourneyRoute: StudentJourneyRoute,
   StudentProfileRoute: StudentProfileRoute,
   StudentProgressRoute: StudentProgressRoute,
+  StudentQaRoute: StudentQaRoute,
   StudentRecordsRoute: StudentRecordsRoute,
   StudentCafeGroupIdRoute: StudentCafeGroupIdRoute,
   StudentMissionsCodeRoute: StudentMissionsCodeRoute,
