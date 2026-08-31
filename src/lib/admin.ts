@@ -326,6 +326,8 @@ export type ManagedFeature = {
   id: string;
   project: string;
   group_id: string | null;
+  module_id: string | null;
+
   code: string;
   name: string;
   description: string;
