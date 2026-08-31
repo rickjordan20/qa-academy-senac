@@ -30,7 +30,7 @@ import {
   type Section,
 } from "@/lib/mission-builder";
 import { useIndicators } from "@/lib/uc10";
-import { useFeatures, type AppProject } from "@/lib/inventory";
+import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 
 export const Route = createFileRoute("/instructor/missions/$missionId")({
   head: () => ({
@@ -82,6 +82,7 @@ function MissionBuilderPage() {
 
   const project: AppProject = draft?.template === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, null);
+  const { data: modules } = useModules(project, null);
 
   const hasAnswers = (runs?.length ?? 0) > 0;
 
