@@ -67,6 +67,279 @@ export type Database = {
           },
         ]
       }
+      builder_mission_assignments: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          mission_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          mission_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          mission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_mission_assignments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_mission_assignments_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      builder_mission_entries: {
+        Row: {
+          author_id: string
+          created_at: string
+          data: Json
+          feature_id: string | null
+          file_path: string | null
+          group_id: string | null
+          id: string
+          kind: string
+          link: string | null
+          mission_id: string
+          parent_id: string | null
+          run_id: string
+          section_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          data?: Json
+          feature_id?: string | null
+          file_path?: string | null
+          group_id?: string | null
+          id?: string
+          kind: string
+          link?: string | null
+          mission_id: string
+          parent_id?: string | null
+          run_id: string
+          section_id: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          data?: Json
+          feature_id?: string | null
+          file_path?: string | null
+          group_id?: string | null
+          id?: string
+          kind?: string
+          link?: string | null
+          mission_id?: string
+          parent_id?: string | null
+          run_id?: string
+          section_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_mission_entries_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "app_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_mission_entries_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_mission_entries_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_mission_entries_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_mission_entries_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      builder_mission_runs: {
+        Row: {
+          answers: Json
+          checklist_state: Json
+          created_at: string
+          created_by: string
+          group_id: string | null
+          id: string
+          mission_id: string
+          progress: number
+          status: string
+          student_id: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          checklist_state?: Json
+          created_at?: string
+          created_by: string
+          group_id?: string | null
+          id?: string
+          mission_id: string
+          progress?: number
+          status?: string
+          student_id?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          checklist_state?: Json
+          created_at?: string
+          created_by?: string
+          group_id?: string | null
+          id?: string
+          mission_id?: string
+          progress?: number
+          status?: string
+          student_id?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_mission_runs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_mission_runs_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      builder_missions: {
+        Row: {
+          badge_code: string | null
+          base_xp: number
+          code: string | null
+          created_at: string
+          created_by: string
+          description: string
+          due_at: string | null
+          feature_ids: string[]
+          id: string
+          indicator_codes: string[]
+          is_library_template: boolean
+          lesson_number: number | null
+          library_name: string | null
+          modality: string
+          objective: string
+          opens_at: string | null
+          project: string
+          sections: Json
+          status: string
+          subtitle: string
+          template: string
+          title: string
+          updated_at: string
+          workload: string
+        }
+        Insert: {
+          badge_code?: string | null
+          base_xp?: number
+          code?: string | null
+          created_at?: string
+          created_by: string
+          description?: string
+          due_at?: string | null
+          feature_ids?: string[]
+          id?: string
+          indicator_codes?: string[]
+          is_library_template?: boolean
+          lesson_number?: number | null
+          library_name?: string | null
+          modality?: string
+          objective?: string
+          opens_at?: string | null
+          project?: string
+          sections?: Json
+          status?: string
+          subtitle?: string
+          template?: string
+          title: string
+          updated_at?: string
+          workload?: string
+        }
+        Update: {
+          badge_code?: string | null
+          base_xp?: number
+          code?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          due_at?: string | null
+          feature_ids?: string[]
+          id?: string
+          indicator_codes?: string[]
+          is_library_template?: boolean
+          lesson_number?: number | null
+          library_name?: string | null
+          modality?: string
+          objective?: string
+          opens_at?: string | null
+          project?: string
+          sections?: Json
+          status?: string
+          subtitle?: string
+          template?: string
+          title?: string
+          updated_at?: string
+          workload?: string
+        }
+        Relationships: []
+      }
       cafe_contributions: {
         Row: {
           created_at: string
@@ -1561,6 +1834,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      builder_mission_open: { Args: { _mission_id: string }; Returns: boolean }
+      builder_mission_visible: {
+        Args: { _mission_id: string; _user_id: string }
+        Returns: boolean
+      }
+      builder_run_can_edit: {
+        Args: { _run_id: string; _user_id: string }
+        Returns: boolean
+      }
+      builder_run_can_view: {
+        Args: { _run_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_group: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
