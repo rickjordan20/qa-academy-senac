@@ -17,8 +17,11 @@ import {
   useQaEvidences,
   useQaMissions,
   useTestCases,
+  isValidEvidenceUrl,
+  TEXT_EVIDENCE_KINDS,
   type QaScope,
 } from "@/lib/qa";
+import { EvidenceGuide } from "@/components/EvidenceGuide";
 
 const empty = {
   title: "",
@@ -49,13 +52,12 @@ export function EvidencesPanel({
   const remove = useDeleteQaEvidence(scope, userId);
   const { data: names } = useProfileNames((evidences ?? []).map((e) => e.author_id));
   const [form, setForm] = useState({ ...empty });
-  const [file, setFile] = useState<File | null>(null);
 
   function set(k: keyof typeof empty, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
-  const needsFile = ["imagem", "documento", "video", "log"].includes(form.kind);
+  const isTextual = TEXT_EVIDENCE_KINDS.includes(form.kind);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,16 +65,20 @@ export function EvidencesPanel({
       toast.error("Informe o título da evidência.");
       return;
     }
-    if (form.kind === "link" && !form.link.trim()) {
-      toast.error("Informe o link.");
+    if (!form.description.trim()) {
+      toast.error("Explique o que esta evidência demonstra.");
       return;
     }
-    if (form.kind === "texto" && !form.content.trim()) {
-      toast.error("Escreva o conteúdo da evidência.");
+    if (isTextual && !form.content.trim() && !isValidEvidenceUrl(form.link)) {
+      toast.error("Escreva o conteúdo da evidência ou informe um link válido.");
       return;
     }
-    if (needsFile && !file && !form.link.trim() && !form.content.trim()) {
-      toast.error("Anexe um arquivo, informe um link ou cole o conteúdo.");
+    if (!isTextual && !isValidEvidenceUrl(form.link)) {
+      toast.error("Informe um link válido para a evidência.");
+      return;
+    }
+    if (form.link.trim() && !isValidEvidenceUrl(form.link)) {
+      toast.error("Informe um link válido para a evidência.");
       return;
     }
     try {
@@ -87,10 +93,8 @@ export function EvidencesPanel({
         test_case_id: form.test_case_id || null,
         bug_id: form.bug_id || null,
         retest_id: null,
-        file,
       });
       setForm({ ...empty });
-      setFile(null);
       (e.target as HTMLFormElement).reset();
       toast.success("Evidência registrada.");
     } catch (err) {
@@ -107,6 +111,9 @@ export function EvidencesPanel({
           </CardHeader>
           <CardContent>
             <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <EvidenceGuide />
+              </div>
               <Field label="Título" id="ev-title">
                 <Input id="ev-title" value={form.title} onChange={(e) => set("title", e.target.value)} />
               </Field>
@@ -154,20 +161,17 @@ export function EvidencesPanel({
                   ]}
                 />
               </Field>
-              {form.kind === "link" ? (
-                <Field label="Link" id="ev-link" full>
-                  <Input id="ev-link" value={form.link} onChange={(e) => set("link", e.target.value)} placeholder="https://..." />
-                </Field>
-              ) : form.kind === "texto" || form.kind === "log" ? (
-                <Field label={form.kind === "log" ? "Log" : "Conteúdo"} id="ev-content" full>
-                  <Textarea id="ev-content" rows={5} value={form.content} onChange={(e) => set("content", e.target.value)} />
-                </Field>
-              ) : null}
-              {needsFile && (
-                <Field label="Arquivo" id="ev-file">
-                  <Input id="ev-file" type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                </Field>
-              )}
+              <Field label="URL da evidência (https://...)" id="ev-link" full>
+                <Input
+                  id="ev-link"
+                  value={form.link}
+                  onChange={(e) => set("link", e.target.value)}
+                  placeholder="https://drive.google.com/..."
+                />
+              </Field>
+              <Field label="Evidência textual / log (opcional)" id="ev-content" full>
+                <Textarea id="ev-content" rows={4} value={form.content} onChange={(e) => set("content", e.target.value)} />
+              </Field>
               <Field label="Descrição" id="ev-desc" full>
                 <Textarea id="ev-desc" rows={2} value={form.description} onChange={(e) => set("description", e.target.value)} />
               </Field>
@@ -211,9 +215,11 @@ export function EvidencesPanel({
               </div>
               <div className="flex items-center gap-2">
                 {ev.link && (
-                  <a href={ev.link} target="_blank" rel="noopener noreferrer" className="text-xs text-accent underline">
-                    Abrir link
-                  </a>
+                  <Button size="sm" variant="secondary" asChild>
+                    <a href={ev.link} target="_blank" rel="noopener noreferrer">
+                      🔗 Abrir evidência
+                    </a>
+                  </Button>
                 )}
                 {ev.file_path && (
                   <Button size="sm" variant="secondary" onClick={() => void openQaFile(ev.file_path!)}>
