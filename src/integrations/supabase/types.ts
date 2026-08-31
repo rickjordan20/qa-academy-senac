@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_features: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string
+          group_id: string | null
+          id: string
+          kind: string
+          name: string
+          origin: string
+          position: number
+          project: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          name: string
+          origin?: string
+          position?: number
+          project: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          origin?: string
+          position?: number
+          project?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_features_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cafe_contributions: {
         Row: {
           created_at: string
@@ -853,6 +906,7 @@ export type Database = {
           description: string
           environment: string
           expected_result: string
+          feature_id: string | null
           group_id: string | null
           id: string
           mission_id: string | null
@@ -874,6 +928,7 @@ export type Database = {
           description?: string
           environment?: string
           expected_result?: string
+          feature_id?: string | null
           group_id?: string | null
           id?: string
           mission_id?: string | null
@@ -895,6 +950,7 @@ export type Database = {
           description?: string
           environment?: string
           expected_result?: string
+          feature_id?: string | null
           group_id?: string | null
           id?: string
           mission_id?: string | null
@@ -909,6 +965,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_bugs_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "app_features"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_bugs_group_id_fkey"
             columns: ["group_id"]
@@ -1076,6 +1139,7 @@ export type Database = {
           executed_by: string | null
           expected_result: string
           feature: string
+          feature_id: string | null
           group_id: string | null
           id: string
           input_data: string
@@ -1085,6 +1149,7 @@ export type Database = {
           project: string
           status: string
           steps: string
+          test_type: string
           title: string
           updated_at: string
         }
@@ -1097,6 +1162,7 @@ export type Database = {
           executed_by?: string | null
           expected_result?: string
           feature?: string
+          feature_id?: string | null
           group_id?: string | null
           id?: string
           input_data?: string
@@ -1106,6 +1172,7 @@ export type Database = {
           project?: string
           status?: string
           steps?: string
+          test_type?: string
           title: string
           updated_at?: string
         }
@@ -1118,6 +1185,7 @@ export type Database = {
           executed_by?: string | null
           expected_result?: string
           feature?: string
+          feature_id?: string | null
           group_id?: string | null
           id?: string
           input_data?: string
@@ -1127,10 +1195,18 @@ export type Database = {
           project?: string
           status?: string
           steps?: string
+          test_type?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_test_cases_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "app_features"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_test_cases_group_id_fkey"
             columns: ["group_id"]

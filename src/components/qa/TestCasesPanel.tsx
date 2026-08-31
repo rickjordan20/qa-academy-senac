@@ -17,12 +17,15 @@ import {
   useUpdateTestCase,
   type QaScope,
 } from "@/lib/qa";
+import { TEST_TYPES, projectLabel, testTypeLabel, useFeatures, type AppProject } from "@/lib/inventory";
 
 export type PersonOption = { id: string; name: string };
 
 const empty = {
   title: "",
   project: "",
+  feature_id: "",
+  test_type: "funcional",
   mission_id: "",
   assignee_id: "",
   feature: "",
@@ -45,6 +48,8 @@ export function TestCasesPanel({
   people?: PersonOption[];
   readOnly?: boolean;
 }) {
+  const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
+  const { data: features } = useFeatures(project, scope.groupId);
   const { data: cases, isPending } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateTestCase(scope, userId);
@@ -72,6 +77,8 @@ export function TestCasesPanel({
       await create.mutateAsync({
         ...form,
         title: form.title.trim(),
+        project: form.project || projectLabel(project),
+        feature_id: form.feature_id || null,
         mission_id: form.mission_id || null,
         assignee_id: form.assignee_id || null,
       });
@@ -100,11 +107,28 @@ export function TestCasesPanel({
                   <Input id="tc-title" value={form.title} onChange={(e) => set("title", e.target.value)} />
                 </Field>
                 <Field label="Projeto" id="tc-project">
-                  <Input
-                    id="tc-project"
-                    value={form.project}
-                    onChange={(e) => set("project", e.target.value)}
-                    placeholder="Ex.: TechEduca"
+                  <Input id="tc-project" value={projectLabel(project)} readOnly />
+                </Field>
+                <Field label="Funcionalidade (inventário)" id="tc-feature-id">
+                  <NativeSelect
+                    id="tc-feature-id"
+                    value={form.feature_id}
+                    onChange={(v) => set("feature_id", v)}
+                    options={[
+                      { value: "", label: "Não relacionada" },
+                      ...(features ?? []).map((f) => ({
+                        value: f.id,
+                        label: `${f.code} — ${f.name}${f.kind === "additional" ? " (adicional)" : ""}`,
+                      })),
+                    ]}
+                  />
+                </Field>
+                <Field label="Tipo de teste" id="tc-type">
+                  <NativeSelect
+                    id="tc-type"
+                    value={form.test_type}
+                    onChange={(v) => set("test_type", v)}
+                    options={TEST_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                   />
                 </Field>
                 <Field label="Missão" id="tc-mission">
@@ -129,7 +153,7 @@ export function TestCasesPanel({
                     ]}
                   />
                 </Field>
-                <Field label="Funcionalidade" id="tc-feature">
+                <Field label="Observação sobre a funcionalidade" id="tc-feature">
                   <Input id="tc-feature" value={form.feature} onChange={(e) => set("feature", e.target.value)} />
                 </Field>
                 <Field label="Status" id="tc-status">
@@ -190,11 +214,18 @@ export function TestCasesPanel({
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-                <span>Projeto: {c.project || "—"}</span>
+                <span>Projeto: {c.project || projectLabel(project)}</span>
+                <span>
+                  Funcionalidade:{" "}
+                  {(features ?? []).find((f) => f.id === c.feature_id)
+                    ? `${(features ?? []).find((f) => f.id === c.feature_id)!.code} — ${(features ?? []).find((f) => f.id === c.feature_id)!.name}`
+                    : "—"}
+                </span>
+                <span>Tipo de teste: {testTypeLabel(c.test_type)}</span>
                 <span>Missão: {missionTitle(c.mission_id) ?? "—"}</span>
                 <span>Autor: {names?.[c.author_id] ?? "—"}</span>
                 <span>Responsável: {c.assignee_id ? (names?.[c.assignee_id] ?? "—") : "—"}</span>
-                <span>Funcionalidade: {c.feature || "—"}</span>
+                <span>Observação: {c.feature || "—"}</span>
               </div>
               {c.precondition && <Block title="Pré-condição" text={c.precondition} />}
               {c.input_data && <Block title="Dados de entrada" text={c.input_data} />}

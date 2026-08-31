@@ -8,6 +8,7 @@ const items = [
   { to: "/instructor/students", label: "Alunos" },
   { to: "/instructor/groups", label: "Grupos" },
   { to: "/instructor/cafe", label: "Café Central" },
+  { to: "/instructor/inventory", label: "Inventário" },
   { to: "/instructor/qa", label: "Módulos QA" },
   { to: "/instructor/gamification", label: "Gamificação" },
   { to: "/instructor/evaluations", label: "Matriz de Avaliação" },

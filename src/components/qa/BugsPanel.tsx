@@ -23,10 +23,12 @@ import {
   useUpdateBug,
   type QaScope,
 } from "@/lib/qa";
+import { projectLabel, useFeatures, type AppProject } from "@/lib/inventory";
 
 const empty = {
   title: "",
   project: "",
+  feature_id: "",
   mission_id: "",
   test_case_id: "",
   assignee_id: "",
@@ -51,6 +53,8 @@ export function BugsPanel({
   people?: PersonOption[];
   readOnly?: boolean;
 }) {
+  const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
+  const { data: features } = useFeatures(project, scope.groupId);
   const { data: bugs, isPending } = useBugs(scope, userId);
   const { data: cases } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
@@ -81,6 +85,8 @@ export function BugsPanel({
       await create.mutateAsync({
         ...form,
         title: form.title.trim(),
+        project: form.project || projectLabel(project),
+        feature_id: form.feature_id || null,
         mission_id: form.mission_id || null,
         test_case_id: form.test_case_id || null,
         assignee_id: form.assignee_id || null,
@@ -118,12 +124,30 @@ export function BugsPanel({
           </CardHeader>
           {open && (
             <CardContent>
+              <p className="mb-3 rounded-md border border-border p-2 text-xs text-muted-foreground">
+                Registre apenas comportamento incorreto de funcionalidades que existem no escopo do projeto. A
+                ausência de uma funcionalidade que nunca foi requisito não é bug.
+              </p>
               <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
                 <Field label="Título" id="bg-title">
                   <Input id="bg-title" value={form.title} onChange={(e) => set("title", e.target.value)} />
                 </Field>
                 <Field label="Projeto" id="bg-project">
-                  <Input id="bg-project" value={form.project} onChange={(e) => set("project", e.target.value)} />
+                  <Input id="bg-project" value={projectLabel(project)} readOnly />
+                </Field>
+                <Field label="Funcionalidade relacionada" id="bg-feature">
+                  <NativeSelect
+                    id="bg-feature"
+                    value={form.feature_id}
+                    onChange={(v) => set("feature_id", v)}
+                    options={[
+                      { value: "", label: "Não relacionada" },
+                      ...(features ?? []).map((f) => ({
+                        value: f.id,
+                        label: `${f.code} — ${f.name}${f.kind === "additional" ? " (adicional)" : ""}`,
+                      })),
+                    ]}
+                  />
                 </Field>
                 <Field label="Missão" id="bg-mission">
                   <NativeSelect
@@ -240,7 +264,13 @@ export function BugsPanel({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-                  <span>Projeto: {b.project || "—"}</span>
+                  <span>Projeto: {b.project || projectLabel(project)}</span>
+                  <span>
+                    Funcionalidade:{" "}
+                    {(features ?? []).find((f) => f.id === b.feature_id)
+                      ? `${(features ?? []).find((f) => f.id === b.feature_id)!.code} — ${(features ?? []).find((f) => f.id === b.feature_id)!.name}`
+                      : "—"}
+                  </span>
                   <span>Missão: {missions?.find((m) => m.id === b.mission_id)?.title ?? "—"}</span>
                   <span>Autor: {names?.[b.author_id] ?? "—"}</span>
                   <span>Responsável: {b.assignee_id ? (names?.[b.assignee_id] ?? "—") : "—"}</span>

@@ -68,6 +68,8 @@ export type QaTestCase = {
   group_id: string | null;
   mission_id: string | null;
   project: string;
+  feature_id: string | null;
+  test_type: string;
   title: string;
   feature: string;
   precondition: string;
@@ -89,6 +91,7 @@ export type QaBug = {
   group_id: string | null;
   mission_id: string | null;
   test_case_id: string | null;
+  feature_id: string | null;
   project: string;
   title: string;
   description: string;
@@ -223,6 +226,8 @@ export function useTestCases(scope: QaScope, userId: string | null) {
 export type TestCaseInput = {
   title: string;
   project: string;
+  feature_id: string | null;
+  test_type: string;
   mission_id: string | null;
   assignee_id: string | null;
   feature: string;
@@ -293,6 +298,7 @@ export function useBugs(scope: QaScope, userId: string | null) {
 export type BugInput = {
   title: string;
   project: string;
+  feature_id: string | null;
   mission_id: string | null;
   test_case_id: string | null;
   assignee_id: string | null;
