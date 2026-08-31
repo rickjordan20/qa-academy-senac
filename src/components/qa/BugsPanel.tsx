@@ -275,11 +275,9 @@ export function BugsPanel({
                 <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
                   <span>Projeto: {b.project || projectLabel(project)}</span>
                   <span>
-                    Funcionalidade:{" "}
-                    {(features ?? []).find((f) => f.id === b.feature_id)
-                      ? `${(features ?? []).find((f) => f.id === b.feature_id)!.code} — ${(features ?? []).find((f) => f.id === b.feature_id)!.name}`
-                      : "—"}
+                    Módulo/Funcionalidade: {featureTrace(modules, features, b.feature_id)}
                   </span>
+
                   <span>Missão: {missions?.find((m) => m.id === b.mission_id)?.title ?? "—"}</span>
                   <span>Autor: {names?.[b.author_id] ?? "—"}</span>
                   <span>Responsável: {b.assignee_id ? (names?.[b.assignee_id] ?? "—") : "—"}</span>
