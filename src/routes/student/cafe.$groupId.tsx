@@ -297,6 +297,8 @@ function GroupPanel() {
               é exclusiva do instrutor.
             </p>
 
+            <TeamXpCard groupId={group.id} runId={runId} />
+
             <NewTaskForm
               runId={runId}
               groupId={group.id}
