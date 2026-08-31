@@ -179,7 +179,7 @@ function ReportsPage() {
                   ))}
                   {r.rows.length === 1 && (
                     <tr>
-                      <td className="p-2 text-muted-foreground" colSpan={r.rows[0].length}>
+                      <td className="p-2 text-muted-foreground" colSpan={header.length}>
                         Sem dados.
                       </td>
                     </tr>
