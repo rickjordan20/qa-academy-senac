@@ -26,6 +26,7 @@ function StudentDashboard() {
   const { data: enrollment } = useMyEnrollment(user?.id ?? null);
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
   const { data: indicators } = useIndicators();
+  const { data: groups } = useMyGroups(user?.id ?? null);
 
   const byIndicator = new Map((evaluations ?? []).map((e) => [e.indicator_id, e]));
   const total = indicators?.length ?? 0;
