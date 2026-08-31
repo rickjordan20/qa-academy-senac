@@ -249,6 +249,7 @@ function FeaturesPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
         <div className="space-y-3">
           <Card>
             <CardHeader className="pb-2">
