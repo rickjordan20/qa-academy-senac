@@ -58,6 +58,8 @@ export function BugsPanel({
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
+  const { data: modules } = useModules(project, scope.groupId);
+
   const { data: bugs, isPending } = useBugs(scope, userId);
   const { data: cases } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
@@ -85,15 +87,22 @@ export function BugsPanel({
       return;
     }
     try {
+      const { module_id: _module, ...values } = form;
+      // Herda a funcionalidade do caso de teste relacionado, quando não informada.
+      const inherited =
+        form.feature_id ||
+        (cases ?? []).find((c) => c.id === form.test_case_id)?.feature_id ||
+        null;
       await create.mutateAsync({
-        ...form,
+        ...values,
         title: form.title.trim(),
         project: form.project || projectLabel(project),
-        feature_id: form.feature_id || null,
+        feature_id: inherited,
         mission_id: form.mission_id || null,
         test_case_id: form.test_case_id || null,
         assignee_id: form.assignee_id || null,
       });
+
       setForm({ ...empty });
       setOpen(false);
       toast.success("Bug registrado.");
