@@ -207,7 +207,7 @@ function FeatureRow({
   description: string;
   kind: string;
   origin?: string;
-  onDelete?: () => void;
+  onDelete?: (() => void) | undefined;
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3">
