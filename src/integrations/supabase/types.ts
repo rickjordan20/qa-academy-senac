@@ -24,6 +24,7 @@ export type Database = {
           group_id: string | null
           id: string
           kind: string
+          module_id: string | null
           name: string
           notes: string
           origin: string
@@ -42,6 +43,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           kind?: string
+          module_id?: string | null
           name: string
           notes?: string
           origin?: string
@@ -60,6 +62,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           kind?: string
+          module_id?: string | null
           name?: string
           notes?: string
           origin?: string
@@ -72,6 +75,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "app_features_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_features_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "app_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_modules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          group_id: string | null
+          id: string
+          name: string
+          position: number
+          project: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          group_id?: string | null
+          id?: string
+          name: string
+          position?: number
+          project: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          group_id?: string | null
+          id?: string
+          name?: string
+          position?: number
+          project?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_modules_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
