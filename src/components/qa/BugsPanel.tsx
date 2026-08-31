@@ -147,20 +147,17 @@ export function BugsPanel({
                 <Field label="Projeto" id="bg-project">
                   <Input id="bg-project" value={projectLabel(project)} readOnly />
                 </Field>
-                <Field label="Funcionalidade relacionada" id="bg-feature">
-                  <NativeSelect
-                    id="bg-feature"
-                    value={form.feature_id}
-                    onChange={(v) => set("feature_id", v)}
-                    options={[
-                      { value: "", label: "Não relacionada" },
-                      ...(features ?? []).map((f) => ({
-                        value: f.id,
-                        label: `${f.code} — ${f.name}${f.kind === "additional" ? " (adicional)" : ""}`,
-                      })),
-                    ]}
-                  />
-                </Field>
+                <ModuleFeatureSelect
+                  idPrefix="bg"
+                  project={project}
+                  groupId={scope.groupId}
+                  moduleId={form.module_id}
+                  featureId={form.feature_id}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))
+                  }
+                />
+
                 <Field label="Missão" id="bg-mission">
                   <NativeSelect
                     id="bg-mission"
