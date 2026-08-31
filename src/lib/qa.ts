@@ -40,13 +40,27 @@ export const PRIORITIES = [
 ] as const;
 
 export const EVIDENCE_KINDS = [
-  { value: "imagem", label: "Imagem" },
-  { value: "documento", label: "Documento" },
-  { value: "link", label: "Link" },
-  { value: "texto", label: "Texto" },
+  { value: "imagem", label: "Imagem / Print" },
+  { value: "documento", label: "Documento / PDF" },
   { value: "video", label: "Vídeo" },
   { value: "log", label: "Log" },
+  { value: "github", label: "GitHub / Código" },
+  { value: "app", label: "Aplicação publicada" },
+  { value: "texto", label: "Texto" },
+  { value: "link", label: "Link" },
+  { value: "outro", label: "Outro" },
 ] as const;
+
+/** Tipos que podem ser registrados apenas como texto/log, sem URL. */
+export const TEXT_EVIDENCE_KINDS = ["texto", "log"];
+
+export function isValidEvidenceUrl(url: string) {
+  try {
+    return new URL(url.trim()).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export function labelOf(
   list: readonly { value: string; label: string }[],
@@ -428,26 +442,16 @@ export type QaEvidenceInput = {
   test_case_id: string | null;
   bug_id: string | null;
   retest_id: string | null;
-  file?: File | null;
 };
 
 export function useCreateQaEvidence(scope: QaScope, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: QaEvidenceInput) => {
-      const { file, ...rest } = input;
-      let filePath: string | null = null;
-      if (file) {
-        const safe = file.name.replace(/[^\w.-]+/g, "_");
-        const path = `${userId}/${crypto.randomUUID()}-${safe}`;
-        const { error: upErr } = await supabase.storage.from("evidencias").upload(path, file);
-        if (upErr) throw upErr;
-        filePath = path;
-      }
       const { error } = await supabase.from("qa_evidences").insert({
-        ...rest,
+        ...input,
         ...scopeInsertFields(scope),
-        file_path: filePath,
+        file_path: null,
         author_id: userId!,
       } as never);
       if (error) throw error;
@@ -460,7 +464,6 @@ export function useDeleteQaEvidence(scope: QaScope, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ev: QaEvidence) => {
-      if (ev.file_path) await supabase.storage.from("evidencias").remove([ev.file_path]);
       const { error } = await supabase.from("qa_evidences").delete().eq("id", ev.id);
       if (error) throw error;
     },

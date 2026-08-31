@@ -103,7 +103,7 @@ function StudentMissionPage() {
     }, 700);
   }
 
-  async function addEntry(section: Section, values: Record<string, string>, file: File | null) {
+  async function addEntry(section: Section, values: Record<string, string>) {
     if (!run || !userId) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
@@ -116,8 +116,7 @@ function StudentMissionPage() {
       title: values[titleKey] ?? "",
       status: values["status"] ?? "",
       data: values,
-      link: values["link"] ?? null,
-      file: file ?? null,
+      link: values["url"] ?? values["link"] ?? null,
     });
     if (section.xp > 0) {
       await awardMissionXp({

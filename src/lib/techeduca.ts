@@ -268,16 +268,7 @@ export function useCreateEvidence(userId: string | null) {
       link: string | null;
       run_id: string | null;
       bug_report_id: string | null;
-      file?: File | null;
     }) => {
-      let filePath: string | null = null;
-      if (input.file) {
-        const safe = input.file.name.replace(/[^\w.-]+/g, "_");
-        const path = `${userId}/${crypto.randomUUID()}-${safe}`;
-        const { error: upErr } = await supabase.storage.from("evidencias").upload(path, input.file);
-        if (upErr) throw upErr;
-        filePath = path;
-      }
       const { error } = await supabase.from("techeduca_evidences").insert({
         student_id: userId!,
         title: input.title,
@@ -285,7 +276,7 @@ export function useCreateEvidence(userId: string | null) {
         link: input.link,
         run_id: input.run_id,
         bug_report_id: input.bug_report_id,
-        file_path: filePath,
+        file_path: null,
       });
       if (error) throw error;
     },
@@ -299,7 +290,6 @@ export function useDeleteEvidence(userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ev: Evidence) => {
-      if (ev.file_path) await supabase.storage.from("evidencias").remove([ev.file_path]);
       const { error } = await supabase.from("techeduca_evidences").delete().eq("id", ev.id);
       if (error) throw error;
     },

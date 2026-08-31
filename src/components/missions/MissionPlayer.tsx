@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { EvidenceGuide } from "@/components/EvidenceGuide";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { FieldInput } from "@/components/missions/DynamicFields";
 import {
@@ -27,7 +27,7 @@ export type PlayerState = {
 export type PlayerHandlers = {
   onAnswer: (sectionId: string, key: string, value: string) => void;
   onToggle: (itemId: string, value: boolean) => void;
-  onAddEntry: (section: Section, values: Record<string, string>, file: File | null) => Promise<void> | void;
+  onAddEntry: (section: Section, values: Record<string, string>) => Promise<void> | void;
   onDeleteEntry: (id: string) => void;
 };
 
@@ -56,10 +56,9 @@ function EntryForm({
   section: Section;
   fields: FieldDef[];
   disabled: boolean;
-  onSubmit: (values: Record<string, string>, file: File | null) => void;
+  onSubmit: (values: Record<string, string>) => void;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
-  const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
 
   if (!open)
@@ -71,6 +70,7 @@ function EntryForm({
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
+      {section.kind === "evidence" ? <EvidenceGuide /> : null}
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map((f) => (
           <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
@@ -81,20 +81,36 @@ function EntryForm({
             />
           </div>
         ))}
-        {section.kind === "evidence" ? (
-          <div className="sm:col-span-2 space-y-1">
-            <Label className="text-xs">Arquivo (opcional)</Label>
-            <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          </div>
-        ) : null}
+
       </div>
       <div className="flex gap-2">
         <Button
           size="sm"
           onClick={() => {
-            onSubmit(values, file);
+            const url = (values["url"] ?? "").trim();
+            const isHttps = (() => {
+              try {
+                return new URL(url).protocol === "https:";
+              } catch {
+                return false;
+              }
+            })();
+            if (section.kind === "evidence") {
+              if (!(values["descricao"] ?? "").trim()) {
+                toast.error("Explique o que esta evidência demonstra.");
+                return;
+              }
+              if (!isHttps && !(values["conteudo"] ?? "").trim()) {
+                toast.error("Informe um link válido para a evidência.");
+                return;
+              }
+              if (url && !isHttps) {
+                toast.error("Informe um link válido para a evidência.");
+                return;
+              }
+            }
+            onSubmit(values);
             setValues({});
-            setFile(null);
             setOpen(false);
           }}
         >
@@ -241,7 +257,19 @@ function SectionCard({
                           </div>
                         ))}
                     </dl>
-                    {e.file_path ? <p className="mt-1 text-xs text-muted-foreground">Arquivo anexado</p> : null}
+                    {e.link ? (
+                      <a
+                        href={e.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-block text-xs text-accent underline"
+                      >
+                        🔗 Abrir evidência
+                      </a>
+                    ) : null}
+                    {e.file_path ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Arquivo anexado (registro antigo)</p>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -251,7 +279,7 @@ function SectionCard({
                 section={section}
                 fields={def.fields ?? []}
                 disabled={readOnly}
-                onSubmit={(values, file) => handlers.onAddEntry(section, values, file)}
+                onSubmit={(values) => handlers.onAddEntry(section, values)}
               />
             ) : null}
           </div>
