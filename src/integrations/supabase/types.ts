@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       app_features: {
         Row: {
+          category: string
           code: string
           created_at: string
           created_by: string | null
@@ -24,12 +25,16 @@ export type Database = {
           id: string
           kind: string
           name: string
+          notes: string
           origin: string
+          owner_id: string | null
           position: number
           project: string
+          status: string
           updated_at: string
         }
         Insert: {
+          category?: string
           code: string
           created_at?: string
           created_by?: string | null
@@ -38,12 +43,16 @@ export type Database = {
           id?: string
           kind?: string
           name: string
+          notes?: string
           origin?: string
+          owner_id?: string | null
           position?: number
           project: string
+          status?: string
           updated_at?: string
         }
         Update: {
+          category?: string
           code?: string
           created_at?: string
           created_by?: string | null
@@ -52,9 +61,12 @@ export type Database = {
           id?: string
           kind?: string
           name?: string
+          notes?: string
           origin?: string
+          owner_id?: string | null
           position?: number
           project?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -66,6 +78,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          new_value: Json
+          old_value: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          new_value?: Json
+          old_value?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          new_value?: Json
+          old_value?: Json
+        }
+        Relationships: []
       }
       builder_mission_assignments: {
         Row: {
@@ -633,31 +678,58 @@ export type Database = {
       }
       classes: {
         Row: {
+          code: string | null
+          course: string | null
           created_at: string
           description: string | null
+          end_date: string | null
           id: string
           instructor_id: string
           name: string
+          notes: string
           period: string | null
+          shift: string | null
+          start_date: string | null
+          status: string
+          uc_code: string
           updated_at: string
+          workload: string | null
         }
         Insert: {
+          code?: string | null
+          course?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           instructor_id: string
           name: string
+          notes?: string
           period?: string | null
+          shift?: string | null
+          start_date?: string | null
+          status?: string
+          uc_code?: string
           updated_at?: string
+          workload?: string | null
         }
         Update: {
+          code?: string | null
+          course?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           instructor_id?: string
           name?: string
+          notes?: string
           period?: string | null
+          shift?: string | null
+          start_date?: string | null
+          status?: string
+          uc_code?: string
           updated_at?: string
+          workload?: string | null
         }
         Relationships: []
       }
@@ -666,19 +738,31 @@ export type Database = {
           class_id: string
           created_at: string
           id: string
+          notes: string
+          status: string
+          student_code: string | null
           student_id: string
+          updated_at: string
         }
         Insert: {
           class_id: string
           created_at?: string
           id?: string
+          notes?: string
+          status?: string
+          student_code?: string | null
           student_id: string
+          updated_at?: string
         }
         Update: {
           class_id?: string
           created_at?: string
           id?: string
+          notes?: string
+          status?: string
+          student_code?: string | null
           student_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -785,6 +869,59 @@ export type Database = {
             columns: ["indicator_id"]
             isOneToOne: false
             referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_suggestions: {
+        Row: {
+          author_id: string
+          created_at: string
+          description: string
+          group_id: string | null
+          id: string
+          justification: string
+          name: string
+          project: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          description?: string
+          group_id?: string | null
+          id?: string
+          justification?: string
+          name: string
+          project: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          description?: string
+          group_id?: string | null
+          id?: string
+          justification?: string
+          name?: string
+          project?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_suggestions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
         ]
@@ -1022,25 +1159,31 @@ export type Database = {
         Row: {
           class_id: string
           created_at: string
+          description: string
           id: string
           name: string
           qa_lead_id: string | null
+          status: string
           updated_at: string
         }
         Insert: {
           class_id: string
           created_at?: string
+          description?: string
           id?: string
           name: string
           qa_lead_id?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
           class_id?: string
           created_at?: string
+          description?: string
           id?: string
           name?: string
           qa_lead_id?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
