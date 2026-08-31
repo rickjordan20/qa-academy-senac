@@ -325,7 +325,7 @@ function FeatureRow({
   name: string;
   description: string;
   kind: string;
-  origin?: string;
+  origin?: string | undefined;
   onDelete?: (() => void) | undefined;
 }) {
   return (
