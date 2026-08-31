@@ -10,6 +10,7 @@ const items = [
   { to: "/student/qa", label: "Módulos QA" },
   { to: "/student/records", label: "Meus Registros" },
   { to: "/student/evidences", label: "Minhas Evidências" },
+  { to: "/student/ranking", label: "Ranking" },
   { to: "/student/progress", label: "Meu Progresso" },
   { to: "/student/evaluation", label: "Minha Avaliação" },
   { to: "/student/profile", label: "Perfil" },

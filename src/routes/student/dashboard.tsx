@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
+import { useMyGroups } from "@/lib/cafe";
+import { XpOverview } from "@/components/gam/XpOverview";
 import { useIndicators, useMyEnrollment, useMyEvaluations } from "@/lib/uc10";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,7 @@ function StudentDashboard() {
   const { data: enrollment } = useMyEnrollment(user?.id ?? null);
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
   const { data: indicators } = useIndicators();
+  const { data: groups } = useMyGroups(user?.id ?? null);
 
   const byIndicator = new Map((evaluations ?? []).map((e) => [e.indicator_id, e]));
   const total = indicators?.length ?? 0;
@@ -70,6 +73,13 @@ function StudentDashboard() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mb-6">
+        <XpOverview
+          userId={user?.id ?? null}
+          groupIds={(groups ?? []).map((g) => g.id)}
+        />
       </div>
 
       <Card>

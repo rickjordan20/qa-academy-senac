@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamXpCard } from "@/components/gam/TeamXpCard";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/student/cafe/$groupId")({
@@ -296,6 +297,8 @@ function GroupPanel() {
               O QA Lead organiza o trabalho do grupo. A avaliação por indicadores (A, PA, NA e D/ND)
               é exclusiva do instrutor.
             </p>
+
+            <TeamXpCard groupId={group.id} runId={runId} />
 
             <NewTaskForm
               runId={runId}
