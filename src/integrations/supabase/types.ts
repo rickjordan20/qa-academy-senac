@@ -364,6 +364,105 @@ export type Database = {
           },
         ]
       }
+      eval_feedbacks: {
+        Row: {
+          author_id: string
+          class_id: string
+          created_at: string
+          id: string
+          indicator_id: string | null
+          message: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          class_id: string
+          created_at?: string
+          id?: string
+          indicator_id?: string | null
+          message: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          class_id?: string
+          created_at?: string
+          id?: string
+          indicator_id?: string | null
+          message?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eval_feedbacks_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eval_feedbacks_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eval_history: {
+        Row: {
+          class_id: string
+          concept: Database["public"]["Enums"]["evaluation_concept"] | null
+          created_at: string
+          evaluated_by: string | null
+          id: string
+          indicator_id: string
+          notes: string
+          stage: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          concept?: Database["public"]["Enums"]["evaluation_concept"] | null
+          created_at?: string
+          evaluated_by?: string | null
+          id?: string
+          indicator_id: string
+          notes?: string
+          stage?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          concept?: Database["public"]["Enums"]["evaluation_concept"] | null
+          created_at?: string
+          evaluated_by?: string | null
+          id?: string
+          indicator_id?: string
+          notes?: string
+          stage?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eval_history_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eval_history_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gam_actions: {
         Row: {
           code: string
@@ -639,6 +738,7 @@ export type Database = {
           id: string
           indicator_id: string
           notes: string | null
+          stage: string
           student_id: string
           updated_at: string
         }
@@ -652,6 +752,7 @@ export type Database = {
           id?: string
           indicator_id: string
           notes?: string | null
+          stage?: string
           student_id: string
           updated_at?: string
         }
@@ -665,6 +766,7 @@ export type Database = {
           id?: string
           indicator_id?: string
           notes?: string | null
+          stage?: string
           student_id?: string
           updated_at?: string
         }
@@ -1045,6 +1147,53 @@ export type Database = {
           },
         ]
       }
+      recovery_plans: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          indicator_ids: string[]
+          status: string
+          student_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          indicator_ids?: string[]
+          status?: string
+          student_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          indicator_ids?: string[]
+          status?: string
+          student_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_plans_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       techeduca_bug_reports: {
         Row: {
           classification: string
@@ -1265,6 +1414,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      uc_results: {
+        Row: {
+          class_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          final_result: Database["public"]["Enums"]["final_result"] | null
+          id: string
+          notes: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          final_result?: Database["public"]["Enums"]["final_result"] | null
+          id?: string
+          notes?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          final_result?: Database["public"]["Enums"]["final_result"] | null
+          id?: string
+          notes?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uc_results_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
