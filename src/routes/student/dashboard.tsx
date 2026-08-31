@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
+import { useMyGroups } from "@/lib/cafe";
+import { XpOverview } from "@/components/gam/XpOverview";
 import { useIndicators, useMyEnrollment, useMyEvaluations } from "@/lib/uc10";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
