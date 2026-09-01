@@ -201,7 +201,7 @@ function GroupsPage() {
                   />
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   <Button
                     variant="outline"
                     size="sm"
@@ -214,7 +214,32 @@ function GroupsPage() {
                   >
                     {g.status === "active" ? "Arquivar grupo" : "Reativar grupo"}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-danger hover:text-danger"
+                    onClick={async () => {
+                      if (
+                        !window.confirm(
+                          `Excluir o grupo "${g.name}"? Os integrantes voltam para a lista de alunos sem grupo.`,
+                        )
+                      )
+                        return;
+                      try {
+                        await deleteGroup.mutateAsync(g.id);
+                        toast.success("Grupo excluído.");
+                      } catch (err) {
+                        console.error(err);
+                        toast.error(
+                          "Não foi possível excluir. O grupo pode ter registros vinculados (tarefas, casos ou bugs).",
+                        );
+                      }
+                    }}
+                  >
+                    Excluir grupo
+                  </Button>
                 </div>
+
               </CardContent>
             </Card>
           );
