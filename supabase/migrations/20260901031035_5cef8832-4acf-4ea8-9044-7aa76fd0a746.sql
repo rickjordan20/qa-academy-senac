@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.groups_qa_lead_guard() FROM PUBLIC, anon, authenticated;

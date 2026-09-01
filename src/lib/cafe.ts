@@ -524,3 +524,82 @@ export function useUpdateRun(runId: string | null, groupId: string | null, missi
     },
   });
 }
+
+/* ------------------ Gestão do grupo pelo QA Lead ------------------- */
+
+function useGroupInvalidator(userId: string | null) {
+  const qc = useQueryClient();
+  return () => {
+    void qc.invalidateQueries({ queryKey: ["cafe", "my-groups", userId] });
+    void qc.invalidateQueries({ queryKey: ["cafe", "instructor-groups"] });
+    void qc.invalidateQueries({ queryKey: ["cafe", "classmates"] });
+  };
+}
+
+/** Renomeia o grupo (QA Lead ou instrutor). */
+export function useRenameGroup(groupId: string | null, userId: string | null) {
+  const invalidate = useGroupInvalidator(userId);
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) throw new Error("Informe um nome para o grupo.");
+      const { error } = await supabase.from("groups").update({ name: trimmed }).eq("id", groupId!);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+}
+
+/** Alunos da turma que ainda não fazem parte do grupo. */
+export function useClassmatesAvailable(classId: string | null, excludeIds: string[]) {
+  const key = [...excludeIds].sort().join(",");
+  return useQuery({
+    queryKey: ["cafe", "classmates", classId, key],
+    enabled: !!classId,
+    queryFn: async () => {
+      const enrollments = await supabase
+        .from("enrollments")
+        .select("student_id")
+        .eq("class_id", classId!);
+      if (enrollments.error) throw enrollments.error;
+      const ids = (enrollments.data ?? [])
+        .map((e) => e.student_id as string)
+        .filter((id) => !excludeIds.includes(id));
+      if (ids.length === 0) return [] as { id: string; name: string }[];
+      const profiles = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      if (profiles.error) throw profiles.error;
+      return (profiles.data ?? []).map((p) => ({
+        id: p.id as string,
+        name: (p.full_name as string) || (p.email as string) || "Aluno",
+      }));
+    },
+  });
+}
+
+export function useAddGroupMember(groupId: string | null, userId: string | null) {
+  const invalidate = useGroupInvalidator(userId);
+  return useMutation({
+    mutationFn: async (studentId: string) => {
+      const { error } = await supabase
+        .from("group_members")
+        .insert({ group_id: groupId!, student_id: studentId });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveGroupMember(groupId: string | null, userId: string | null) {
+  const invalidate = useGroupInvalidator(userId);
+  return useMutation({
+    mutationFn: async (studentId: string) => {
+      const { error } = await supabase
+        .from("group_members")
+        .delete()
+        .eq("group_id", groupId!)
+        .eq("student_id", studentId);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+}

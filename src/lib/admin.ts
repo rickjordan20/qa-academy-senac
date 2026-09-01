@@ -579,3 +579,16 @@ export function diffFields(oldV: Record<string, unknown>, newV: Record<string, u
   }
   return out;
 }
+
+export function useDeleteGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const members = await supabase.from("group_members").delete().eq("group_id", id);
+      if (members.error) throw members.error;
+      const { error } = await supabase.from("groups").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateGroups(qc),
+  });
+}

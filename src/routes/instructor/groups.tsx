@@ -17,6 +17,7 @@ import {
   useGroupMemberActions,
   useRoster,
   useSaveGroup,
+  useDeleteGroup,
 } from "@/lib/admin";
 
 export const Route = createFileRoute("/instructor/groups")({
@@ -43,6 +44,7 @@ function GroupsPage() {
   const { data: groups } = useAdminGroups(classIds);
   const { data: roster } = useRoster(classIds);
   const saveGroup = useSaveGroup();
+  const deleteGroup = useDeleteGroup();
   const actions = useGroupMemberActions();
 
   const [classFilter, setClassFilter] = useState("all");
@@ -135,7 +137,9 @@ function GroupsPage() {
                     {classNameById.get(g.class_id)}
                   </Link>
                 </CardTitle>
+                <GroupNameEditor id={g.id} name={g.name} />
               </CardHeader>
+
               <CardContent className="space-y-3 text-sm">
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground">QA Lead</span>
@@ -199,7 +203,7 @@ function GroupsPage() {
                   />
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   <Button
                     variant="outline"
                     size="sm"
@@ -212,7 +216,32 @@ function GroupsPage() {
                   >
                     {g.status === "active" ? "Arquivar grupo" : "Reativar grupo"}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-danger hover:text-danger"
+                    onClick={async () => {
+                      if (
+                        !window.confirm(
+                          `Excluir o grupo "${g.name}"? Os integrantes voltam para a lista de alunos sem grupo.`,
+                        )
+                      )
+                        return;
+                      try {
+                        await deleteGroup.mutateAsync(g.id);
+                        toast.success("Grupo excluído.");
+                      } catch (err) {
+                        console.error(err);
+                        toast.error(
+                          "Não foi possível excluir. O grupo pode ter registros vinculados (tarefas, casos ou bugs).",
+                        );
+                      }
+                    }}
+                  >
+                    Excluir grupo
+                  </Button>
                 </div>
+
               </CardContent>
             </Card>
           );
@@ -252,5 +281,51 @@ function GroupsPage() {
 
       <AuditList entity="groups" title="Histórico de grupos" />
     </div>
+  );
+}
+
+function GroupNameEditor({ id, name }: { id: string; name: string }) {
+  const save = useSaveGroup();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className="w-fit text-xs text-accent hover:underline"
+        onClick={() => {
+          setValue(name);
+          setEditing(true);
+        }}
+      >
+        Renomear grupo
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="flex gap-2 pt-1"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        try {
+          await save.mutateAsync({ id, values: { name: value.trim() } });
+          toast.success("Nome atualizado.");
+          setEditing(false);
+        } catch (err) {
+          console.error(err);
+          toast.error("Não foi possível renomear o grupo.");
+        }
+      }}
+    >
+      <Input required value={value} onChange={(e) => setValue(e.target.value)} className="h-8" />
+      <Button type="submit" size="sm">
+        Salvar
+      </Button>
+      <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
+        Cancelar
+      </Button>
+    </form>
   );
 }
