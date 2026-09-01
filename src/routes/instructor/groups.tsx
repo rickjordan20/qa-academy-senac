@@ -135,7 +135,9 @@ function GroupsPage() {
                     {classNameById.get(g.class_id)}
                   </Link>
                 </CardTitle>
+                <GroupNameEditor id={g.id} name={g.name} />
               </CardHeader>
+
               <CardContent className="space-y-3 text-sm">
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground">QA Lead</span>
