@@ -126,6 +126,26 @@ export type FeatureInput = {
   module_id?: string | null;
 };
 
+/** Converte o erro técnico do backend em uma mensagem clara para o usuário. */
+export function friendlyFeatureError(err: unknown): string {
+  const e = err as { code?: string; message?: string; details?: string } | null;
+  const msg = e?.message ?? "";
+  console.error("[inventário] falha ao salvar requisito:", err);
+  if (e?.code === "23505" || /duplicate key/i.test(msg)) {
+    return "Já existe um requisito com este código neste projeto.";
+  }
+  if (e?.code === "23503" || /foreign key/i.test(msg)) {
+    return "A tela (módulo) selecionada não existe mais. Recarregue a página e tente novamente.";
+  }
+  if (e?.code === "23514" || /violates check constraint/i.test(msg)) {
+    return "Dados inválidos para este projeto. Verifique a tela selecionada e tente novamente.";
+  }
+  if (e?.code === "42501" || /row-level security|permission denied/i.test(msg)) {
+    return "Você não tem permissão para cadastrar requisitos neste escopo. Fale com o instrutor ou com o QA Lead do grupo.";
+  }
+  return msg || "Não foi possível salvar o requisito.";
+}
+
 export function useCreateFeature(project: AppProject, groupId: string | null, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
@@ -135,7 +155,8 @@ export function useCreateFeature(project: AppProject, groupId: string | null, us
         module_id: input.module_id || null,
         project,
         group_id: groupId,
-        kind: "additional",
+        // A regra do banco exige: base ⇒ sem grupo; adicional ⇒ com grupo.
+        kind: groupId ? "additional" : "base",
         created_by: userId,
       } as never);
       if (error) throw error;
@@ -143,9 +164,11 @@ export function useCreateFeature(project: AppProject, groupId: string | null, us
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["inventory-modules"] });
+      qc.invalidateQueries({ queryKey: ["managed-features"] });
     },
   });
 }
+
 
 /** CRUD de Módulos/Telas — instrutor em qualquer escopo; QA Lead no próprio grupo. */
 export function useSaveModule() {
