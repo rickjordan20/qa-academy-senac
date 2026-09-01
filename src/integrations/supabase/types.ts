@@ -301,9 +301,14 @@ export type Database = {
       builder_mission_runs: {
         Row: {
           answers: Json
+          attempt: number
           checklist_state: Json
           created_at: string
           created_by: string
+          eval_status: string
+          evaluated_at: string | null
+          evaluated_by: string | null
+          feedback: string
           group_id: string | null
           id: string
           mission_id: string
@@ -313,12 +318,18 @@ export type Database = {
           submitted_at: string | null
           submitted_by: string | null
           updated_at: string
+          xp_awarded: number | null
         }
         Insert: {
           answers?: Json
+          attempt?: number
           checklist_state?: Json
           created_at?: string
           created_by: string
+          eval_status?: string
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          feedback?: string
           group_id?: string | null
           id?: string
           mission_id: string
@@ -328,12 +339,18 @@ export type Database = {
           submitted_at?: string | null
           submitted_by?: string | null
           updated_at?: string
+          xp_awarded?: number | null
         }
         Update: {
           answers?: Json
+          attempt?: number
           checklist_state?: Json
           created_at?: string
           created_by?: string
+          eval_status?: string
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          feedback?: string
           group_id?: string | null
           id?: string
           mission_id?: string
@@ -343,6 +360,7 @@ export type Database = {
           submitted_at?: string | null
           submitted_by?: string | null
           updated_at?: string
+          xp_awarded?: number | null
         }
         Relationships: [
           {
@@ -441,6 +459,54 @@ export type Database = {
           workload?: string
         }
         Relationships: []
+      }
+      builder_run_events: {
+        Row: {
+          actor_id: string | null
+          attempt: number
+          created_at: string
+          id: string
+          kind: string
+          mission_id: string
+          note: string
+          run_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          attempt?: number
+          created_at?: string
+          id?: string
+          kind: string
+          mission_id: string
+          note?: string
+          run_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          attempt?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          mission_id?: string
+          note?: string
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_run_events_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_run_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cafe_contributions: {
         Row: {

@@ -20,6 +20,7 @@ import {
   useStartRun,
   type Section,
 } from "@/lib/mission-builder";
+import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
 
 export const Route = createFileRoute("/student/activities/$missionId")({
   head: () => ({
@@ -51,6 +52,7 @@ function StudentMissionPage() {
   const { data: run } = useMyRun(mission ?? null, userId, groupId);
   const start = useStartRun(mission!, userId!, groupId);
   const save = useSaveRun(missionId);
+  const submitRun = useSubmitRun();
   const { data: entries } = useRunEntries(run?.id ?? null);
   const createEntry = useCreateEntry(run?.id ?? "");
   const deleteEntry = useDeleteEntry(run?.id ?? "");
@@ -195,32 +197,46 @@ function StudentMissionPage() {
       />
 
       {run && mission.status === "published" ? (
-        <Button
-          onClick={async () => {
-            await save.mutateAsync({
-              runId: run.id,
-              patch: {
-                status: "completed",
+        <div className="space-y-2">
+          {(run as unknown as { feedback?: string }).feedback ? (
+            <p className="rounded-md border border-border bg-secondary/40 p-3 text-sm">
+              <span className="font-semibold">Feedback do instrutor: </span>
+              {(run as unknown as { feedback?: string }).feedback}
+            </p>
+          ) : null}
+          <Button
+            disabled={submitRun.isPending}
+            onClick={async () => {
+              const attempt = await submitRun.mutateAsync({
+                run: run as unknown as SubmissionRun,
+                missionId: mission.id,
+                actorId: userId!,
                 progress,
-                submitted_at: new Date().toISOString(),
                 answers,
-                checklist_state: checklist,
-              },
-            });
-            if (userId)
-              await awardMissionXp({
-                studentId: userId,
-                groupId: run.group_id,
-                context: isCafe ? "cafe" : "techeduca",
-                action: "builder_mission_complete",
-                refId: mission.id,
-                note: mission.title,
+                checklist: checklist,
               });
-            toast.success("Missão entregue! A avaliação A/PA/NA é feita pelo instrutor.");
-          }}
-        >
-          Concluir e entregar missão
-        </Button>
+              if (userId && attempt === 1)
+                await awardMissionXp({
+                  studentId: userId,
+                  groupId: run.group_id,
+                  context: isCafe ? "cafe" : "techeduca",
+                  action: "builder_mission_complete",
+                  refId: mission.id,
+                  note: mission.title,
+                });
+              toast.success("Missão entregue! A avaliação A/PA/NA é feita pelo instrutor.");
+            }}
+          >
+            {run.submitted_at ? "Reenviar missão revisada" : "Concluir e entregar missão"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Acompanhe a situação em{" "}
+            <Link to="/student/missions" className="text-accent hover:underline">
+              Minhas Missões
+            </Link>
+            .
+          </p>
+        </div>
       ) : null}
     </div>
   );
