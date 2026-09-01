@@ -9,6 +9,8 @@ import { Field, NativeSelect } from "@/components/qa/TestCasesPanel";
 import {
   PROJECT_SCOPE,
   featureKindLabel,
+  friendlyFeatureError,
+
   groupByModule,
   projectLabel,
   useCreateFeature,
@@ -68,11 +70,11 @@ export function InventoryPanel({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.code.trim() || !form.name.trim()) {
-      toast.error("Informe código e nome da funcionalidade.");
+      toast.error("Informe código e nome do requisito.");
       return;
     }
     if (!form.module_id) {
-      toast.error("Selecione o Módulo/Tela da funcionalidade.");
+      toast.error("Selecione a Tela/Módulo do requisito.");
       return;
     }
     try {
@@ -85,9 +87,9 @@ export function InventoryPanel({
       });
       setForm({ ...empty });
       setOpen(false);
-      toast.success("Funcionalidade adicional cadastrada.");
+      toast.success("Requisito cadastrado com sucesso");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
+      toast.error(friendlyFeatureError(err));
     }
   }
 
@@ -106,9 +108,10 @@ export function InventoryPanel({
       setModuleName("");
       toast.success("Módulo/Tela criado.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
+      toast.error(friendlyFeatureError(err));
     }
   }
+
 
   return (
     <div className="space-y-4">
