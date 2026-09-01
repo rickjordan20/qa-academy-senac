@@ -23,7 +23,12 @@ import {
   useUpdateEvidenceRequest,
   useUpdateRun,
   useUpdateTask,
+  useRenameGroup,
+  useClassmatesAvailable,
+  useAddGroupMember,
+  useRemoveGroupMember,
   type CafeTask,
+  type CafeGroup,
 } from "@/lib/cafe";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -908,6 +913,111 @@ function DeliverableForm({
           >
             {status === "submitted" ? "Entrega concluída" : "Concluir entrega do grupo"}
           </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ManageGroupCard({ group, userId }: { group: CafeGroup; userId: string | null }) {
+  const rename = useRenameGroup(group.id, userId);
+  const add = useAddGroupMember(group.id, userId);
+  const remove = useRemoveGroupMember(group.id, userId);
+  const memberIds = group.members.map((m) => m.student_id);
+  const { data: available } = useClassmatesAvailable(group.class_id, memberIds);
+  const [name, setName] = useState(group.name);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Gerenciar grupo</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <form
+          className="space-y-1"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              await rename.mutateAsync(name);
+              toast.success("Nome do grupo atualizado.");
+            } catch (err) {
+              console.error(err);
+              toast.error("Não foi possível alterar o nome do grupo.");
+            }
+          }}
+        >
+          <Label htmlFor="group-name">Nome do grupo</Label>
+          <div className="flex gap-2">
+            <Input id="group-name" required value={name} onChange={(e) => setName(e.target.value)} />
+            <Button type="submit" disabled={rename.isPending}>
+              Salvar
+            </Button>
+          </div>
+        </form>
+
+        <div className="space-y-2">
+          <Label>Integrantes</Label>
+          {group.members.map((m) => (
+            <div
+              key={m.student_id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
+            >
+              <span>
+                {m.full_name}
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {m.is_qa_lead ? "QA Lead" : m.member_function}
+                </span>
+              </span>
+              {!m.is_qa_lead && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    if (!window.confirm(`Remover ${m.full_name} do grupo?`)) return;
+                    try {
+                      await remove.mutateAsync(m.student_id);
+                      toast.success("Integrante removido.");
+                    } catch (err) {
+                      console.error(err);
+                      toast.error("Não foi possível remover o integrante.");
+                    }
+                  }}
+                >
+                  Remover
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="add-member">Adicionar integrante da turma</Label>
+          <select
+            id="add-member"
+            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+            value=""
+            onChange={async (e) => {
+              const id = e.target.value;
+              if (!id) return;
+              try {
+                await add.mutateAsync(id);
+                toast.success("Integrante adicionado.");
+              } catch (err) {
+                console.error(err);
+                toast.error("Não foi possível adicionar o integrante.");
+              }
+            }}
+          >
+            <option value="">Selecione um aluno</option>
+            {(available ?? []).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            A troca de QA Lead, a turma e a situação do grupo são definidas pelo instrutor.
+          </p>
         </div>
       </CardContent>
     </Card>
