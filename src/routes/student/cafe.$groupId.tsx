@@ -300,6 +300,9 @@ function GroupPanel() {
 
             <TeamXpCard groupId={group.id} runId={runId} />
 
+            <ManageGroupCard group={group} userId={user?.id ?? null} />
+
+
             <NewTaskForm
               runId={runId}
               groupId={group.id}
