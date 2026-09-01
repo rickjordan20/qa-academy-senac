@@ -20,6 +20,7 @@ import {
   useStartRun,
   type Section,
 } from "@/lib/mission-builder";
+import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
 
 export const Route = createFileRoute("/student/activities/$missionId")({
   head: () => ({
