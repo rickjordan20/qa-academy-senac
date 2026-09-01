@@ -47,6 +47,7 @@ import { Route as InstructorMissionsIndexRouteImport } from './routes/instructor
 import { Route as InstructorMissionsMissionIdRouteImport } from './routes/instructor/missions.$missionId'
 import { Route as InstructorStudentsIndexRouteImport } from './routes/instructor/students.index'
 import { Route as InstructorStudentsStudentIdRouteImport } from './routes/instructor/students.$studentId'
+import { Route as InstructorSubmissionsIndexRouteImport } from './routes/instructor/submissions.index'
 import { Route as StudentActivitiesIndexRouteImport } from './routes/student/activities.index'
 import { Route as StudentActivitiesMissionIdRouteImport } from './routes/student/activities.$missionId'
 import { Route as StudentCafeIndexRouteImport } from './routes/student/cafe.index'
@@ -248,6 +249,12 @@ const InstructorStudentsStudentIdRoute =
     path: '/students/$studentId',
     getParentRoute: () => InstructorRouteRoute,
   } as any)
+const InstructorSubmissionsIndexRoute =
+  InstructorSubmissionsIndexRouteImport.update({
+    id: '/submissions/',
+    path: '/submissions/',
+    getParentRoute: () => InstructorRouteRoute,
+  } as any)
 const StudentActivitiesIndexRoute = StudentActivitiesIndexRouteImport.update({
   id: '/activities/',
   path: '/activities/',
@@ -328,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/instructor/classes/': typeof InstructorClassesIndexRoute
   '/instructor/missions/': typeof InstructorMissionsIndexRoute
   '/instructor/students/': typeof InstructorStudentsIndexRoute
+  '/instructor/submissions/': typeof InstructorSubmissionsIndexRoute
   '/student/activities/': typeof StudentActivitiesIndexRoute
   '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
@@ -375,6 +383,7 @@ export interface FileRoutesByTo {
   '/instructor/classes': typeof InstructorClassesIndexRoute
   '/instructor/missions': typeof InstructorMissionsIndexRoute
   '/instructor/students': typeof InstructorStudentsIndexRoute
+  '/instructor/submissions': typeof InstructorSubmissionsIndexRoute
   '/student/activities': typeof StudentActivitiesIndexRoute
   '/student/cafe': typeof StudentCafeIndexRoute
   '/student/missions': typeof StudentMissionsIndexRoute
@@ -423,6 +432,7 @@ export interface FileRoutesById {
   '/instructor/classes/': typeof InstructorClassesIndexRoute
   '/instructor/missions/': typeof InstructorMissionsIndexRoute
   '/instructor/students/': typeof InstructorStudentsIndexRoute
+  '/instructor/submissions/': typeof InstructorSubmissionsIndexRoute
   '/student/activities/': typeof StudentActivitiesIndexRoute
   '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/instructor/classes/'
     | '/instructor/missions/'
     | '/instructor/students/'
+    | '/instructor/submissions/'
     | '/student/activities/'
     | '/student/cafe/'
     | '/student/missions/'
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/instructor/classes'
     | '/instructor/missions'
     | '/instructor/students'
+    | '/instructor/submissions'
     | '/student/activities'
     | '/student/cafe'
     | '/student/missions'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/instructor/classes/'
     | '/instructor/missions/'
     | '/instructor/students/'
+    | '/instructor/submissions/'
     | '/student/activities/'
     | '/student/cafe/'
     | '/student/missions/'
@@ -849,6 +862,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorStudentsStudentIdRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/instructor/submissions/': {
+      id: '/instructor/submissions/'
+      path: '/submissions'
+      fullPath: '/instructor/submissions/'
+      preLoaderRoute: typeof InstructorSubmissionsIndexRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
     '/student/activities/': {
       id: '/student/activities/'
       path: '/activities'
@@ -922,6 +942,7 @@ interface InstructorRouteRouteChildren {
   InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
   InstructorMissionsIndexRoute: typeof InstructorMissionsIndexRoute
   InstructorStudentsIndexRoute: typeof InstructorStudentsIndexRoute
+  InstructorSubmissionsIndexRoute: typeof InstructorSubmissionsIndexRoute
 }
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
@@ -945,6 +966,7 @@ const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorClassesIndexRoute: InstructorClassesIndexRoute,
   InstructorMissionsIndexRoute: InstructorMissionsIndexRoute,
   InstructorStudentsIndexRoute: InstructorStudentsIndexRoute,
+  InstructorSubmissionsIndexRoute: InstructorSubmissionsIndexRoute,
 }
 
 const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
