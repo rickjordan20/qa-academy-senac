@@ -52,6 +52,7 @@ function StudentMissionPage() {
   const { data: run } = useMyRun(mission ?? null, userId, groupId);
   const start = useStartRun(mission!, userId!, groupId);
   const save = useSaveRun(missionId);
+  const submitRun = useSubmitRun();
   const { data: entries } = useRunEntries(run?.id ?? null);
   const createEntry = useCreateEntry(run?.id ?? "");
   const deleteEntry = useDeleteEntry(run?.id ?? "");
