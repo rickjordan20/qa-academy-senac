@@ -9,6 +9,8 @@ import { Field, NativeSelect } from "@/components/qa/TestCasesPanel";
 import {
   PROJECT_SCOPE,
   featureKindLabel,
+  friendlyFeatureError,
+
   groupByModule,
   projectLabel,
   useCreateFeature,
