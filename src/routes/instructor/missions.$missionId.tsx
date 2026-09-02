@@ -70,6 +70,7 @@ function MissionBuilderPage() {
   const { data: assignments } = useMissionAssignments(missionId);
   const { data: runs } = useMissionRunsForInstructor(missionId);
   const { data: indicators } = useIndicators();
+  const { data: badges } = useBadgeCatalog();
   const update = useUpdateMission();
   const setAssignments = useSetAssignments(missionId);
 
