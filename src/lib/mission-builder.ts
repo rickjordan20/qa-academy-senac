@@ -733,6 +733,8 @@ export function useCreateMission(userId: string | null) {
           template: input.template ?? "techeduca",
           project: input.project ?? (input.template === "cafe" ? "cafe_central" : "techeduca"),
           modality: input.template === "cafe" ? "grupo" : "individual",
+          activity_kind: input.activity_kind ?? "presencial",
+          position: input.position ?? 0,
           sections: (input.sections ?? []) as never,
           lesson_number: input.lesson_number ?? null,
           created_by: userId!,
