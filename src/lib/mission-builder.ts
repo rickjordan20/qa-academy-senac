@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { missionSituation } from "@/lib/mission-schedule";
 
 /* ==================================================================== */
 /* MOTOR DE MISSÕES — tipos                                             */
