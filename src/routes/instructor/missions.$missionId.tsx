@@ -32,6 +32,7 @@ import {
   type BuilderMission,
   type Section,
 } from "@/lib/mission-builder";
+import { useBadgeCatalog } from "@/lib/gamification";
 import { useIndicators } from "@/lib/uc10";
 import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 
@@ -69,6 +70,7 @@ function MissionBuilderPage() {
   const { data: assignments } = useMissionAssignments(missionId);
   const { data: runs } = useMissionRunsForInstructor(missionId);
   const { data: indicators } = useIndicators();
+  const { data: badges } = useBadgeCatalog();
   const update = useUpdateMission();
   const setAssignments = useSetAssignments(missionId);
 
@@ -315,8 +317,21 @@ function MissionBuilderPage() {
             <p className="text-[11px] text-muted-foreground">Horário de Brasília. Ex.: 02/09/2026 23:59</p>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Badge (opcional)</Label>
-            <Input value={draft.badge_code ?? ""} onChange={(e) => patch({ badge_code: e.target.value || null })} />
+            <Label className="text-xs">Badge relacionado (opcional)</Label>
+            <NativeSelect
+              value={draft.badge_code ?? ""}
+              onChange={(v) => patch({ badge_code: v || null })}
+            >
+              <option value="">Nenhum badge relacionado</option>
+              {(badges ?? []).map((b) => (
+                <option key={b.code} value={b.code}>
+                  {b.name}{b.criteria ? ` — ${b.criteria}` : ""}
+                </option>
+              ))}
+            </NativeSelect>
+            <p className="text-[11px] text-muted-foreground">
+              Apenas orientação: concluir a missão não concede o badge automaticamente.
+            </p>
           </div>
 
           <div className="sm:col-span-3 space-y-1">

@@ -64,6 +64,8 @@ export type Badge = {
   icon: string;
   criteria: string;
   position: number;
+  enabled: boolean;
+  updated_at?: string;
 };
 
 export type GamSettings = {
@@ -152,6 +154,62 @@ export function useMyBadges(userId: string | null) {
         .eq("student_id", userId!);
       if (error) throw error;
       return (data ?? []) as { badge_code: string; awarded_at: string }[];
+    },
+  });
+}
+
+/** Instrutor: edita apenas os textos descritivos, a posição e o status do badge. */
+export function useUpdateBadge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ code, patch }: { code: string; patch: Partial<Badge> }) => {
+      const { error } = await supabase.from("gam_badges").update(patch as never).eq("code", code);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gam"] }),
+  });
+}
+
+export type BadgeAward = { badge_code: string; awarded_at: string; student_id: string; name: string };
+
+/** Instrutor: todas as conquistas visíveis (RLS limita aos alunos das suas turmas). */
+export function useBadgeAwards() {
+  return useQuery({
+    queryKey: ["gam", "badge-awards"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gam_student_badges")
+        .select("badge_code, awarded_at, student_id")
+        .order("awarded_at", { ascending: false });
+      if (error) throw error;
+      const rows = (data ?? []) as { badge_code: string; awarded_at: string; student_id: string }[];
+      const ids = Array.from(new Set(rows.map((r) => r.student_id)));
+      let names = new Map<string, string>();
+      if (ids.length > 0) {
+        const prof = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+        names = new Map(
+          ((prof.data ?? []) as { id: string; full_name: string; email: string }[]).map((p) => [
+            p.id,
+            p.full_name?.trim() || p.email,
+          ]),
+        );
+      }
+      return rows.map((r) => ({ ...r, name: names.get(r.student_id) ?? r.student_id })) as BadgeAward[];
+    },
+  });
+}
+
+/** Missões que declaram um badge relacionado. */
+export function useMissionsByBadge() {
+  return useQuery({
+    queryKey: ["gam", "badge-missions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("builder_missions")
+        .select("id, title, badge_code")
+        .not("badge_code", "is", null);
+      if (error) throw error;
+      return (data ?? []) as { id: string; title: string; badge_code: string }[];
     },
   });
 }
@@ -401,20 +459,10 @@ export function useSyncGamification(userId: string | null) {
         await supabase.from("gam_xp_events").insert(missing as never);
       }
 
+      // A concessão de badges é feita no servidor (função segura `gam_sync_my_badges`),
+      // que recalcula os mesmos critérios e impede que o aluno conceda badges a si mesmo.
       const badges = earnedBadges(stats);
-      if (badges.length > 0) {
-        const owned = await supabase
-          .from("gam_student_badges")
-          .select("badge_code")
-          .eq("student_id", userId!);
-        const have = new Set(((owned.data ?? []) as { badge_code: string }[]).map((b) => b.badge_code));
-        const toAward = badges.filter((b) => !have.has(b));
-        if (toAward.length > 0) {
-          await supabase
-            .from("gam_student_badges")
-            .insert(toAward.map((code) => ({ student_id: userId!, badge_code: code })) as never);
-        }
-      }
+      await supabase.rpc("gam_sync_my_badges");
 
       if (missing.length > 0 || badges.length > 0) {
         void qc.invalidateQueries({ queryKey: ["gam", "xp", userId] });

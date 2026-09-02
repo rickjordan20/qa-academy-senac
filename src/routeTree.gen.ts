@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as InstructorAsyncRouteImport } from './routes/instructor/async'
+import { Route as InstructorBadgesRouteImport } from './routes/instructor/badges'
 import { Route as InstructorCafeRouteImport } from './routes/instructor/cafe'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
 import { Route as InstructorDossierRouteImport } from './routes/instructor/dossier'
@@ -96,6 +97,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const InstructorAsyncRoute = InstructorAsyncRouteImport.update({
   id: '/async',
   path: '/async',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorBadgesRoute = InstructorBadgesRouteImport.update({
+  id: '/badges',
+  path: '/badges',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorCafeRoute = InstructorCafeRouteImport.update({
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/instructor/async': typeof InstructorAsyncRoute
+  '/instructor/badges': typeof InstructorBadgesRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -364,6 +371,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/instructor/async': typeof InstructorAsyncRoute
+  '/instructor/badges': typeof InstructorBadgesRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -415,6 +423,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/instructor/async': typeof InstructorAsyncRoute
+  '/instructor/badges': typeof InstructorBadgesRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -467,6 +476,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/auth/callback'
     | '/instructor/async'
+    | '/instructor/badges'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -517,6 +527,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/auth/callback'
     | '/instructor/async'
+    | '/instructor/badges'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/auth/callback'
     | '/instructor/async'
+    | '/instructor/badges'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -675,6 +687,13 @@ declare module '@tanstack/react-router' {
       path: '/async'
       fullPath: '/instructor/async'
       preLoaderRoute: typeof InstructorAsyncRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/badges': {
+      id: '/instructor/badges'
+      path: '/badges'
+      fullPath: '/instructor/badges'
+      preLoaderRoute: typeof InstructorBadgesRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/cafe': {
@@ -962,6 +981,7 @@ declare module '@tanstack/react-router' {
 
 interface InstructorRouteRouteChildren {
   InstructorAsyncRoute: typeof InstructorAsyncRoute
+  InstructorBadgesRoute: typeof InstructorBadgesRoute
   InstructorCafeRoute: typeof InstructorCafeRoute
   InstructorDashboardRoute: typeof InstructorDashboardRoute
   InstructorDossierRoute: typeof InstructorDossierRoute
@@ -988,6 +1008,7 @@ interface InstructorRouteRouteChildren {
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorAsyncRoute: InstructorAsyncRoute,
+  InstructorBadgesRoute: InstructorBadgesRoute,
   InstructorCafeRoute: InstructorCafeRoute,
   InstructorDashboardRoute: InstructorDashboardRoute,
   InstructorDossierRoute: InstructorDossierRoute,

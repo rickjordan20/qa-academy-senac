@@ -24,6 +24,7 @@ import {
   type Section,
 } from "@/lib/mission-builder";
 import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
+import { useBadgeCatalog } from "@/lib/gamification";
 
 export const Route = createFileRoute("/student/activities/$missionId")({
   head: () => ({
@@ -47,6 +48,7 @@ function StudentMissionPage() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const { data: mission } = useBuilderMission(missionId);
+  const { data: badgeCatalog } = useBadgeCatalog();
   const { data: groups } = useMyGroups(userId);
 
   const isCafe = mission?.template === "cafe";
@@ -184,6 +186,7 @@ function StudentMissionPage() {
   }
 
   const situation = missionSituation(mission, (run ?? null) as never);
+  const relatedBadge = (badgeCatalog ?? []).find((b) => b.code === mission.badge_code) ?? null;
 
   const header = (
     <div className="mt-4 space-y-2 text-xs text-muted-foreground">
@@ -203,6 +206,15 @@ function StudentMissionPage() {
         <span>Prazo: {mission.due_at ? fmtMissionDateTime(mission.due_at, "due") : "sem prazo"}</span>
         <span className={`rounded-full px-2 py-0.5 font-semibold ${situation.tone}`}>Status: {situation.label}</span>
       </div>
+      {relatedBadge ? (
+        <div className="rounded-md border border-border bg-muted/40 p-2">
+          <p className="font-semibold text-foreground">🏅 Badge relacionado: {relatedBadge.name}</p>
+          {relatedBadge.criteria ? <p>Critério: {relatedBadge.criteria}</p> : null}
+          <p className="mt-1">
+            O badge é conquistado ao atingir o critério — concluir esta missão não o concede automaticamente.
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 
