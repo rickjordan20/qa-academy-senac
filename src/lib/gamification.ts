@@ -57,6 +57,35 @@ export type XpEvent = {
   created_at: string;
 };
 
+export type BadgeMetric =
+  | "evidences"
+  | "bugs"
+  | "executions"
+  | "cases"
+  | "retests"
+  | "uxBugs"
+  | "severeBugs"
+  | "contributions"
+  | "isQaLead";
+
+export const BADGE_METRICS: { value: BadgeMetric; label: string }[] = [
+  { value: "evidences", label: "Evidências registradas" },
+  { value: "bugs", label: "Bugs registrados" },
+  { value: "executions", label: "Execuções de teste" },
+  { value: "cases", label: "Casos de teste criados" },
+  { value: "retests", label: "Retestes realizados" },
+  { value: "uxBugs", label: "Bugs de UX" },
+  { value: "severeBugs", label: "Bugs de severidade alta/crítica" },
+  { value: "contributions", label: "Contribuições no grupo" },
+  { value: "isQaLead", label: "É QA Líder (1 = sim)" },
+];
+
+export const BADGE_OPERATORS = [">=", ">", "=", "<=", "<"] as const;
+export type BadgeOperator = (typeof BADGE_OPERATORS)[number];
+
+export type BadgeCondition = { metric: BadgeMetric; op: BadgeOperator; value: number };
+export type BadgeRuleConfig = { all: BadgeCondition[] };
+
 export type Badge = {
   code: string;
   name: string;
@@ -65,8 +94,32 @@ export type Badge = {
   criteria: string;
   position: number;
   enabled: boolean;
+  rule_config: BadgeRuleConfig;
   updated_at?: string;
 };
+
+export function normalizeRule(raw: unknown): BadgeRuleConfig {
+  const all = (raw as { all?: unknown })?.all;
+  if (!Array.isArray(all)) return { all: [] };
+  return {
+    all: all
+      .map((c) => c as Partial<BadgeCondition>)
+      .filter((c) => !!c && !!c.metric)
+      .map((c) => ({
+        metric: c.metric as BadgeMetric,
+        op: (BADGE_OPERATORS as readonly string[]).includes(String(c.op)) ? (c.op as BadgeOperator) : ">=",
+        value: Number(c.value) || 0,
+      })),
+  };
+}
+
+export function describeRule(rule: BadgeRuleConfig): string {
+  if (rule.all.length === 0) return "Sem regra automática configurada";
+  return rule.all
+    .map((c) => `${BADGE_METRICS.find((m) => m.value === c.metric)?.label ?? c.metric} ${c.op} ${c.value}`)
+    .join(" e ");
+}
+
 
 export type GamSettings = {
   id: boolean;
