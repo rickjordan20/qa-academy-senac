@@ -684,7 +684,11 @@ export type MissionContribution = CafeContribution & {
   builder_run_id: string | null;
   mission_id: string | null;
   reflection: string;
+  section_id: string | null;
+  scope: string;
 };
+
+export type MissionTaskCollaborator = { id: string; task_id: string; student_id: string };
 
 export function useMissionTasks(builderRunId: string | null) {
   return useQuery({
@@ -728,7 +732,7 @@ export function useCreateMissionTask(
   const invalidate = useMissionInvalidator(builderRunId);
   return useMutation({
     mutationFn: async (input: MissionTaskInput) => {
-      const { error } = await supabase.from("cafe_tasks").insert({
+      const { data, error } = await supabase.from("cafe_tasks").insert({
         builder_run_id: builderRunId!,
         mission_id: missionId,
         group_id: groupId!,
@@ -741,8 +745,9 @@ export function useCreateMissionTask(
         section_id: input.section_id,
         assignee_id: input.assignee_id,
         status: input.status,
-      } as never);
+      } as never).select("id").maybeSingle();
       if (error) throw error;
+      return (data as { id: string } | null)?.id ?? null;
     },
 
     onSuccess: () => invalidate("mission-tasks"),
@@ -805,6 +810,8 @@ export function useCreateMissionContribution(
       description: string;
       link: string | null;
       reflection: string;
+      section_id?: string | null;
+      scope?: string;
     }) => {
       const { error } = await supabase.from("cafe_contributions").insert({
         builder_run_id: builderRunId!,
@@ -817,6 +824,8 @@ export function useCreateMissionContribution(
         description: input.description,
         link: input.link,
         reflection: input.reflection,
+        section_id: input.section_id ?? null,
+        scope: input.scope ?? "individual",
       } as never);
       if (error) throw error;
     },
@@ -832,5 +841,47 @@ export function useDeleteMissionContribution(builderRunId: string | null) {
       if (error) throw error;
     },
     onSuccess: () => invalidate("mission-contributions"),
+  });
+}
+
+
+/* ---------------- Co-responsáveis das tarefas da missão ---------------- */
+
+/** Co-responsáveis de todas as tarefas do quadro da missão. */
+export function useMissionTaskCollaborators(taskIds: string[]) {
+  const key = [...taskIds].sort().join(",");
+  return useQuery({
+    queryKey: ["cafe", "mission-collaborators", key],
+    enabled: taskIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cafe_task_collaborators")
+        .select("id, task_id, student_id")
+        .in("task_id", taskIds);
+      if (error) throw error;
+      return (data ?? []) as MissionTaskCollaborator[];
+    },
+  });
+}
+
+/** Define a lista completa de co-responsáveis de uma tarefa (QA Líder / instrutor). */
+export function useSetMissionTaskCollaborators(groupId: string | null, userId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ taskId, studentIds }: { taskId: string; studentIds: string[] }) => {
+      const del = await supabase.from("cafe_task_collaborators").delete().eq("task_id", taskId);
+      if (del.error) throw del.error;
+      if (studentIds.length === 0) return;
+      const { error } = await supabase.from("cafe_task_collaborators").insert(
+        studentIds.map((student_id) => ({
+          task_id: taskId,
+          group_id: groupId!,
+          student_id,
+          added_by: userId!,
+        })) as never,
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["cafe", "mission-collaborators"] }),
   });
 }
