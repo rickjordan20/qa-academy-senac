@@ -158,7 +158,7 @@ function StudentMissionPage() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-5xl space-y-4">
       {isCafe ? (
         <div className="max-w-sm">
           <NativeSelect value={groupId ?? ""} onChange={(v) => setGroupId(v || null)}>
@@ -184,7 +184,13 @@ function StudentMissionPage() {
       ) : null}
 
       {isCafe && run && group ? (
-        <MissionTaskBoard missionId={mission.id} runId={run.id} group={group} userId={userId} />
+        <MissionTaskBoard
+          missionId={mission.id}
+          runId={run.id}
+          group={group}
+          userId={userId}
+          sections={(mission.sections ?? []).filter((s) => s.visible)}
+        />
       ) : null}
 
       <MissionPlayer
@@ -193,7 +199,21 @@ function StudentMissionPage() {
         readOnly={readOnly}
         header={header}
         authorName={(id) => names.data?.[id] ?? "aluno"}
+        sectionExtra={
+          isCafe && run && group
+            ? (section) => (
+                <SectionAssign
+                  section={section}
+                  runId={run.id}
+                  missionId={mission.id}
+                  group={group}
+                  userId={userId}
+                />
+              )
+            : undefined
+        }
         state={{ answers, checklist, entries: entries ?? [] }}
+
         handlers={{
           onAnswer: (sectionId, key, value) => {
             setAnswers((a) => {
