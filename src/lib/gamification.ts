@@ -191,7 +191,10 @@ export function useBadgeCatalog() {
     queryFn: async () => {
       const { data, error } = await supabase.from("gam_badges").select("*").order("position");
       if (error) throw error;
-      return (data ?? []) as Badge[];
+      return ((data ?? []) as Record<string, unknown>[]).map(
+        (b) => ({ ...b, rule_config: normalizeRule(b["rule_config"]) }) as Badge,
+      );
+
     },
   });
 }
