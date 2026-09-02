@@ -15,9 +15,12 @@ import {
   projectLabel,
   useCreateFeature,
   useDeleteFeature,
+  useDeleteModule,
   useFeatures,
   useModules,
   useSaveModule,
+  useUpdateFeature,
+  type AppFeature,
   type AppProject,
 } from "@/lib/inventory";
 import { useBugs, useTestCases, type QaScope } from "@/lib/qa";
@@ -35,23 +38,33 @@ export function InventoryPanel({
   groupId,
   userId,
   canManage = false,
+  canDelete = false,
+  canManageBase = false,
+  groupName,
   scope,
 }: {
   project: AppProject;
   groupId: string | null;
   userId: string | null;
   canManage?: boolean;
+  canDelete?: boolean;
+  canManageBase?: boolean;
+  groupName?: string | null;
   scope?: QaScope;
 }) {
   const { data: features, isPending } = useFeatures(project, groupId);
   const { data: modules } = useModules(project, groupId);
   const create = useCreateFeature(project, groupId, userId);
   const saveModule = useSaveModule();
+  const removeModule = useDeleteModule();
+  const updateFeature = useUpdateFeature();
   const remove = useDeleteFeature();
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
   const [moduleName, setModuleName] = useState("");
+  const [editingModule, setEditingModule] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
 
   const coverageScope: QaScope = scope ?? { context: "techeduca", groupId: null };
   const { data: cases } = useTestCases(coverageScope, userId);
@@ -112,6 +125,49 @@ export function InventoryPanel({
     }
   }
 
+  async function renameModule(id: string, values: { name: string; description: string }) {
+    try {
+      await saveModule.mutateAsync({ id, values });
+      toast.success("Módulo/Tela atualizado.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
+
+  async function deleteModule(id: string, count: number) {
+    if (count > 0) {
+      toast.error(
+        `Este Módulo/Tela possui ${count} funcionalidade(s) vinculada(s). Exclua ou mova as funcionalidades antes.`,
+      );
+      return;
+    }
+    if (!window.confirm("Excluir este Módulo/Tela? Esta ação não pode ser desfeita.")) return;
+    try {
+      await removeModule.mutateAsync(id);
+      toast.success("Módulo/Tela excluído.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
+
+  async function saveFeature(id: string, values: Partial<AppFeature>) {
+    try {
+      await updateFeature.mutateAsync({ id, values });
+      toast.success("Funcionalidade atualizada.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
+
+  async function deleteFeature(id: string) {
+    if (!window.confirm("Excluir esta funcionalidade? Esta ação não pode ser desfeita.")) return;
+    try {
+      await remove.mutateAsync(id);
+      toast.success("Funcionalidade removida.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -120,8 +176,17 @@ export function InventoryPanel({
           <CardTitle className="text-base">Inventário da Aplicação — {projectLabel(project)}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
+          {groupId ? (
+            <p className="text-sm font-medium text-foreground">Grupo: {groupName || "—"}</p>
+          ) : (
+            <p className="text-sm font-medium text-foreground">
+              Inventário de referência {project === "techeduca" ? "do TechEduca" : "do projeto"} — mantido
+              pelo instrutor.
+            </p>
+          )}
           <p>Modalidade: {PROJECT_SCOPE[project].modality}</p>
           <p>{PROJECT_SCOPE[project].note}</p>
+
           <p className="text-xs">
             Hierarquia: Projeto → Módulo/Tela → Funcionalidade → Caso de teste → Execução → Bug →
             Evidência → Reteste.
@@ -220,14 +285,15 @@ export function InventoryPanel({
 
           {tree.map(({ module, features: list }) => {
             const isClosed = collapsed[module.id] ?? false;
+            const ownScope = module.group_id !== null || canManageBase;
             return (
               <div key={module.id} className="rounded-lg border border-border">
-                <button
-                  type="button"
-                  onClick={() => setCollapsed((c) => ({ ...c, [module.id]: !isClosed }))}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => setCollapsed((c) => ({ ...c, [module.id]: !isClosed }))}
+                    className="flex flex-1 items-center gap-2 text-left text-sm font-medium"
+                  >
                     {isClosed ? (
                       <ChevronRight className="h-4 w-4" />
                     ) : (
@@ -237,11 +303,44 @@ export function InventoryPanel({
                     {module.status !== "active" && (
                       <span className="rounded-md bg-secondary px-2 py-0.5 text-xs">Inativo</span>
                     )}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {list.length} funcionalidade(s)
-                  </span>
-                </button>
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {list.length} funcionalidade(s)
+                    </span>
+                  </button>
+                  {canManage && ownScope && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setEditingModule((m) => (m === module.id ? null : module.id))
+                        }
+                      >
+                        {editingModule === module.id ? "Cancelar" : "Editar"}
+                      </Button>
+                      {canDelete && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteModule(module.id, list.length)}
+                        >
+                          Excluir
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {editingModule === module.id && (
+                  <ModuleEditForm
+                    name={module.name}
+                    description={module.description}
+                    onCancel={() => setEditingModule(null)}
+                    onSave={async (values) => {
+                      await renameModule(module.id, values);
+                      setEditingModule(null);
+                    }}
+                  />
+                )}
                 {!isClosed && (
                   <div className="space-y-2 border-t border-border p-3">
                     {module.description && (
@@ -252,30 +351,27 @@ export function InventoryPanel({
                         Nenhuma funcionalidade cadastrada neste módulo.
                       </p>
                     )}
-                    {list.map((f) => (
-                      <FeatureRow
-                        key={f.id}
-                        code={f.code}
-                        name={f.name}
-                        description={f.description}
-                        kind={f.kind}
-                        origin={f.kind === "additional" ? f.origin : undefined}
-                        onDelete={
-                          canManage && f.kind === "additional"
-                            ? () =>
-                                remove.mutate(f.id, {
-                                  onSuccess: () => toast.success("Funcionalidade removida."),
-                                  onError: (e) => toast.error(e.message),
-                                })
-                            : undefined
-                        }
-                      />
-                    ))}
+                    {list.map((f) => {
+                      const editable = canManage && (f.group_id !== null || canManageBase);
+                      return (
+                        <FeatureRow
+                          key={f.id}
+                          code={f.code}
+                          name={f.name}
+                          description={f.description}
+                          kind={f.kind}
+                          origin={f.kind === "additional" ? f.origin : undefined}
+                          onSave={editable ? (values) => saveFeature(f.id, values) : undefined}
+                          onDelete={editable && canDelete ? () => deleteFeature(f.id) : undefined}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
             );
           })}
+
 
           {orphans.length > 0 && (
             <div className="rounded-lg border border-dashed border-border p-3">
@@ -316,12 +412,46 @@ export function InventoryPanel({
   );
 }
 
+function ModuleEditForm({
+  name,
+  description,
+  onSave,
+  onCancel,
+}: {
+  name: string;
+  description: string;
+  onSave: (values: { name: string; description: string }) => void | Promise<void>;
+  onCancel: () => void;
+}) {
+  const [n, setN] = useState(name);
+  const [d, setD] = useState(description ?? "");
+  return (
+    <div className="grid gap-3 border-t border-border p-3 sm:grid-cols-2">
+      <Field label="Nome do Módulo/Tela" id={`mod-name-${name}`}>
+        <Input id={`mod-name-${name}`} value={n} onChange={(e) => setN(e.target.value)} />
+      </Field>
+      <Field label="Descrição" id={`mod-desc-${name}`}>
+        <Input id={`mod-desc-${name}`} value={d} onChange={(e) => setD(e.target.value)} />
+      </Field>
+      <div className="flex gap-2 sm:col-span-2">
+        <Button size="sm" onClick={() => n.trim() && onSave({ name: n.trim(), description: d.trim() })}>
+          Salvar
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
+          Cancelar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function FeatureRow({
   code,
   name,
   description,
   kind,
   origin,
+  onSave,
   onDelete,
 }: {
   code: string;
@@ -329,8 +459,59 @@ function FeatureRow({
   description: string;
   kind: string;
   origin?: string | undefined;
+  onSave?: ((values: { code: string; name: string; description: string; origin: string }) => void | Promise<void>) | undefined;
   onDelete?: (() => void) | undefined;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [v, setV] = useState({ code, name, description: description ?? "", origin: origin ?? "" });
+
+  if (editing && onSave) {
+    return (
+      <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2">
+        <Field label="Código" id={`fe-code-${code}`}>
+          <Input id={`fe-code-${code}`} value={v.code} onChange={(e) => setV((s) => ({ ...s, code: e.target.value }))} />
+        </Field>
+        <Field label="Nome" id={`fe-name-${code}`}>
+          <Input id={`fe-name-${code}`} value={v.name} onChange={(e) => setV((s) => ({ ...s, name: e.target.value }))} />
+        </Field>
+        <Field label="Origem" id={`fe-origin-${code}`}>
+          <Input id={`fe-origin-${code}`} value={v.origin} onChange={(e) => setV((s) => ({ ...s, origin: e.target.value }))} />
+        </Field>
+        <Field label="Descrição" id={`fe-desc-${code}`} full>
+          <Textarea
+            id={`fe-desc-${code}`}
+            rows={2}
+            value={v.description}
+            onChange={(e) => setV((s) => ({ ...s, description: e.target.value }))}
+          />
+        </Field>
+        <div className="flex gap-2 sm:col-span-2">
+          <Button
+            size="sm"
+            onClick={async () => {
+              if (!v.code.trim() || !v.name.trim()) {
+                toast.error("Informe código e nome.");
+                return;
+              }
+              await onSave({
+                code: v.code.trim(),
+                name: v.name.trim(),
+                description: v.description.trim(),
+                origin: v.origin.trim(),
+              });
+              setEditing(false);
+            }}
+          >
+            Salvar
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3">
       <div>
@@ -343,6 +524,11 @@ function FeatureRow({
       </div>
       <div className="flex items-center gap-2">
         <span className="rounded-md bg-secondary px-2 py-0.5 text-xs">{featureKindLabel(kind)}</span>
+        {onSave && (
+          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+            Editar
+          </Button>
+        )}
         {onDelete && (
           <Button size="sm" variant="ghost" onClick={onDelete}>
             Excluir
@@ -352,3 +538,4 @@ function FeatureRow({
     </div>
   );
 }
+

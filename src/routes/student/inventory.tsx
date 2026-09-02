@@ -70,7 +70,9 @@ function InventoryPage() {
         project={project}
         groupId={groupId}
         userId={userId}
-        canManage={isQaLead}
+        canManage={!!group}
+        canDelete={isQaLead}
+        groupName={group?.name ?? null}
         scope={scope}
       />
     </div>
