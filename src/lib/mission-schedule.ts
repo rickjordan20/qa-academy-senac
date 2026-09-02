@@ -86,8 +86,8 @@ export function toDateTimeLocalValue(value: string | null | undefined, kind: "op
 /** Converte o valor do input (horário de Brasília) em ISO UTC para o banco. */
 export function fromDateTimeLocalValue(value: string): string | null {
   if (!value) return null;
-  const d = new Date(`${value}:00${BR_OFFSET}`.replace(/:00:00-/, ":00-"));
-  const parsed = Number.isNaN(d.getTime()) ? new Date(`${value}${BR_OFFSET}`) : d;
+  const withSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ? `${value}:00` : value;
+  const parsed = new Date(`${withSeconds}${BR_OFFSET}`);
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
