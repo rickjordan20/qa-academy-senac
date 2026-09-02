@@ -794,6 +794,8 @@ export function useDuplicateMission(userId: string | null) {
           project: mission.project,
           template: mission.template,
           modality: mission.modality,
+          activity_kind: mission.activity_kind ?? "presencial",
+          position: mission.position ?? 0,
           workload: mission.workload,
           objective: mission.objective,
           status: "draft",
