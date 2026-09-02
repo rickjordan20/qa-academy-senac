@@ -183,6 +183,10 @@ function StudentMissionPage() {
         </Button>
       ) : null}
 
+      {isCafe && run && group ? (
+        <MissionTaskBoard missionId={mission.id} runId={run.id} group={group} userId={userId} />
+      ) : null}
+
       <MissionPlayer
         mission={mission}
         progress={progress}
@@ -209,10 +213,6 @@ function StudentMissionPage() {
           onDeleteEntry: (id) => deleteEntry.mutate(id),
         }}
       />
-
-      {isCafe && run && group ? (
-        <MissionTaskBoard missionId={mission.id} runId={run.id} group={group} userId={userId} />
-      ) : null}
 
       {run && mission.status === "published" ? (
         <div className="space-y-2">
