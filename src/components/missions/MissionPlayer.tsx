@@ -308,6 +308,7 @@ export function MissionPlayer({
   progress,
   authorName = (id) => id.slice(0, 8),
   header,
+  sectionExtra,
 }: {
   mission: BuilderMission;
   state: PlayerState;
@@ -316,10 +317,12 @@ export function MissionPlayer({
   progress: number;
   authorName?: (id: string) => string;
   header?: React.ReactNode;
+  sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
 }) {
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
-    <div className="max-w-4xl space-y-5">
+    <div className="w-full space-y-5">
+
       <div className="rounded-xl border border-border bg-surface p-6">
         <span className="text-xs font-semibold uppercase tracking-widest text-accent">
           {mission.lesson_number ? `Aula ${mission.lesson_number} · ` : ""}
