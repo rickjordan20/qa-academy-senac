@@ -520,6 +520,8 @@ export type Database = {
           mission_id: string | null
           reflection: string
           run_id: string | null
+          scope: string
+          section_id: string | null
           student_id: string
           task_id: string | null
           title: string
@@ -536,6 +538,8 @@ export type Database = {
           mission_id?: string | null
           reflection?: string
           run_id?: string | null
+          scope?: string
+          section_id?: string | null
           student_id: string
           task_id?: string | null
           title: string
@@ -552,6 +556,8 @@ export type Database = {
           mission_id?: string | null
           reflection?: string
           run_id?: string | null
+          scope?: string
+          section_id?: string | null
           student_id?: string
           task_id?: string | null
           title?: string

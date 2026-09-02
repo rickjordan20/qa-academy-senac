@@ -133,6 +133,7 @@ function SectionCard({
   readOnly,
   authorName,
   sectionExtra,
+  entryFilter,
 }: {
   section: Section;
   index: number;
@@ -142,10 +143,13 @@ function SectionCard({
   readOnly: boolean;
   authorName: (id: string) => string;
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
+  entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
 }) {
   const def = blockDef(section.kind);
   const answers = state.answers[section.id] ?? {};
-  const entries = state.entries.filter((e) => e.section_id === section.id);
+  const entries = state.entries.filter(
+    (e) => e.section_id === section.id && (entryFilter ? entryFilter(section, e) : true),
+  );
 
 
   return (
@@ -309,6 +313,7 @@ export function MissionPlayer({
   authorName = (id) => id.slice(0, 8),
   header,
   sectionExtra,
+  entryFilter,
 }: {
   mission: BuilderMission;
   state: PlayerState;
@@ -318,6 +323,7 @@ export function MissionPlayer({
   authorName?: (id: string) => string;
   header?: React.ReactNode;
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
+  entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
 }) {
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
@@ -351,6 +357,7 @@ export function MissionPlayer({
           readOnly={readOnly}
           authorName={authorName}
           sectionExtra={sectionExtra}
+          entryFilter={entryFilter}
 
         />
       ))}

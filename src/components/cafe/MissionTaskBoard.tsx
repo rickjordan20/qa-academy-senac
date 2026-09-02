@@ -19,7 +19,9 @@ import {
   useDeleteMissionContribution,
   useDeleteMissionTask,
   useMissionContributions,
+  useMissionTaskCollaborators,
   useMissionTasks,
+  useSetMissionTaskCollaborators,
   useUpdateMissionTask,
   type CafeGroup,
   type MissionTask,
@@ -46,11 +48,13 @@ const emptyTask = {
   feature_id: "",
   section_id: "",
   assignee_id: "",
+  collaborators: [] as string[],
   status: "todo" as TaskStatus,
 };
 
 const emptyContribution = {
   task_id: "",
+  section_id: "",
   kind: "execucao",
   title: "",
   description: "",
@@ -174,6 +178,10 @@ export function MissionTaskBoard({
   const { data: modules } = useModules("cafe_central", group.id);
   const { data: features } = useFeatures("cafe_central", group.id);
 
+  const taskIds = useMemo(() => (tasks ?? []).map((t) => t.id), [tasks]);
+  const { data: collaborators } = useMissionTaskCollaborators(taskIds);
+  const setCollaborators = useSetMissionTaskCollaborators(group.id, userId);
+
   const createTask = useCreateMissionTask(runId, missionId, group.id, userId);
   const updateTask = useUpdateMissionTask(runId);
   const deleteTask = useDeleteMissionTask(runId);
@@ -183,7 +191,20 @@ export function MissionTaskBoard({
   const [editing, setEditing] = useState<MissionTask | null>(null);
 
   const list = tasks ?? [];
-  const myTasks = useMemo(() => list.filter((t) => t.assignee_id === userId), [list, userId]);
+  const collabOf = (taskId: string) =>
+    (collaborators ?? []).filter((c) => c.task_id === taskId).map((c) => c.student_id);
+  const isResponsible = (t: MissionTask) =>
+    t.assignee_id === userId ||
+    (collaborators ?? []).some((c) => c.task_id === t.id && c.student_id === userId);
+  const myTasks = useMemo(
+    () =>
+      list.filter(
+        (t) =>
+          t.assignee_id === userId ||
+          (collaborators ?? []).some((c) => c.task_id === t.id && c.student_id === userId),
+      ),
+    [list, userId, collaborators],
+  );
   const myRole = memberLabel(group, userId).role;
 
   const sectionLabel = (id: string | null) => {
@@ -212,11 +233,14 @@ export function MissionTaskBoard({
       status: form.status,
     };
     try {
+      const extra = form.collaborators.filter((id) => id && id !== form.assignee_id);
       if (editing) {
         await updateTask.mutateAsync({ id: editing.id, patch: payload });
+        await setCollaborators.mutateAsync({ taskId: editing.id, studentIds: extra });
         toast.success("Tarefa atualizada.");
       } else {
-        await createTask.mutateAsync(payload);
+        const newId = await createTask.mutateAsync(payload);
+        if (newId) await setCollaborators.mutateAsync({ taskId: newId, studentIds: extra });
         toast.success("Tarefa distribuída para o grupo.");
       }
       setForm(emptyTask);
@@ -237,6 +261,7 @@ export function MissionTaskBoard({
       feature_id: t.feature_id ?? "",
       section_id: t.section_id ?? "",
       assignee_id: t.assignee_id ?? "",
+      collaborators: collabOf(t.id),
       status: (COLUMNS.find((c) => c.accepts.includes(t.status))?.key ?? "todo") as TaskStatus,
     });
     setOpen(true);
@@ -246,7 +271,8 @@ export function MissionTaskBoard({
 
   function TaskCard({ t }: { t: MissionTask }) {
     const who = memberLabel(group, t.assignee_id);
-    const mine = t.assignee_id === userId;
+    const extra = collabOf(t.id);
+    const mine = isResponsible(t);
     const block = sectionLabel(t.section_id);
     return (
       <div
@@ -268,6 +294,14 @@ export function MissionTaskBoard({
           {mine ? " (você)" : ""}
           {who.role ? ` — ${who.role}` : ""}
         </p>
+        {extra.length ? (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold">Também responsáveis: </span>
+            {extra
+              .map((id) => `${memberLabel(group, id).name}${id === userId ? " (você)" : ""}`)
+              .join(", ")}
+          </p>
+        ) : null}
         {t.feature_id || t.area ? (
           <p className="text-xs text-muted-foreground">
             <span className="font-semibold">Tela/Funcionalidade: </span>
@@ -345,6 +379,42 @@ export function MissionTaskBoard({
                     onChange={(v) => setForm((f) => ({ ...f, assignee_id: v }))}
                     options={memberOptions}
                   />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Outros responsáveis (opcional)</Label>
+                  <div className="mt-1 flex flex-wrap gap-3 rounded-md border border-border bg-background p-3">
+                    {group.members.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">Grupo sem integrantes.</span>
+                    ) : (
+                      group.members.map((m) => (
+                        <label
+                          key={m.student_id}
+                          className="flex items-center gap-2 text-xs"
+                          htmlFor={`collab-${m.student_id}`}
+                        >
+                          <input
+                            id={`collab-${m.student_id}`}
+                            type="checkbox"
+                            className="h-4 w-4 accent-[hsl(var(--accent))]"
+                            checked={form.collaborators.includes(m.student_id)}
+                            disabled={m.student_id === form.assignee_id}
+                            onChange={(e) =>
+                              setForm((f) => ({
+                                ...f,
+                                collaborators: e.target.checked
+                                  ? [...f.collaborators, m.student_id]
+                                  : f.collaborators.filter((id) => id !== m.student_id),
+                              }))
+                            }
+                          />
+                          <span>
+                            {m.full_name}
+                            {m.student_id === form.assignee_id ? " (responsável principal)" : ""}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="task-status">Status</Label>
@@ -473,6 +543,7 @@ export function MissionTaskBoard({
               contributions={contributions ?? []}
               areaOf={areaOf}
               sectionLabel={sectionLabel}
+              sections={sections}
             />
           </TabsContent>
         </Tabs>
@@ -490,6 +561,7 @@ function ContributionsPanel({
   contributions,
   areaOf,
   sectionLabel,
+  sections,
 }: {
   runId: string;
   missionId: string;
@@ -506,9 +578,12 @@ function ContributionsPanel({
     link: string | null;
     reflection: string;
     created_at: string;
+    section_id?: string | null;
+    scope?: string;
   }[];
   areaOf: (t: MissionTask) => string;
   sectionLabel: (id: string | null) => string;
+  sections: Section[];
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
@@ -527,8 +602,14 @@ function ContributionsPanel({
       toast.error("A evidência deve ser um link https válido.");
       return;
     }
+    const sectionId = form.section_id || null;
+    const scope = sectionId
+      ? (sections.find((x) => x.id === sectionId)?.scope ?? "individual")
+      : "individual";
     try {
       await create.mutateAsync({
+        section_id: sectionId,
+        scope,
         task_id: form.task_id || null,
         kind: form.kind,
         title: form.title.trim(),
@@ -568,6 +649,21 @@ function ContributionsPanel({
                 ...myTasks.map((t) => ({
                   value: t.id,
                   label: `${t.title}${sectionLabel(t.section_id) ? ` — ${sectionLabel(t.section_id)}` : ""}`,
+                })),
+              ]}
+            />
+          </div>
+          <div>
+            <Label htmlFor="c-section">Bloco da missão</Label>
+            <NativeSelect
+              id="c-section"
+              value={form.section_id}
+              onChange={(v) => setForm((f) => ({ ...f, section_id: v }))}
+              options={[
+                { value: "", label: "Sem bloco vinculado (individual)" },
+                ...sections.map((s2) => ({
+                  value: s2.id,
+                  label: `${blockDef(s2.kind).icon} ${s2.title} — ${s2.scope === "individual" ? "individual" : "grupo"}`,
                 })),
               ]}
             />
@@ -645,6 +741,10 @@ function ContributionsPanel({
                   {t ? t.title : "—"}
                   {t && sectionLabel(t.section_id) ? ` · Bloco: ${sectionLabel(t.section_id)}` : ""}
                   {t && (t.feature_id || t.area) ? ` · ${areaOf(t)}` : ""}
+                  {c.section_id && sectionLabel(c.section_id)
+                    ? ` · Bloco: ${sectionLabel(c.section_id)}`
+                    : ""}
+                  {` · Registro ${c.scope === "group" ? "do grupo" : "individual"}`}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap">{c.description}</p>
                 {c.reflection ? (

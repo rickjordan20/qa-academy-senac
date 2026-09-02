@@ -943,7 +943,7 @@ export function useCreateEntry(runId: string) {
       data: Record<string, string>;
       link?: string | null;
     }) => {
-      const { error } = await supabase.from("builder_mission_entries").insert({
+      const { data, error } = await supabase.from("builder_mission_entries").insert({
         run_id: runId,
         mission_id: input.missionId,
         section_id: input.sectionId,
@@ -955,8 +955,9 @@ export function useCreateEntry(runId: string) {
         data: input.data as never,
         link: input.link ?? null,
         file_path: null,
-      } as never);
+      } as never).select("id").maybeSingle();
       if (error) throw error;
+      return (data as { id: string } | null)?.id ?? null;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["builder-entries", runId] }),
   });
@@ -999,4 +1000,24 @@ export async function signedEvidenceUrl(path: string) {
   const { data, error } = await supabase.storage.from("evidencias").createSignedUrl(path, 60);
   if (error) throw error;
   return data.signedUrl;
+}
+
+
+/** XP coletivo do grupo pela missão do Café Central (uma vez por ação/execução). */
+export async function awardGroupMissionXp(params: {
+  groupId: string;
+  action: "cafe_collaboration" | "cafe_mission_delivered";
+  refId: string;
+  note: string;
+}) {
+  await supabase.from("gam_xp_events").insert({
+    group_id: params.groupId,
+    context: "cafe",
+    kind: "collective",
+    action_code: params.action,
+    xp: 0,
+    ref_kind: "group_run",
+    ref_id: params.refId,
+    note: params.note,
+  } as never);
 }

@@ -6,9 +6,10 @@ import { NativeSelect } from "@/components/missions/DynamicFields";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
 import { MissionTaskBoard, SectionAssign } from "@/components/cafe/MissionTaskBoard";
 import { useAuth } from "@/lib/auth";
-import { useMyGroups } from "@/lib/cafe";
+import { useCreateMissionContribution, useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
 import {
+  awardGroupMissionXp,
   awardMissionXp,
   blockDef,
   computeProgress,
@@ -61,6 +62,12 @@ function StudentMissionPage() {
   const submitRun = useSubmitRun();
   const { data: entries } = useRunEntries(run?.id ?? null);
   const createEntry = useCreateEntry(run?.id ?? "");
+  const createContribution = useCreateMissionContribution(
+    run?.id ?? null,
+    missionId,
+    groupId,
+    userId,
+  );
   const deleteEntry = useDeleteEntry(run?.id ?? "");
 
   const [answers, setAnswers] = useState<Record<string, Record<string, string>>>({});
@@ -119,7 +126,7 @@ function StudentMissionPage() {
     if (!run || !userId) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
-    await createEntry.mutateAsync({
+    const entryId = await createEntry.mutateAsync({
       missionId: mission!.id,
       sectionId: section.id,
       kind: section.kind,
@@ -130,17 +137,49 @@ function StudentMissionPage() {
       data: values,
       link: values["url"] ?? values["link"] ?? null,
     });
+    const individual = !isCafe || section.scope === "individual";
     if (section.xp > 0) {
       await awardMissionXp({
         studentId: userId,
         groupId: run.group_id,
         context: isCafe ? "cafe" : "techeduca",
         action: "builder_block_submit",
-        refId: mission!.id,
+        refId: entryId ?? mission!.id,
         note: `${mission!.title} — ${section.title}`,
       });
     }
-    toast.success("Registro salvo com sua autoria.");
+    if (isCafe && run.group_id && !individual) {
+      // bloco coletivo: XP de grupo pela missão em geral (uma vez por execução)
+      await awardGroupMissionXp({
+        groupId: run.group_id,
+        action: "cafe_collaboration",
+        refId: run.id,
+        note: `${mission!.title} — colaboração do grupo`,
+      });
+    }
+    if (isCafe && groupId) {
+      // rastreabilidade individual: aparece em "Minhas contribuições"
+      try {
+        await createContribution.mutateAsync({
+          task_id: null,
+          section_id: section.id,
+          scope: individual ? "individual" : "group",
+          kind: section.kind === "evidence" ? "evidencia" : "execucao",
+          title: values[titleKey] ?? section.title,
+          description:
+            values["descricao"] ?? values["description"] ?? `Registro no bloco ${section.title}.`,
+          link: values["url"] ?? values["link"] ?? null,
+          reflection: "",
+        });
+      } catch (err) {
+        console.error("[café] falha ao espelhar contribuição do bloco:", err);
+      }
+    }
+    toast.success(
+      individual
+        ? "Registro individual salvo com sua autoria."
+        : "Registro do grupo salvo com sua autoria.",
+    );
   }
 
   const header = (
@@ -212,6 +251,12 @@ function StudentMissionPage() {
               )
             : undefined
         }
+        entryFilter={
+          isCafe
+            ? (section, entry) =>
+                section.scope === "individual" ? entry.author_id === userId : true
+            : undefined
+        }
         state={{ answers, checklist, entries: entries ?? [] }}
 
         handlers={{
@@ -260,6 +305,13 @@ function StudentMissionPage() {
                   context: isCafe ? "cafe" : "techeduca",
                   action: "builder_mission_complete",
                   refId: mission.id,
+                  note: mission.title,
+                });
+              if (isCafe && run.group_id)
+                await awardGroupMissionXp({
+                  groupId: run.group_id,
+                  action: "cafe_mission_delivered",
+                  refId: run.id,
                   note: mission.title,
                 });
               toast.success("Missão entregue! A avaliação A/PA/NA é feita pelo instrutor.");
