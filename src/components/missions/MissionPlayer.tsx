@@ -132,6 +132,7 @@ function SectionCard({
   handlers,
   readOnly,
   authorName,
+  sectionExtra,
 }: {
   section: Section;
   index: number;
@@ -140,10 +141,12 @@ function SectionCard({
   handlers: PlayerHandlers;
   readOnly: boolean;
   authorName: (id: string) => string;
+  sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
 }) {
   const def = blockDef(section.kind);
   const answers = state.answers[section.id] ?? {};
   const entries = state.entries.filter((e) => e.section_id === section.id);
+
 
   return (
     <Card>
