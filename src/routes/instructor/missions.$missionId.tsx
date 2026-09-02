@@ -296,20 +296,22 @@ function MissionBuilderPage() {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Abertura</Label>
+            <Label className="text-xs">Abertura (data e horário)</Label>
             <Input
-              type="date"
-              value={draft.opens_at?.slice(0, 10) ?? ""}
-              onChange={(e) => patch({ opens_at: e.target.value || null })}
+              type="datetime-local"
+              value={toDateTimeLocalValue(draft.opens_at, "opens")}
+              onChange={(e) => patch({ opens_at: fromDateTimeLocalValue(e.target.value) })}
             />
+            <p className="text-[11px] text-muted-foreground">Horário de Brasília. Ex.: 02/09/2026 08:00</p>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Prazo</Label>
+            <Label className="text-xs">Prazo (data e horário)</Label>
             <Input
-              type="date"
-              value={draft.due_at?.slice(0, 10) ?? ""}
-              onChange={(e) => patch({ due_at: e.target.value || null })}
+              type="datetime-local"
+              value={toDateTimeLocalValue(draft.due_at, "due")}
+              onChange={(e) => patch({ due_at: fromDateTimeLocalValue(e.target.value) })}
             />
+            <p className="text-[11px] text-muted-foreground">Horário de Brasília. Ex.: 02/09/2026 23:59</p>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Badge (opcional)</Label>
