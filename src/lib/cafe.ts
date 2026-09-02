@@ -143,13 +143,23 @@ export function useCafeMission() {
 async function loadGroups(groupIds: string[]): Promise<CafeGroup[]> {
   if (groupIds.length === 0) return [];
   const [groupsRes, membersRes] = await Promise.all([
-    supabase.from("groups").select("id, name, class_id, qa_lead_id, classes(name)").in("id", groupIds),
-    supabase.from("group_members").select("group_id, student_id, member_function").in("group_id", groupIds),
+    supabase
+      .from("groups")
+      .select("id, name, class_id, qa_lead_id, classes(name)")
+      .in("id", groupIds),
+    supabase
+      .from("group_members")
+      .select("group_id, student_id, member_function")
+      .in("group_id", groupIds),
   ]);
   if (groupsRes.error) throw groupsRes.error;
   if (membersRes.error) throw membersRes.error;
 
-  const memberRows = (membersRes.data ?? []) as { group_id: string; student_id: string; member_function: string }[];
+  const memberRows = (membersRes.data ?? []) as {
+    group_id: string;
+    student_id: string;
+    member_function: string;
+  }[];
   const groupRows = (groupsRes.data ?? []) as Record<string, unknown>[];
   const ids = new Set<string>();
   memberRows.forEach((m) => ids.add(m.student_id));
@@ -159,11 +169,17 @@ async function loadGroups(groupIds: string[]): Promise<CafeGroup[]> {
   });
 
   const profilesRes = ids.size
-    ? await supabase.from("profiles").select("id, full_name, email").in("id", [...ids])
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", [...ids])
     : { data: [], error: null };
   if (profilesRes.error) throw profilesRes.error;
   const profileMap = new Map(
-    ((profilesRes.data ?? []) as { id: string; full_name: string; email: string }[]).map((p) => [p.id, p]),
+    ((profilesRes.data ?? []) as { id: string; full_name: string; email: string }[]).map((p) => [
+      p.id,
+      p,
+    ]),
   );
 
   return groupRows.map((g) => {
@@ -173,7 +189,8 @@ async function loadGroups(groupIds: string[]): Promise<CafeGroup[]> {
     const members: GroupMemberInfo[] = rows.map((m) => ({
       student_id: m.student_id,
       member_function: m.member_function,
-      full_name: profileMap.get(m.student_id)?.full_name || profileMap.get(m.student_id)?.email || "Aluno",
+      full_name:
+        profileMap.get(m.student_id)?.full_name || profileMap.get(m.student_id)?.email || "Aluno",
       email: profileMap.get(m.student_id)?.email ?? "",
       is_qa_lead: m.student_id === leadId,
     }));
@@ -236,7 +253,11 @@ export function useInstructorGroups(userId: string | null) {
 }
 
 /** Garante a execução coletiva da missão para o grupo. */
-export function useEnsureGroupRun(groupId: string | null, missionId: string | null, userId: string | null) {
+export function useEnsureGroupRun(
+  groupId: string | null,
+  missionId: string | null,
+  userId: string | null,
+) {
   return useQuery({
     queryKey: ["cafe", "run", groupId, missionId],
     enabled: !!groupId && !!missionId && !!userId,
@@ -391,7 +412,13 @@ export function useCreateTask(runId: string | null, groupId: string | null, user
 export function useUpdateTask(runId: string | null) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Pick<CafeTask, "status" | "assignee_id" | "title" | "description" | "area">> }) => {
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<Pick<CafeTask, "status" | "assignee_id" | "title" | "description" | "area">>;
+    }) => {
       const { error } = await supabase.from("cafe_tasks").update(patch).eq("id", id);
       if (error) throw error;
     },
@@ -410,16 +437,27 @@ export function useDeleteTask(runId: string | null) {
   });
 }
 
-export function useSetTaskCollaborators(runId: string | null, groupId: string | null, userId: string | null) {
+export function useSetTaskCollaborators(
+  runId: string | null,
+  groupId: string | null,
+  userId: string | null,
+) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
     mutationFn: async ({ taskId, studentIds }: { taskId: string; studentIds: string[] }) => {
       const del = await supabase.from("cafe_task_collaborators").delete().eq("task_id", taskId);
       if (del.error) throw del.error;
       if (studentIds.length) {
-        const { error } = await supabase.from("cafe_task_collaborators").insert(
-          studentIds.map((student_id) => ({ task_id: taskId, group_id: groupId!, student_id, added_by: userId! })),
-        );
+        const { error } = await supabase
+          .from("cafe_task_collaborators")
+          .insert(
+            studentIds.map((student_id) => ({
+              task_id: taskId,
+              group_id: groupId!,
+              student_id,
+              added_by: userId!,
+            })),
+          );
         if (error) throw error;
       }
     },
@@ -445,7 +483,11 @@ export function useSetMemberFunction(groupId: string | null, userId: string | nu
   });
 }
 
-export function useCreateContribution(runId: string | null, groupId: string | null, userId: string | null) {
+export function useCreateContribution(
+  runId: string | null,
+  groupId: string | null,
+  userId: string | null,
+) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
     mutationFn: async (input: {
@@ -482,10 +524,18 @@ export function useDeleteContribution(runId: string | null) {
   });
 }
 
-export function useRequestEvidence(runId: string | null, groupId: string | null, userId: string | null) {
+export function useRequestEvidence(
+  runId: string | null,
+  groupId: string | null,
+  userId: string | null,
+) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
-    mutationFn: async (input: { requested_from: string; message: string; task_id: string | null }) => {
+    mutationFn: async (input: {
+      requested_from: string;
+      message: string;
+      task_id: string | null;
+    }) => {
       const { error } = await supabase.from("cafe_evidence_requests").insert({
         run_id: runId!,
         group_id: groupId!,
@@ -504,17 +554,29 @@ export function useUpdateEvidenceRequest(runId: string | null) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("cafe_evidence_requests").update({ status }).eq("id", id);
+      const { error } = await supabase
+        .from("cafe_evidence_requests")
+        .update({ status })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(["evidence-requests"]),
   });
 }
 
-export function useUpdateRun(runId: string | null, groupId: string | null, missionId: string | null) {
+export function useUpdateRun(
+  runId: string | null,
+  groupId: string | null,
+  missionId: string | null,
+) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (patch: Partial<Pick<CafeRun, "deliverable" | "status">> & { submitted_at?: string | null; submitted_by?: string | null }) => {
+    mutationFn: async (
+      patch: Partial<Pick<CafeRun, "deliverable" | "status">> & {
+        submitted_at?: string | null;
+        submitted_by?: string | null;
+      },
+    ) => {
       const { error } = await supabase.from("cafe_group_runs").update(patch).eq("id", runId!);
       if (error) throw error;
     },
@@ -686,7 +748,10 @@ export function useUpdateMissionTask(builderRunId: string | null) {
   const invalidate = useMissionInvalidator(builderRunId);
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<MissionTaskInput> }) => {
-      const { error } = await supabase.from("cafe_tasks").update(patch as never).eq("id", id);
+      const { error } = await supabase
+        .from("cafe_tasks")
+        .update(patch as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => invalidate("mission-tasks"),
