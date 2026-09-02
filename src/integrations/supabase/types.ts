@@ -1179,6 +1179,7 @@ export type Database = {
           icon: string
           name: string
           position: number
+          rule_config: Json
           updated_at: string
         }
         Insert: {
@@ -1190,6 +1191,7 @@ export type Database = {
           icon?: string
           name: string
           position?: number
+          rule_config?: Json
           updated_at?: string
         }
         Update: {
@@ -1201,6 +1203,7 @@ export type Database = {
           icon?: string
           name?: string
           position?: number
+          rule_config?: Json
           updated_at?: string
         }
         Relationships: []
