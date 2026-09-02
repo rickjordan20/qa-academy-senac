@@ -122,6 +122,49 @@ export function InventoryPanel({
     }
   }
 
+  async function renameModule(id: string, values: { name: string; description: string }) {
+    try {
+      await saveModule.mutateAsync({ id, values });
+      toast.success("Módulo/Tela atualizado.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
+
+  async function deleteModule(id: string, count: number) {
+    if (count > 0) {
+      toast.error(
+        `Este Módulo/Tela possui ${count} funcionalidade(s) vinculada(s). Exclua ou mova as funcionalidades antes.`,
+      );
+      return;
+    }
+    if (!window.confirm("Excluir este Módulo/Tela? Esta ação não pode ser desfeita.")) return;
+    try {
+      await removeModule.mutateAsync(id);
+      toast.success("Módulo/Tela excluído.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
+
+  async function saveFeature(id: string, values: Partial<AppFeature>) {
+    try {
+      await updateFeature.mutateAsync({ id, values });
+      toast.success("Funcionalidade atualizada.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
+
+  async function deleteFeature(id: string) {
+    if (!window.confirm("Excluir esta funcionalidade? Esta ação não pode ser desfeita.")) return;
+    try {
+      await remove.mutateAsync(id);
+      toast.success("Funcionalidade removida.");
+    } catch (err) {
+      toast.error(friendlyFeatureError(err));
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -130,8 +173,17 @@ export function InventoryPanel({
           <CardTitle className="text-base">Inventário da Aplicação — {projectLabel(project)}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
+          {groupId ? (
+            <p className="text-sm font-medium text-foreground">Grupo: {groupName || "—"}</p>
+          ) : (
+            <p className="text-sm font-medium text-foreground">
+              Inventário de referência {project === "techeduca" ? "do TechEduca" : "do projeto"} — mantido
+              pelo instrutor.
+            </p>
+          )}
           <p>Modalidade: {PROJECT_SCOPE[project].modality}</p>
           <p>{PROJECT_SCOPE[project].note}</p>
+
           <p className="text-xs">
             Hierarquia: Projeto → Módulo/Tela → Funcionalidade → Caso de teste → Execução → Bug →
             Evidência → Reteste.
