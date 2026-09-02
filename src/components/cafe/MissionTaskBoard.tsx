@@ -543,6 +543,7 @@ export function MissionTaskBoard({
               contributions={contributions ?? []}
               areaOf={areaOf}
               sectionLabel={sectionLabel}
+              sections={sections}
             />
           </TabsContent>
         </Tabs>
@@ -560,6 +561,7 @@ function ContributionsPanel({
   contributions,
   areaOf,
   sectionLabel,
+  sections,
 }: {
   runId: string;
   missionId: string;
@@ -576,9 +578,12 @@ function ContributionsPanel({
     link: string | null;
     reflection: string;
     created_at: string;
+    section_id?: string | null;
+    scope?: string;
   }[];
   areaOf: (t: MissionTask) => string;
   sectionLabel: (id: string | null) => string;
+  sections: Section[];
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
@@ -597,8 +602,14 @@ function ContributionsPanel({
       toast.error("A evidência deve ser um link https válido.");
       return;
     }
+    const sectionId = form.section_id || null;
+    const scope = sectionId
+      ? (sections.find((x) => x.id === sectionId)?.scope ?? "individual")
+      : "individual";
     try {
       await create.mutateAsync({
+        section_id: sectionId,
+        scope,
         task_id: form.task_id || null,
         kind: form.kind,
         title: form.title.trim(),
@@ -638,6 +649,21 @@ function ContributionsPanel({
                 ...myTasks.map((t) => ({
                   value: t.id,
                   label: `${t.title}${sectionLabel(t.section_id) ? ` — ${sectionLabel(t.section_id)}` : ""}`,
+                })),
+              ]}
+            />
+          </div>
+          <div>
+            <Label htmlFor="c-section">Bloco da missão</Label>
+            <NativeSelect
+              id="c-section"
+              value={form.section_id}
+              onChange={(v) => setForm((f) => ({ ...f, section_id: v }))}
+              options={[
+                { value: "", label: "Sem bloco vinculado (individual)" },
+                ...sections.map((s2) => ({
+                  value: s2.id,
+                  label: `${blockDef(s2.kind).icon} ${s2.title} — ${s2.scope === "individual" ? "individual" : "grupo"}`,
                 })),
               ]}
             />
@@ -715,6 +741,10 @@ function ContributionsPanel({
                   {t ? t.title : "—"}
                   {t && sectionLabel(t.section_id) ? ` · Bloco: ${sectionLabel(t.section_id)}` : ""}
                   {t && (t.feature_id || t.area) ? ` · ${areaOf(t)}` : ""}
+                  {c.section_id && sectionLabel(c.section_id)
+                    ? ` · Bloco: ${sectionLabel(c.section_id)}`
+                    : ""}
+                  {` · Registro ${c.scope === "group" ? "do grupo" : "individual"}`}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap">{c.description}</p>
                 {c.reflection ? (
