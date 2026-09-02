@@ -603,3 +603,164 @@ export function useRemoveGroupMember(groupId: string | null, userId: string | nu
     onSuccess: invalidate,
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Quadro de tarefas DENTRO da missão do Café Central                  */
+/* (tarefas e contribuições vinculadas à execução da missão do grupo)  */
+/* ------------------------------------------------------------------ */
+
+export type MissionTask = CafeTask & {
+  builder_run_id: string | null;
+  mission_id: string | null;
+  module_id: string | null;
+  feature_id: string | null;
+};
+
+export type MissionContribution = CafeContribution & {
+  builder_run_id: string | null;
+  mission_id: string | null;
+  reflection: string;
+};
+
+export function useMissionTasks(builderRunId: string | null) {
+  return useQuery({
+    queryKey: ["cafe", "mission-tasks", builderRunId],
+    enabled: !!builderRunId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cafe_tasks")
+        .select("*")
+        .eq("builder_run_id", builderRunId!)
+        .order("created_at");
+      if (error) throw error;
+      return (data ?? []) as unknown as MissionTask[];
+    },
+  });
+}
+
+function useMissionInvalidator(builderRunId: string | null) {
+  const qc = useQueryClient();
+  return (key: "mission-tasks" | "mission-contributions") =>
+    void qc.invalidateQueries({ queryKey: ["cafe", key, builderRunId] });
+}
+
+export type MissionTaskInput = {
+  title: string;
+  description: string;
+  area: string;
+  module_id: string | null;
+  feature_id: string | null;
+  assignee_id: string | null;
+  status: TaskStatus;
+};
+
+export function useCreateMissionTask(
+  builderRunId: string | null,
+  missionId: string | null,
+  groupId: string | null,
+  userId: string | null,
+) {
+  const invalidate = useMissionInvalidator(builderRunId);
+  return useMutation({
+    mutationFn: async (input: MissionTaskInput) => {
+      const { error } = await supabase.from("cafe_tasks").insert({
+        builder_run_id: builderRunId!,
+        mission_id: missionId,
+        group_id: groupId!,
+        created_by: userId!,
+        title: input.title,
+        description: input.description,
+        area: input.area,
+        module_id: input.module_id,
+        feature_id: input.feature_id,
+        assignee_id: input.assignee_id,
+        status: input.status,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate("mission-tasks"),
+  });
+}
+
+export function useUpdateMissionTask(builderRunId: string | null) {
+  const invalidate = useMissionInvalidator(builderRunId);
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<MissionTaskInput> }) => {
+      const { error } = await supabase.from("cafe_tasks").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate("mission-tasks"),
+  });
+}
+
+export function useDeleteMissionTask(builderRunId: string | null) {
+  const invalidate = useMissionInvalidator(builderRunId);
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cafe_tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate("mission-tasks"),
+  });
+}
+
+export function useMissionContributions(builderRunId: string | null) {
+  return useQuery({
+    queryKey: ["cafe", "mission-contributions", builderRunId],
+    enabled: !!builderRunId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cafe_contributions")
+        .select("*")
+        .eq("builder_run_id", builderRunId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as MissionContribution[];
+    },
+  });
+}
+
+export function useCreateMissionContribution(
+  builderRunId: string | null,
+  missionId: string | null,
+  groupId: string | null,
+  userId: string | null,
+) {
+  const invalidate = useMissionInvalidator(builderRunId);
+  return useMutation({
+    mutationFn: async (input: {
+      task_id: string | null;
+      kind: string;
+      title: string;
+      description: string;
+      link: string | null;
+      reflection: string;
+    }) => {
+      const { error } = await supabase.from("cafe_contributions").insert({
+        builder_run_id: builderRunId!,
+        mission_id: missionId,
+        group_id: groupId!,
+        student_id: userId!,
+        task_id: input.task_id,
+        kind: input.kind,
+        title: input.title,
+        description: input.description,
+        link: input.link,
+        reflection: input.reflection,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate("mission-contributions"),
+  });
+}
+
+export function useDeleteMissionContribution(builderRunId: string | null) {
+  const invalidate = useMissionInvalidator(builderRunId);
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cafe_contributions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate("mission-contributions"),
+  });
+}
