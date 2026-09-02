@@ -313,6 +313,7 @@ export function MissionPlayer({
   authorName = (id) => id.slice(0, 8),
   header,
   sectionExtra,
+  entryFilter,
 }: {
   mission: BuilderMission;
   state: PlayerState;
@@ -322,6 +323,7 @@ export function MissionPlayer({
   authorName?: (id: string) => string;
   header?: React.ReactNode;
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
+  entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
 }) {
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
@@ -355,6 +357,7 @@ export function MissionPlayer({
           readOnly={readOnly}
           authorName={authorName}
           sectionExtra={sectionExtra}
+          entryFilter={entryFilter}
 
         />
       ))}
