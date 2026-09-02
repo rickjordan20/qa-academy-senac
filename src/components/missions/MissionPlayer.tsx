@@ -132,6 +132,7 @@ function SectionCard({
   handlers,
   readOnly,
   authorName,
+  sectionExtra,
 }: {
   section: Section;
   index: number;
@@ -140,10 +141,12 @@ function SectionCard({
   handlers: PlayerHandlers;
   readOnly: boolean;
   authorName: (id: string) => string;
+  sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
 }) {
   const def = blockDef(section.kind);
   const answers = state.answers[section.id] ?? {};
   const entries = state.entries.filter((e) => e.section_id === section.id);
+
 
   return (
     <Card>
@@ -171,7 +174,9 @@ function SectionCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {sectionExtra ? sectionExtra(section) : null}
         {section.description ? <p className="text-sm text-muted-foreground">{section.description}</p> : null}
+
         {def.family === "content" ? (
           section.kind === "material" ? (
             <ul className="space-y-2">
@@ -303,6 +308,7 @@ export function MissionPlayer({
   progress,
   authorName = (id) => id.slice(0, 8),
   header,
+  sectionExtra,
 }: {
   mission: BuilderMission;
   state: PlayerState;
@@ -311,10 +317,12 @@ export function MissionPlayer({
   progress: number;
   authorName?: (id: string) => string;
   header?: React.ReactNode;
+  sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
 }) {
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
-    <div className="max-w-4xl space-y-5">
+    <div className="w-full space-y-5">
+
       <div className="rounded-xl border border-border bg-surface p-6">
         <span className="text-xs font-semibold uppercase tracking-widest text-accent">
           {mission.lesson_number ? `Aula ${mission.lesson_number} · ` : ""}
@@ -342,6 +350,8 @@ export function MissionPlayer({
           handlers={handlers}
           readOnly={readOnly}
           authorName={authorName}
+          sectionExtra={sectionExtra}
+
         />
       ))}
 

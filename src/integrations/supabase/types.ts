@@ -777,6 +777,7 @@ export type Database = {
           module_id: string | null
           position: number
           run_id: string | null
+          section_id: string | null
           status: string
           title: string
           updated_at: string
@@ -795,6 +796,7 @@ export type Database = {
           module_id?: string | null
           position?: number
           run_id?: string | null
+          section_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -813,6 +815,7 @@ export type Database = {
           module_id?: string | null
           position?: number
           run_id?: string | null
+          section_id?: string | null
           status?: string
           title?: string
           updated_at?: string
