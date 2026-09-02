@@ -124,6 +124,8 @@ function MissionBuilderPage() {
         project: draft.project,
         template: draft.template,
         modality: draft.modality,
+        activity_kind: draft.activity_kind,
+        position: draft.position,
         workload: draft.workload,
         objective: draft.objective,
         opens_at: draft.opens_at,
