@@ -401,20 +401,10 @@ export function useSyncGamification(userId: string | null) {
         await supabase.from("gam_xp_events").insert(missing as never);
       }
 
+      // A concessão de badges é feita no servidor (função segura `gam_sync_my_badges`),
+      // que recalcula os mesmos critérios e impede que o aluno conceda badges a si mesmo.
       const badges = earnedBadges(stats);
-      if (badges.length > 0) {
-        const owned = await supabase
-          .from("gam_student_badges")
-          .select("badge_code")
-          .eq("student_id", userId!);
-        const have = new Set(((owned.data ?? []) as { badge_code: string }[]).map((b) => b.badge_code));
-        const toAward = badges.filter((b) => !have.has(b));
-        if (toAward.length > 0) {
-          await supabase
-            .from("gam_student_badges")
-            .insert(toAward.map((code) => ({ student_id: userId!, badge_code: code })) as never);
-        }
-      }
+      await supabase.rpc("gam_sync_my_badges");
 
       if (missing.length > 0 || badges.length > 0) {
         void qc.invalidateQueries({ queryKey: ["gam", "xp", userId] });
