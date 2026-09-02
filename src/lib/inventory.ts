@@ -222,3 +222,18 @@ export function useDeleteFeature() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["inventory"] }),
   });
 }
+
+/** Atualiza campos de uma funcionalidade existente (integrantes do grupo e instrutor). */
+export function useUpdateFeature() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: Partial<AppFeature> }) => {
+      const { error } = await supabase.from("app_features").update(values as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["managed-features"] });
+    },
+  });
+}
