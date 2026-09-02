@@ -470,21 +470,33 @@ async function collect(userId: string) {
   return { events, stats };
 }
 
-function earnedBadges(stats: GamStats) {
-  const out: string[] = [];
-  if (stats.evidences >= 1) out.push("primeira_evidencia");
-  if (stats.bugs >= 5) out.push("cacador_de_bugs");
-  if (stats.executions >= 5) out.push("tester_funcional");
-  if (stats.uxBugs >= 3) out.push("ux_detective");
-  if (stats.cases >= 10) out.push("code_inspector");
-  if (stats.severeBugs >= 3) out.push("stress_tester");
-  if (stats.retests >= 5) out.push("mestre_do_reteste");
-  if (stats.isQaLead) out.push("qa_lead");
-  if (stats.contributions >= 1) out.push("trabalho_em_equipe");
-  if (stats.cases >= 1 && stats.executions >= 1 && stats.bugs >= 1 && stats.evidences >= 1 && stats.retests >= 1)
-    out.push("qa_360");
-  return out;
+/** Avalia a regra estruturada do badge contra as estatísticas reais do aluno. */
+export function matchesRule(rule: BadgeRuleConfig, stats: GamStats): boolean {
+  if (rule.all.length === 0) return false;
+  return rule.all.every((c) => {
+    const lhs = c.metric === "isQaLead" ? (stats.isQaLead ? 1 : 0) : Number(stats[c.metric] ?? 0);
+    switch (c.op) {
+      case ">=":
+        return lhs >= c.value;
+      case ">":
+        return lhs > c.value;
+      case "=":
+        return lhs === c.value;
+      case "<=":
+        return lhs <= c.value;
+      case "<":
+        return lhs < c.value;
+      default:
+        return false;
+    }
+  });
 }
+
+/** Badges conquistados a partir do catálogo ativo (regras configuradas pelo instrutor). */
+export function earnedBadges(stats: GamStats, catalog: Badge[]) {
+  return catalog.filter((b) => b.enabled && matchesRule(b.rule_config, stats)).map((b) => b.code);
+}
+
 
 /**
  * Recalcula o XP e as badges do aluno a partir dos registros reais.
