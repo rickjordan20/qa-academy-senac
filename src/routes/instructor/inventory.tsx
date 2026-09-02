@@ -63,7 +63,16 @@ function InstructorInventoryPage() {
         />
       </div>
 
-      <InventoryPanel project={project} groupId={groupId} userId={userId} canManage scope={scope} />
+      <InventoryPanel
+        project={project}
+        groupId={groupId}
+        userId={userId}
+        canManage
+        canDelete
+        canManageBase
+        groupName={(groups ?? []).find((g) => g.id === groupId)?.name ?? null}
+        scope={scope}
+      />
     </div>
   );
 }
