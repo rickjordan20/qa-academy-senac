@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, TEMPLATE_LABEL, useStudentMissions } from "@/lib/mission-builder";
+import { useAuth } from "@/lib/auth";
+import { useMySubmissions } from "@/lib/mission-submissions";
+import { fmtMissionDateTime, missionSituation } from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/student/activities/")({
   head: () => ({
@@ -18,7 +21,10 @@ export const Route = createFileRoute("/student/activities/")({
 });
 
 function StudentActivitiesPage() {
+  const { user } = useAuth();
   const { data: all, isPending } = useStudentMissions();
+  const { data: runs } = useMySubmissions(user?.id ?? null);
+  const runByMission = new Map((runs ?? []).map((r) => [r.mission_id, r] as const));
   const missions = (all ?? []).filter((m) => (m.activity_kind ?? "presencial") !== "assincrona");
 
   return (
