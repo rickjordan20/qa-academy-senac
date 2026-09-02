@@ -44,7 +44,7 @@ export type RunEvent = {
 export type SubmissionRow = SubmissionRun & {
   mission: Pick<
     BuilderMission,
-    "id" | "title" | "lesson_number" | "template" | "project" | "base_xp" | "modality" | "due_at" | "status" | "indicator_codes" | "objective" | "description" | "subtitle" | "sections" | "opens_at"
+    "id" | "title" | "lesson_number" | "template" | "project" | "base_xp" | "modality" | "due_at" | "status" | "indicator_codes" | "objective" | "description" | "subtitle" | "sections" | "opens_at" | "activity_kind" | "position"
   > | null;
   studentName: string;
   studentEmail: string;

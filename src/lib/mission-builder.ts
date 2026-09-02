@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type MissionTemplate = "techeduca" | "cafe" | "custom";
 export type MissionStatus = "draft" | "published" | "closed" | "archived";
+export type ActivityKind = "presencial" | "assincrona" | "final" | "recuperacao";
 
 export type FieldType =
   | "text"
@@ -68,6 +69,10 @@ export type BuilderMission = {
   project: string;
   template: MissionTemplate;
   modality: string;
+  /** Presencial | Assíncrona | Avaliação Final | Recuperação */
+  activity_kind: ActivityKind;
+  /** ordem de exibição dentro do tipo (usada nas atividades assíncronas) */
+  position: number;
   workload: string;
   objective: string;
   status: MissionStatus;
@@ -608,6 +613,36 @@ export const TEMPLATE_LABEL: Record<string, string> = {
   custom: "🧩 Missão personalizada",
 };
 
+export const ACTIVITY_KIND_LABEL: Record<ActivityKind, string> = {
+  presencial: "🏫 Presencial",
+  assincrona: "📚 Assíncrona",
+  final: "🎯 Avaliação Final",
+  recuperacao: "🛟 Recuperação",
+};
+
+export const ACTIVITY_KINDS: ActivityKind[] = ["presencial", "assincrona", "final", "recuperacao"];
+
+/** Situação de uma atividade assíncrona para o aluno. */
+export function asyncActivityState(
+  mission: Pick<BuilderMission, "status" | "opens_at" | "due_at">,
+  run: { submitted_at: string | null; eval_status?: string; progress?: number } | null,
+) {
+  if (run?.eval_status === "evaluated") return { key: "evaluated", label: "Avaliada", tone: "bg-success/15 text-success" };
+  if (run?.submitted_at) return { key: "submitted", label: "Entregue", tone: "bg-accent/15 text-accent" };
+  const now = Date.now();
+  if (mission.opens_at && new Date(mission.opens_at).getTime() > now)
+    return { key: "locked", label: "Bloqueada", tone: "bg-secondary text-muted-foreground" };
+  if (mission.status === "closed") return { key: "closed", label: "Encerrada", tone: "bg-secondary text-muted-foreground" };
+  if (run) {
+    if (mission.due_at && new Date(mission.due_at).getTime() < now)
+      return { key: "late", label: "Atrasada", tone: "bg-destructive/15 text-destructive" };
+    return { key: "in_progress", label: "Em andamento", tone: "bg-warning/15 text-warning" };
+  }
+  if (mission.due_at && new Date(mission.due_at).getTime() < now)
+    return { key: "late", label: "Atrasada", tone: "bg-destructive/15 text-destructive" };
+  return { key: "available", label: "Disponível", tone: "bg-accent/10 text-accent" };
+}
+
 export const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho",
   published: "Publicada",
@@ -698,6 +733,8 @@ export function useCreateMission(userId: string | null) {
           template: input.template ?? "techeduca",
           project: input.project ?? (input.template === "cafe" ? "cafe_central" : "techeduca"),
           modality: input.template === "cafe" ? "grupo" : "individual",
+          activity_kind: input.activity_kind ?? "presencial",
+          position: input.position ?? 0,
           sections: (input.sections ?? []) as never,
           lesson_number: input.lesson_number ?? null,
           created_by: userId!,
@@ -757,6 +794,8 @@ export function useDuplicateMission(userId: string | null) {
           project: mission.project,
           template: mission.template,
           modality: mission.modality,
+          activity_kind: mission.activity_kind ?? "presencial",
+          position: mission.position ?? 0,
           workload: mission.workload,
           objective: mission.objective,
           status: "draft",

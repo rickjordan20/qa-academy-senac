@@ -14,6 +14,8 @@ import { SectionEditor } from "@/components/missions/SectionEditor";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
 import { useAuth } from "@/lib/auth";
 import {
+  ACTIVITY_KINDS,
+  ACTIVITY_KIND_LABEL,
   BLOCK_CATALOG,
   PRESETS,
   STATUS_LABEL,
@@ -124,6 +126,8 @@ function MissionBuilderPage() {
         project: draft.project,
         template: draft.template,
         modality: draft.modality,
+        activity_kind: draft.activity_kind,
+        position: draft.position,
         workload: draft.workload,
         objective: draft.objective,
         opens_at: draft.opens_at,
@@ -254,6 +258,30 @@ function MissionBuilderPage() {
               <option value="cafe">🚀 Café Central — autônoma em grupo</option>
               <option value="custom">🧩 Personalizada</option>
             </NativeSelect>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Modalidade / tipo</Label>
+            <NativeSelect
+              value={draft.activity_kind ?? "presencial"}
+              onChange={(v) => patch({ activity_kind: v as BuilderMission["activity_kind"] })}
+            >
+              {ACTIVITY_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {ACTIVITY_KIND_LABEL[k]}
+                </option>
+              ))}
+            </NativeSelect>
+            <p className="text-[11px] text-muted-foreground">
+              Atividades assíncronas aparecem no módulo "Atividades Assíncronas" do aluno.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Ordem de exibição</Label>
+            <Input
+              type="number"
+              value={draft.position ?? 0}
+              onChange={(e) => patch({ position: Number(e.target.value) || 0 })}
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Carga horária</Label>

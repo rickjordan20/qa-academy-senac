@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as InstructorAsyncRouteImport } from './routes/instructor/async'
 import { Route as InstructorCafeRouteImport } from './routes/instructor/cafe'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
 import { Route as InstructorDossierRouteImport } from './routes/instructor/dossier'
@@ -30,6 +31,7 @@ import { Route as InstructorProfileRouteImport } from './routes/instructor/profi
 import { Route as InstructorQaRouteImport } from './routes/instructor/qa'
 import { Route as InstructorRecoveryRouteImport } from './routes/instructor/recovery'
 import { Route as InstructorReportsRouteImport } from './routes/instructor/reports'
+import { Route as StudentAsyncRouteImport } from './routes/student/async'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
 import { Route as StudentEvidencesRouteImport } from './routes/student/evidences'
@@ -90,6 +92,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const InstructorAsyncRoute = InstructorAsyncRouteImport.update({
+  id: '/async',
+  path: '/async',
+  getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorCafeRoute = InstructorCafeRouteImport.update({
   id: '/cafe',
@@ -160,6 +167,11 @@ const InstructorReportsRoute = InstructorReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
   getParentRoute: () => InstructorRouteRoute,
+} as any)
+const StudentAsyncRoute = StudentAsyncRouteImport.update({
+  id: '/async',
+  path: '/async',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/dashboard',
@@ -301,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/async': typeof InstructorAsyncRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -315,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
   '/instructor/reports': typeof InstructorReportsRoute
+  '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
@@ -349,6 +363,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/async': typeof InstructorAsyncRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -363,6 +378,7 @@ export interface FileRoutesByTo {
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
   '/instructor/reports': typeof InstructorReportsRoute
+  '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
@@ -398,6 +414,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/async': typeof InstructorAsyncRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -412,6 +429,7 @@ export interface FileRoutesById {
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
   '/instructor/reports': typeof InstructorReportsRoute
+  '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
@@ -448,6 +466,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/async'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -462,6 +481,7 @@ export interface FileRouteTypes {
     | '/instructor/qa'
     | '/instructor/recovery'
     | '/instructor/reports'
+    | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
@@ -496,6 +516,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/async'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -510,6 +531,7 @@ export interface FileRouteTypes {
     | '/instructor/qa'
     | '/instructor/recovery'
     | '/instructor/reports'
+    | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
@@ -544,6 +566,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/async'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -558,6 +581,7 @@ export interface FileRouteTypes {
     | '/instructor/qa'
     | '/instructor/recovery'
     | '/instructor/reports'
+    | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
@@ -645,6 +669,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/instructor/async': {
+      id: '/instructor/async'
+      path: '/async'
+      fullPath: '/instructor/async'
+      preLoaderRoute: typeof InstructorAsyncRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/cafe': {
       id: '/instructor/cafe'
@@ -743,6 +774,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/instructor/reports'
       preLoaderRoute: typeof InstructorReportsRouteImport
       parentRoute: typeof InstructorRouteRoute
+    }
+    '/student/async': {
+      id: '/student/async'
+      path: '/async'
+      fullPath: '/student/async'
+      preLoaderRoute: typeof StudentAsyncRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/dashboard': {
       id: '/student/dashboard'
@@ -923,6 +961,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface InstructorRouteRouteChildren {
+  InstructorAsyncRoute: typeof InstructorAsyncRoute
   InstructorCafeRoute: typeof InstructorCafeRoute
   InstructorDashboardRoute: typeof InstructorDashboardRoute
   InstructorDossierRoute: typeof InstructorDossierRoute
@@ -948,6 +987,7 @@ interface InstructorRouteRouteChildren {
 }
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
+  InstructorAsyncRoute: InstructorAsyncRoute,
   InstructorCafeRoute: InstructorCafeRoute,
   InstructorDashboardRoute: InstructorDashboardRoute,
   InstructorDossierRoute: InstructorDossierRoute,
@@ -977,6 +1017,7 @@ const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
 )
 
 interface StudentRouteRouteChildren {
+  StudentAsyncRoute: typeof StudentAsyncRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentEvaluationRoute: typeof StudentEvaluationRoute
   StudentEvidencesRoute: typeof StudentEvidencesRoute
@@ -997,6 +1038,7 @@ interface StudentRouteRouteChildren {
 }
 
 const StudentRouteRouteChildren: StudentRouteRouteChildren = {
+  StudentAsyncRoute: StudentAsyncRoute,
   StudentDashboardRoute: StudentDashboardRoute,
   StudentEvaluationRoute: StudentEvaluationRoute,
   StudentEvidencesRoute: StudentEvidencesRoute,

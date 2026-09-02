@@ -381,6 +381,7 @@ export type Database = {
       }
       builder_missions: {
         Row: {
+          activity_kind: string
           badge_code: string | null
           base_xp: number
           code: string | null
@@ -397,6 +398,7 @@ export type Database = {
           modality: string
           objective: string
           opens_at: string | null
+          position: number
           project: string
           sections: Json
           status: string
@@ -407,6 +409,7 @@ export type Database = {
           workload: string
         }
         Insert: {
+          activity_kind?: string
           badge_code?: string | null
           base_xp?: number
           code?: string | null
@@ -423,6 +426,7 @@ export type Database = {
           modality?: string
           objective?: string
           opens_at?: string | null
+          position?: number
           project?: string
           sections?: Json
           status?: string
@@ -433,6 +437,7 @@ export type Database = {
           workload?: string
         }
         Update: {
+          activity_kind?: string
           badge_code?: string | null
           base_xp?: number
           code?: string | null
@@ -449,6 +454,7 @@ export type Database = {
           modality?: string
           objective?: string
           opens_at?: string | null
+          position?: number
           project?: string
           sections?: Json
           status?: string

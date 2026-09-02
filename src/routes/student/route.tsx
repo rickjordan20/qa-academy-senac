@@ -8,6 +8,7 @@ const items: NavItem[] = [
   { to: "/student/dashboard", label: "Início" },
   { to: "/student/journey", label: "Minha Jornada" },
   { to: "/student/activities", label: "Missões da Turma" },
+  { to: "/student/async", label: "Atividades Assíncronas" },
   { to: "/student/missions", label: "Minhas Missões" },
   { to: "/student/cafe", label: "Café Central" },
   { to: "/student/inventory", label: "Inventário da Aplicação" },
@@ -30,6 +31,7 @@ const groups: NavGroup[] = [
     items: [
       { to: "/student/journey", label: "Minha Jornada" },
       { to: "/student/activities", label: "Missões da Turma" },
+      { to: "/student/async", label: "Atividades Assíncronas" },
       { to: "/student/missions", label: "Minhas Missões" },
     ],
   },
