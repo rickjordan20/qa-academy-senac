@@ -1175,27 +1175,33 @@ export type Database = {
           created_at: string
           criteria: string
           description: string
+          enabled: boolean
           icon: string
           name: string
           position: number
+          updated_at: string
         }
         Insert: {
           code: string
           created_at?: string
           criteria?: string
           description: string
+          enabled?: boolean
           icon?: string
           name: string
           position?: number
+          updated_at?: string
         }
         Update: {
           code?: string
           created_at?: string
           criteria?: string
           description?: string
+          enabled?: boolean
           icon?: string
           name?: string
           position?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2221,6 +2227,13 @@ export type Database = {
           group_id: string
           group_name: string
           xp: number
+        }[]
+      }
+      gam_sync_my_badges: {
+        Args: never
+        Returns: {
+          awarded_at: string
+          badge_code: string
         }[]
       }
       group_class_id: { Args: { _group_id: string }; Returns: string }
