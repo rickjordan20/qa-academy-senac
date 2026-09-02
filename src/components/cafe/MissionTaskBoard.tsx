@@ -165,7 +165,9 @@ export function MissionTaskBoard({
         className={`rounded-lg border p-3 text-sm ${mine ? "border-accent bg-accent/5" : "border-border bg-background"}`}
       >
         <p className="font-medium">{t.title}</p>
-        {t.description ? <p className="mt-1 text-xs text-muted-foreground">{t.description}</p> : null}
+        {t.description ? (
+          <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
+        ) : null}
         <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
           <div>
             <span className="font-semibold">Responsável: </span>
@@ -254,7 +256,9 @@ export function MissionTaskBoard({
                   moduleId={form.module_id}
                   featureId={form.feature_id}
                   idPrefix="task-area"
-                  onChange={(v) => setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))
+                  }
                 />
                 <div>
                   <Label htmlFor="task-assignee">Responsável</Label>
@@ -277,12 +281,16 @@ export function MissionTaskBoard({
               </div>
               {(modules ?? []).length === 0 ? (
                 <p className="text-xs text-warning">
-                  Nenhuma tela cadastrada no Inventário do Café Central deste grupo. Cadastre as telas
-                  e funcionalidades no Inventário para usá-las como área de investigação.
+                  Nenhuma tela cadastrada no Inventário do Café Central deste grupo. Cadastre as
+                  telas e funcionalidades no Inventário para usá-las como área de investigação.
                 </p>
               ) : null}
               <div className="flex gap-2">
-                <Button size="sm" onClick={submitTask} disabled={createTask.isPending || updateTask.isPending}>
+                <Button
+                  size="sm"
+                  onClick={submitTask}
+                  disabled={createTask.isPending || updateTask.isPending}
+                >
                   {editing ? "Salvar alterações" : "Distribuir tarefa"}
                 </Button>
                 <Button
@@ -376,7 +384,17 @@ function ContributionsPanel({
   group: CafeGroup;
   userId: string | null;
   myTasks: MissionTask[];
-  contributions: { id: string; student_id: string; task_id: string | null; kind: string; title: string; description: string; link: string | null; reflection: string; created_at: string }[];
+  contributions: {
+    id: string;
+    student_id: string;
+    task_id: string | null;
+    kind: string;
+    title: string;
+    description: string;
+    link: string | null;
+    reflection: string;
+    created_at: string;
+  }[];
   areaOf: (t: MissionTask) => string;
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
@@ -417,8 +435,8 @@ function ContributionsPanel({
     <div className="space-y-5">
       <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
         <p className="text-xs text-muted-foreground">
-          Registre aqui o que você <span className="font-semibold">já executou</span>. A distribuição de
-          tarefas é feita pelo QA Líder no quadro acima.
+          Registre aqui o que você <span className="font-semibold">já executou</span>. A
+          distribuição de tarefas é feita pelo QA Líder no quadro acima.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -428,7 +446,12 @@ function ContributionsPanel({
               value={form.task_id}
               onChange={(v) => setForm((f) => ({ ...f, task_id: v }))}
               options={[
-                { value: "", label: myTasks.length ? "Sem tarefa vinculada" : "Nenhuma tarefa atribuída a você" },
+                {
+                  value: "",
+                  label: myTasks.length
+                    ? "Sem tarefa vinculada"
+                    : "Nenhuma tarefa atribuída a você",
+                },
                 ...myTasks.map((t) => ({ value: t.id, label: `${t.title} — ${areaOf(t)}` })),
               ]}
             />
@@ -497,7 +520,8 @@ function ContributionsPanel({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{c.title}</span>
                   <span className="text-xs text-muted-foreground">
-                    {contributionKindLabel(c.kind)} · {new Date(c.created_at).toLocaleString("pt-BR")}
+                    {contributionKindLabel(c.kind)} ·{" "}
+                    {new Date(c.created_at).toLocaleString("pt-BR")}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">

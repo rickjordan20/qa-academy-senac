@@ -27,7 +27,10 @@ export const Route = createFileRoute("/student/activities/$missionId")({
   head: () => ({
     meta: [
       { title: "Executar missão | QA Academy" },
-      { name: "description", content: "Execute a missão da UC10, registre respostas, casos, bugs e evidências." },
+      {
+        name: "description",
+        content: "Execute a missão da UC10, registre respostas, casos, bugs e evidências.",
+      },
       { property: "og:title", content: "Executar missão | QA Academy" },
       { property: "og:description", content: "Sua missão da UC10 na QA Academy." },
       { property: "og:type", content: "website" },
@@ -101,7 +104,11 @@ function StudentMissionPage() {
         patch: {
           answers: nextAnswers,
           checklist_state: nextChecklist,
-          progress: computeProgress(mission, { ...run, answers: nextAnswers, checklist_state: nextChecklist }, entries ?? []),
+          progress: computeProgress(
+            mission,
+            { ...run, answers: nextAnswers, checklist_state: nextChecklist },
+            entries ?? [],
+          ),
         },
       });
       setSaving("saved");
@@ -141,7 +148,11 @@ function StudentMissionPage() {
       <Link to="/student/activities" className="hover:underline">
         ← Todas as missões
       </Link>
-      {saving === "saving" ? <span>Salvando...</span> : saving === "saved" ? <span>Salvo</span> : null}
+      {saving === "saving" ? (
+        <span>Salvando...</span>
+      ) : saving === "saved" ? (
+        <span>Salvo</span>
+      ) : null}
       {mission.status === "closed" ? <span>Missão encerrada — consulta apenas.</span> : null}
     </div>
   );
