@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth";
 import { asyncActivityState, useStudentMissions } from "@/lib/mission-builder";
-import { fmtDateTime, useMySubmissions } from "@/lib/mission-submissions";
+import { useMySubmissions } from "@/lib/mission-submissions";
+import { fmtMissionDateTime } from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/student/async")({
   head: () => ({
@@ -81,8 +82,8 @@ function StudentAsyncPage() {
                   <p className="text-xs text-muted-foreground">
                     {mission.template === "cafe" ? "🚀 Café Central — em grupo" : "🎓 Individual"}
                     {mission.workload ? ` · ${mission.workload}` : ""}
-                    {mission.opens_at ? ` · abre em ${fmtDateTime(mission.opens_at)}` : ""}
-                    {mission.due_at ? ` · prazo ${fmtDateTime(mission.due_at)}` : ""}
+                    {mission.opens_at ? ` · abertura ${fmtMissionDateTime(mission.opens_at, "opens")}` : ""}
+                    {mission.due_at ? ` · prazo ${fmtMissionDateTime(mission.due_at, "due")}` : ""}
                   </p>
                   {mission.objective ? (
                     <p className="mt-1 text-sm text-muted-foreground">{mission.objective}</p>
