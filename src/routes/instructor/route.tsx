@@ -17,6 +17,7 @@ const items: NavItem[] = [
   { to: "/instructor/inventory", label: "Inventário" },
   { to: "/instructor/qa", label: "Módulos QA" },
   { to: "/instructor/gamification", label: "Gamificação" },
+  { to: "/instructor/badges", label: "Badges" },
   { to: "/instructor/evaluations", label: "Matriz de Avaliação" },
   { to: "/instructor/dossier", label: "Dossiê do Aluno" },
   { to: "/instructor/final", label: "Avaliação Final" },
@@ -37,6 +38,7 @@ const groups: NavGroup[] = [
       { to: "/instructor/async", label: "Atividades Assíncronas" },
       { to: "/instructor/cafe", label: "Café Central" },
       { to: "/instructor/gamification", label: "Gamificação" },
+      { to: "/instructor/badges", label: "Badges" },
     ],
   },
   {
