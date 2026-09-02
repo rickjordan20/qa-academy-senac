@@ -182,17 +182,26 @@ function StudentMissionPage() {
     );
   }
 
+  const situation = missionSituation(mission, (run ?? null) as never);
+
   const header = (
-    <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-      <Link to="/student/activities" className="hover:underline">
-        ← Todas as missões
-      </Link>
-      {saving === "saving" ? (
-        <span>Salvando...</span>
-      ) : saving === "saved" ? (
-        <span>Salvo</span>
-      ) : null}
-      {mission.status === "closed" ? <span>Missão encerrada — consulta apenas.</span> : null}
+    <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-3">
+        <Link to="/student/activities" className="hover:underline">
+          ← Todas as missões
+        </Link>
+        {saving === "saving" ? (
+          <span>Salvando...</span>
+        ) : saving === "saved" ? (
+          <span>Salvo</span>
+        ) : null}
+        {mission.status === "closed" ? <span>Missão encerrada — consulta apenas.</span> : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <span>Abertura: {mission.opens_at ? fmtMissionDateTime(mission.opens_at, "opens") : "livre"}</span>
+        <span>Prazo: {mission.due_at ? fmtMissionDateTime(mission.due_at, "due") : "sem prazo"}</span>
+        <span className={`rounded-full px-2 py-0.5 font-semibold ${situation.tone}`}>Status: {situation.label}</span>
+      </div>
     </div>
   );
 
