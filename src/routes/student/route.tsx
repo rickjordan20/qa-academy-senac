@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { BookOpen, Coffee, FolderCheck, Home, Route as RouteIcon, Trophy } from "lucide-react";
+import { BookOpen, Coffee, FolderCheck, Home, Trophy } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";
 
@@ -26,26 +26,26 @@ const items: NavItem[] = [
 const groups: NavGroup[] = [
   { label: "Início", icon: Home, to: "/student/dashboard" },
   {
-    label: "Jornada",
-    icon: RouteIcon,
-    items: [
-      { to: "/student/journey", label: "Minha Jornada" },
-      { to: "/student/activities", label: "Missões da Turma" },
-      { to: "/student/async", label: "Atividades Assíncronas" },
-      { to: "/student/missions", label: "Minhas Missões" },
-    ],
-  },
-  {
-    label: "Aprendizado",
+    label: "Meu Aprendizado",
     icon: BookOpen,
     items: [
+      { to: "/student/journey", label: "Minha Jornada" },
       { to: "/student/qa", label: "Módulos QA" },
+      { to: "/student/missions", label: "Minhas Missões" },
+      { to: "/student/async", label: "Atividades Assíncronas" },
       { to: "/student/inventory", label: "Inventário da Aplicação" },
     ],
   },
-  { label: "Café Central", icon: Coffee, to: "/student/cafe" },
   {
-    label: "Evidências",
+    label: "Café Central",
+    icon: Coffee,
+    items: [
+      { to: "/student/activities", label: "Missões da Turma" },
+      { to: "/student/cafe", label: "Café Central" },
+    ],
+  },
+  {
+    label: "Meus Registros",
     icon: FolderCheck,
     items: [
       { to: "/student/records", label: "Meus Registros" },
@@ -54,12 +54,12 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    label: "Desempenho",
+    label: "Meu Desempenho",
     icon: Trophy,
     items: [
       { to: "/student/progress", label: "Meu Progresso" },
-      { to: "/student/ranking", label: "Ranking" },
       { to: "/student/evaluation", label: "Minha Avaliação" },
+      { to: "/student/ranking", label: "Ranking" },
     ],
   },
 ];
