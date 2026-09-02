@@ -15,9 +15,12 @@ import {
   projectLabel,
   useCreateFeature,
   useDeleteFeature,
+  useDeleteModule,
   useFeatures,
   useModules,
   useSaveModule,
+  useUpdateFeature,
+  type AppFeature,
   type AppProject,
 } from "@/lib/inventory";
 import { useBugs, useTestCases, type QaScope } from "@/lib/qa";
@@ -35,23 +38,30 @@ export function InventoryPanel({
   groupId,
   userId,
   canManage = false,
+  canDelete = false,
+  groupName,
   scope,
 }: {
   project: AppProject;
   groupId: string | null;
   userId: string | null;
   canManage?: boolean;
+  canDelete?: boolean;
+  groupName?: string | null;
   scope?: QaScope;
 }) {
   const { data: features, isPending } = useFeatures(project, groupId);
   const { data: modules } = useModules(project, groupId);
   const create = useCreateFeature(project, groupId, userId);
   const saveModule = useSaveModule();
+  const removeModule = useDeleteModule();
+  const updateFeature = useUpdateFeature();
   const remove = useDeleteFeature();
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
   const [moduleName, setModuleName] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
 
   const coverageScope: QaScope = scope ?? { context: "techeduca", groupId: null };
   const { data: cases } = useTestCases(coverageScope, userId);
