@@ -174,7 +174,9 @@ function SectionCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {sectionExtra ? sectionExtra(section) : null}
         {section.description ? <p className="text-sm text-muted-foreground">{section.description}</p> : null}
+
         {def.family === "content" ? (
           section.kind === "material" ? (
             <ul className="space-y-2">
