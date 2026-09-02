@@ -412,12 +412,46 @@ export function InventoryPanel({
   );
 }
 
+function ModuleEditForm({
+  name,
+  description,
+  onSave,
+  onCancel,
+}: {
+  name: string;
+  description: string;
+  onSave: (values: { name: string; description: string }) => void | Promise<void>;
+  onCancel: () => void;
+}) {
+  const [n, setN] = useState(name);
+  const [d, setD] = useState(description ?? "");
+  return (
+    <div className="grid gap-3 border-t border-border p-3 sm:grid-cols-2">
+      <Field label="Nome do Módulo/Tela" id={`mod-name-${name}`}>
+        <Input id={`mod-name-${name}`} value={n} onChange={(e) => setN(e.target.value)} />
+      </Field>
+      <Field label="Descrição" id={`mod-desc-${name}`}>
+        <Input id={`mod-desc-${name}`} value={d} onChange={(e) => setD(e.target.value)} />
+      </Field>
+      <div className="flex gap-2 sm:col-span-2">
+        <Button size="sm" onClick={() => n.trim() && onSave({ name: n.trim(), description: d.trim() })}>
+          Salvar
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
+          Cancelar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function FeatureRow({
   code,
   name,
   description,
   kind,
   origin,
+  onSave,
   onDelete,
 }: {
   code: string;
@@ -425,8 +459,59 @@ function FeatureRow({
   description: string;
   kind: string;
   origin?: string | undefined;
+  onSave?: ((values: { code: string; name: string; description: string; origin: string }) => void | Promise<void>) | undefined;
   onDelete?: (() => void) | undefined;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [v, setV] = useState({ code, name, description: description ?? "", origin: origin ?? "" });
+
+  if (editing && onSave) {
+    return (
+      <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2">
+        <Field label="Código" id={`fe-code-${code}`}>
+          <Input id={`fe-code-${code}`} value={v.code} onChange={(e) => setV((s) => ({ ...s, code: e.target.value }))} />
+        </Field>
+        <Field label="Nome" id={`fe-name-${code}`}>
+          <Input id={`fe-name-${code}`} value={v.name} onChange={(e) => setV((s) => ({ ...s, name: e.target.value }))} />
+        </Field>
+        <Field label="Origem" id={`fe-origin-${code}`}>
+          <Input id={`fe-origin-${code}`} value={v.origin} onChange={(e) => setV((s) => ({ ...s, origin: e.target.value }))} />
+        </Field>
+        <Field label="Descrição" id={`fe-desc-${code}`} full>
+          <Textarea
+            id={`fe-desc-${code}`}
+            rows={2}
+            value={v.description}
+            onChange={(e) => setV((s) => ({ ...s, description: e.target.value }))}
+          />
+        </Field>
+        <div className="flex gap-2 sm:col-span-2">
+          <Button
+            size="sm"
+            onClick={async () => {
+              if (!v.code.trim() || !v.name.trim()) {
+                toast.error("Informe código e nome.");
+                return;
+              }
+              await onSave({
+                code: v.code.trim(),
+                name: v.name.trim(),
+                description: v.description.trim(),
+                origin: v.origin.trim(),
+              });
+              setEditing(false);
+            }}
+          >
+            Salvar
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3">
       <div>
@@ -439,6 +524,11 @@ function FeatureRow({
       </div>
       <div className="flex items-center gap-2">
         <span className="rounded-md bg-secondary px-2 py-0.5 text-xs">{featureKindLabel(kind)}</span>
+        {onSave && (
+          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+            Editar
+          </Button>
+        )}
         {onDelete && (
           <Button size="sm" variant="ghost" onClick={onDelete}>
             Excluir
@@ -448,3 +538,4 @@ function FeatureRow({
     </div>
   );
 }
+
