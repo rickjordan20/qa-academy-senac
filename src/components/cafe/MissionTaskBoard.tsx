@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import { NativeSelect } from "@/components/qa/TestCasesPanel";
 import { useFeatures, useModules } from "@/lib/inventory";
+import { blockDef, type Section } from "@/lib/mission-builder";
 import {
   CONTRIBUTION_KINDS,
   contributionKindLabel,
@@ -43,6 +44,7 @@ const emptyTask = {
   description: "",
   module_id: "",
   feature_id: "",
+  section_id: "",
   assignee_id: "",
   status: "todo" as TaskStatus,
 };
@@ -56,22 +58,115 @@ const emptyContribution = {
   reflection: "",
 };
 
-function memberLabel(group: CafeGroup, id: string | null) {
+export function memberLabel(group: CafeGroup, id: string | null) {
   const m = group.members.find((x) => x.student_id === id);
   if (!m) return { name: id ? "Integrante" : "Sem responsável", role: "" };
   return { name: m.full_name, role: m.is_qa_lead ? "QA Líder" : m.member_function || "Integrante" };
 }
+
+export function memberOptionsOf(group: CafeGroup) {
+  return [
+    { value: "", label: "Sem responsável" },
+    ...group.members.map((m) => ({
+      value: m.student_id,
+      label: `${m.full_name} — ${m.is_qa_lead ? "QA Líder" : m.member_function || "Integrante"}`,
+    })),
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/* Atribuição discreta dentro de cada bloco da missão                  */
+/* ------------------------------------------------------------------ */
+
+export function SectionAssign({
+  section,
+  runId,
+  missionId,
+  group,
+  userId,
+}: {
+  section: Section;
+  runId: string;
+  missionId: string;
+  group: CafeGroup;
+  userId: string | null;
+}) {
+  const isLead = group.qa_lead_id === userId;
+  const { data: tasks } = useMissionTasks(runId);
+  const create = useCreateMissionTask(runId, missionId, group.id, userId);
+  const update = useUpdateMissionTask(runId);
+  const [open, setOpen] = useState(false);
+
+  const task = (tasks ?? []).find((t) => t.section_id === section.id) ?? null;
+  const who = memberLabel(group, task?.assignee_id ?? null);
+
+  async function assign(studentId: string) {
+    try {
+      if (task) {
+        await update.mutateAsync({ id: task.id, patch: { assignee_id: studentId || null } });
+      } else {
+        await create.mutateAsync({
+          title: section.title,
+          description: section.description ?? "",
+          area: "",
+          module_id: null,
+          feature_id: null,
+          section_id: section.id,
+          assignee_id: studentId || null,
+          status: "todo",
+        });
+      }
+      setOpen(false);
+      toast.success("Responsável definido para este bloco.");
+    } catch (err) {
+      console.error("[café] falha ao atribuir bloco:", err);
+      toast.error("Não foi possível atribuir. Apenas o QA Líder distribui tarefas.");
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+      <span className="font-semibold text-foreground">Responsável:</span>
+      <span>{task?.assignee_id ? `${who.name} — ${who.role}` : "não atribuído"}</span>
+      {task ? <span>· {taskStatusLabel(task.status)}</span> : null}
+      {isLead ? (
+        open ? (
+          <NativeSelect
+            id={`assign-${section.id}`}
+            value={task?.assignee_id ?? ""}
+            onChange={(v) => void assign(v)}
+            options={memberOptionsOf(group)}
+          />
+        ) : (
+          <button
+            type="button"
+            className="text-accent underline"
+            onClick={() => setOpen(true)}
+          >
+            Atribuir responsável
+          </button>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Quadro completo                                                     */
+/* ------------------------------------------------------------------ */
 
 export function MissionTaskBoard({
   missionId,
   runId,
   group,
   userId,
+  sections = [],
 }: {
   missionId: string;
   runId: string;
   group: CafeGroup;
   userId: string | null;
+  sections?: Section[];
 }) {
   const isLead = group.qa_lead_id === userId;
   const { data: tasks } = useMissionTasks(runId);
@@ -91,6 +186,12 @@ export function MissionTaskBoard({
   const myTasks = useMemo(() => list.filter((t) => t.assignee_id === userId), [list, userId]);
   const myRole = memberLabel(group, userId).role;
 
+  const sectionLabel = (id: string | null) => {
+    if (!id) return "";
+    const s = sections.find((x) => x.id === id);
+    return s ? `${blockDef(s.kind).icon} ${s.title}` : "";
+  };
+
   const areaOf = (t: MissionTask) =>
     t.feature_id ? featureTrace(modules, features, t.feature_id) : t.area || "—";
 
@@ -100,31 +201,22 @@ export function MissionTaskBoard({
       return;
     }
     const area = form.feature_id ? featureTrace(modules, features, form.feature_id) : "";
+    const payload = {
+      title: form.title.trim(),
+      description: form.description.trim(),
+      area,
+      module_id: form.module_id || null,
+      feature_id: form.feature_id || null,
+      section_id: form.section_id || null,
+      assignee_id: form.assignee_id || null,
+      status: form.status,
+    };
     try {
       if (editing) {
-        await updateTask.mutateAsync({
-          id: editing.id,
-          patch: {
-            title: form.title.trim(),
-            description: form.description.trim(),
-            area,
-            module_id: form.module_id || null,
-            feature_id: form.feature_id || null,
-            assignee_id: form.assignee_id || null,
-            status: form.status,
-          },
-        });
+        await updateTask.mutateAsync({ id: editing.id, patch: payload });
         toast.success("Tarefa atualizada.");
       } else {
-        await createTask.mutateAsync({
-          title: form.title.trim(),
-          description: form.description.trim(),
-          area,
-          module_id: form.module_id || null,
-          feature_id: form.feature_id || null,
-          assignee_id: form.assignee_id || null,
-          status: form.status,
-        });
+        await createTask.mutateAsync(payload);
         toast.success("Tarefa distribuída para o grupo.");
       }
       setForm(emptyTask);
@@ -143,52 +235,47 @@ export function MissionTaskBoard({
       description: t.description ?? "",
       module_id: t.module_id ?? "",
       feature_id: t.feature_id ?? "",
+      section_id: t.section_id ?? "",
       assignee_id: t.assignee_id ?? "",
       status: (COLUMNS.find((c) => c.accepts.includes(t.status))?.key ?? "todo") as TaskStatus,
     });
     setOpen(true);
   }
 
-  const memberOptions = [
-    { value: "", label: "Sem responsável" },
-    ...group.members.map((m) => ({
-      value: m.student_id,
-      label: `${m.full_name} — ${m.is_qa_lead ? "QA Líder" : m.member_function || "Integrante"}`,
-    })),
-  ];
+  const memberOptions = memberOptionsOf(group);
 
   function TaskCard({ t }: { t: MissionTask }) {
     const who = memberLabel(group, t.assignee_id);
     const mine = t.assignee_id === userId;
+    const block = sectionLabel(t.section_id);
     return (
       <div
-        className={`rounded-lg border p-3 text-sm ${mine ? "border-accent bg-accent/5" : "border-border bg-background"}`}
+        className={`rounded-xl border p-4 text-sm shadow-sm transition-colors ${mine ? "border-accent bg-accent/5" : "border-border bg-background"}`}
       >
-        <p className="font-medium">{t.title}</p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium leading-snug">{t.title}</p>
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
+            {taskStatusLabel(t.status)}
+          </span>
+        </div>
+        {block ? <p className="mt-1 text-xs font-medium text-primary">Bloco: {block}</p> : null}
         {t.description ? (
           <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
         ) : null}
-        <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-          <div>
-            <span className="font-semibold">Responsável: </span>
-            {who.name}
-            {mine ? " (você)" : ""}
-          </div>
-          <div>
-            <span className="font-semibold">Função: </span>
-            {who.role || "—"}
-          </div>
-          <div>
-            <span className="font-semibold">Área: </span>
+        <p className="mt-2 text-xs text-muted-foreground">
+          <span className="font-semibold">Responsável: </span>
+          {who.name}
+          {mine ? " (você)" : ""}
+          {who.role ? ` — ${who.role}` : ""}
+        </p>
+        {t.feature_id || t.area ? (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold">Tela/Funcionalidade: </span>
             {areaOf(t)}
-          </div>
-          <div>
-            <span className="font-semibold">Status: </span>
-            {taskStatusLabel(t.status)}
-          </div>
-        </dl>
+          </p>
+        ) : null}
         {isLead || mine ? (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <NativeSelect
               id={`st-${t.id}`}
               value={COLUMNS.find((c) => c.accepts.includes(t.status))?.key ?? "todo"}
@@ -212,7 +299,7 @@ export function MissionTaskBoard({
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">🧩 Quadro de Tarefas da Equipe</CardTitle>
@@ -223,13 +310,13 @@ export function MissionTaskBoard({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">
-          A distribuição de tarefas é feita pelo QA Líder dentro desta missão. Os demais integrantes
+          O QA Líder distribui os blocos da missão e tarefas livres entre os integrantes. Os demais
           acompanham o quadro e atualizam o andamento das próprias tarefas.
         </p>
 
         {isLead ? (
           open ? (
-            <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
+            <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="task-title">Título da tarefa</Label>
@@ -237,7 +324,7 @@ export function MissionTaskBoard({
                     id="task-title"
                     value={form.title}
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                    placeholder="Ex.: Testar formulário de login"
+                    placeholder="Ex.: Registrar as evidências da missão"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -247,19 +334,9 @@ export function MissionTaskBoard({
                     rows={3}
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                    placeholder="O que precisa ser investigado ou executado."
+                    placeholder="Opcional: detalhe o que precisa ser feito."
                   />
                 </div>
-                <ModuleFeatureSelect
-                  project="cafe_central"
-                  groupId={group.id}
-                  moduleId={form.module_id}
-                  featureId={form.feature_id}
-                  idPrefix="task-area"
-                  onChange={(v) =>
-                    setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))
-                  }
-                />
                 <div>
                   <Label htmlFor="task-assignee">Responsável</Label>
                   <NativeSelect
@@ -278,13 +355,46 @@ export function MissionTaskBoard({
                     options={BOARD_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
                   />
                 </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="task-section">Bloco da missão relacionado (opcional)</Label>
+                  <NativeSelect
+                    id="task-section"
+                    value={form.section_id}
+                    onChange={(v) => {
+                      const s = sections.find((x) => x.id === v);
+                      setForm((f) => ({
+                        ...f,
+                        section_id: v,
+                        title: f.title.trim() ? f.title : (s?.title ?? ""),
+                      }));
+                    }}
+                    options={[
+                      { value: "", label: "Sem bloco relacionado" },
+                      ...sections.map((s) => ({
+                        value: s.id,
+                        label: `${blockDef(s.kind).icon} ${s.title}`,
+                      })),
+                    ]}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="mb-1 text-xs text-muted-foreground">
+                    Tela/Funcionalidade relacionada (opcional)
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <ModuleFeatureSelect
+                      project="cafe_central"
+                      groupId={group.id}
+                      moduleId={form.module_id}
+                      featureId={form.feature_id}
+                      idPrefix="task-area"
+                      onChange={(v) =>
+                        setForm((f) => ({ ...f, module_id: v.moduleId, feature_id: v.featureId }))
+                      }
+                    />
+                  </div>
+                </div>
               </div>
-              {(modules ?? []).length === 0 ? (
-                <p className="text-xs text-warning">
-                  Nenhuma tela cadastrada no Inventário do Café Central deste grupo. Cadastre as
-                  telas e funcionalidades no Inventário para usá-las como área de investigação.
-                </p>
-              ) : null}
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -326,9 +436,9 @@ export function MissionTaskBoard({
                 Nenhuma tarefa distribuída ainda nesta missão.
               </p>
             ) : (
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-4 lg:grid-cols-3">
                 {COLUMNS.map((col) => (
-                  <div key={col.key} className="space-y-2 rounded-lg bg-secondary/30 p-3">
+                  <div key={col.key} className="space-y-3 rounded-xl bg-secondary/30 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {col.label} ({list.filter((t) => col.accepts.includes(t.status)).length})
                     </p>
@@ -343,7 +453,7 @@ export function MissionTaskBoard({
             )}
           </TabsContent>
 
-          <TabsContent value="minhas" className="space-y-2 pt-4">
+          <TabsContent value="minhas" className="grid gap-3 pt-4 md:grid-cols-2">
             {myTasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Você ainda não tem tarefas atribuídas nesta missão.
@@ -362,6 +472,7 @@ export function MissionTaskBoard({
               myTasks={myTasks}
               contributions={contributions ?? []}
               areaOf={areaOf}
+              sectionLabel={sectionLabel}
             />
           </TabsContent>
         </Tabs>
@@ -378,6 +489,7 @@ function ContributionsPanel({
   myTasks,
   contributions,
   areaOf,
+  sectionLabel,
 }: {
   runId: string;
   missionId: string;
@@ -396,6 +508,7 @@ function ContributionsPanel({
     created_at: string;
   }[];
   areaOf: (t: MissionTask) => string;
+  sectionLabel: (id: string | null) => string;
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
@@ -433,7 +546,7 @@ function ContributionsPanel({
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
+      <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
         <p className="text-xs text-muted-foreground">
           Registre aqui o que você <span className="font-semibold">já executou</span>. A
           distribuição de tarefas é feita pelo QA Líder no quadro acima.
@@ -452,7 +565,10 @@ function ContributionsPanel({
                     ? "Sem tarefa vinculada"
                     : "Nenhuma tarefa atribuída a você",
                 },
-                ...myTasks.map((t) => ({ value: t.id, label: `${t.title} — ${areaOf(t)}` })),
+                ...myTasks.map((t) => ({
+                  value: t.id,
+                  label: `${t.title}${sectionLabel(t.section_id) ? ` — ${sectionLabel(t.section_id)}` : ""}`,
+                })),
               ]}
             />
           </div>
@@ -516,7 +632,7 @@ function ContributionsPanel({
           mine.map((c) => {
             const t = taskById(c.task_id);
             return (
-              <div key={c.id} className="rounded-md border border-border p-3 text-sm">
+              <div key={c.id} className="rounded-xl border border-border p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{c.title}</span>
                   <span className="text-xs text-muted-foreground">
@@ -525,7 +641,10 @@ function ContributionsPanel({
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Grupo {group.name} · Função: {role || "Integrante"} · Tarefa: {t ? t.title : "—"}
+                  Grupo {group.name} · Função: {role || "Integrante"} · Tarefa:{" "}
+                  {t ? t.title : "—"}
+                  {t && sectionLabel(t.section_id) ? ` · Bloco: ${sectionLabel(t.section_id)}` : ""}
+                  {t && (t.feature_id || t.area) ? ` · ${areaOf(t)}` : ""}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap">{c.description}</p>
                 {c.reflection ? (
