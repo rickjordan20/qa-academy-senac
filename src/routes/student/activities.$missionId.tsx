@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/missions/DynamicFields";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
+import { MissionTaskBoard } from "@/components/cafe/MissionTaskBoard";
 import { useAuth } from "@/lib/auth";
 import { useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
@@ -48,6 +49,8 @@ function StudentMissionPage() {
   useEffect(() => {
     if (isCafe && !groupId && groups?.length) setGroupId(groups[0]!.id as string);
   }, [isCafe, groupId, groups]);
+
+  const group = (groups ?? []).find((g) => g.id === groupId) ?? null;
 
   const { data: run } = useMyRun(mission ?? null, userId, groupId);
   const start = useStartRun(mission!, userId!, groupId);
@@ -195,6 +198,10 @@ function StudentMissionPage() {
           onDeleteEntry: (id) => deleteEntry.mutate(id),
         }}
       />
+
+      {isCafe && run && group ? (
+        <MissionTaskBoard missionId={mission.id} runId={run.id} group={group} userId={userId} />
+      ) : null}
 
       {run && mission.status === "published" ? (
         <div className="space-y-2">
