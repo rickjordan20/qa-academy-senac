@@ -30,6 +30,7 @@ import { Route as InstructorProfileRouteImport } from './routes/instructor/profi
 import { Route as InstructorQaRouteImport } from './routes/instructor/qa'
 import { Route as InstructorRecoveryRouteImport } from './routes/instructor/recovery'
 import { Route as InstructorReportsRouteImport } from './routes/instructor/reports'
+import { Route as StudentAsyncRouteImport } from './routes/student/async'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
 import { Route as StudentEvidencesRouteImport } from './routes/student/evidences'
@@ -160,6 +161,11 @@ const InstructorReportsRoute = InstructorReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
   getParentRoute: () => InstructorRouteRoute,
+} as any)
+const StudentAsyncRoute = StudentAsyncRouteImport.update({
+  id: '/async',
+  path: '/async',
+  getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/dashboard',
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
   '/instructor/reports': typeof InstructorReportsRoute
+  '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
@@ -363,6 +370,7 @@ export interface FileRoutesByTo {
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
   '/instructor/reports': typeof InstructorReportsRoute
+  '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
   '/instructor/reports': typeof InstructorReportsRoute
+  '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
@@ -462,6 +471,7 @@ export interface FileRouteTypes {
     | '/instructor/qa'
     | '/instructor/recovery'
     | '/instructor/reports'
+    | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
     | '/instructor/qa'
     | '/instructor/recovery'
     | '/instructor/reports'
+    | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
@@ -558,6 +569,7 @@ export interface FileRouteTypes {
     | '/instructor/qa'
     | '/instructor/recovery'
     | '/instructor/reports'
+    | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
@@ -743,6 +755,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/instructor/reports'
       preLoaderRoute: typeof InstructorReportsRouteImport
       parentRoute: typeof InstructorRouteRoute
+    }
+    '/student/async': {
+      id: '/student/async'
+      path: '/async'
+      fullPath: '/student/async'
+      preLoaderRoute: typeof StudentAsyncRouteImport
+      parentRoute: typeof StudentRouteRoute
     }
     '/student/dashboard': {
       id: '/student/dashboard'
@@ -977,6 +996,7 @@ const InstructorRouteRouteWithChildren = InstructorRouteRoute._addFileChildren(
 )
 
 interface StudentRouteRouteChildren {
+  StudentAsyncRoute: typeof StudentAsyncRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentEvaluationRoute: typeof StudentEvaluationRoute
   StudentEvidencesRoute: typeof StudentEvidencesRoute
@@ -997,6 +1017,7 @@ interface StudentRouteRouteChildren {
 }
 
 const StudentRouteRouteChildren: StudentRouteRouteChildren = {
+  StudentAsyncRoute: StudentAsyncRoute,
   StudentDashboardRoute: StudentDashboardRoute,
   StudentEvaluationRoute: StudentEvaluationRoute,
   StudentEvidencesRoute: StudentEvidencesRoute,
