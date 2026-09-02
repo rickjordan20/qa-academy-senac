@@ -57,6 +57,35 @@ export type XpEvent = {
   created_at: string;
 };
 
+export type BadgeMetric =
+  | "evidences"
+  | "bugs"
+  | "executions"
+  | "cases"
+  | "retests"
+  | "uxBugs"
+  | "severeBugs"
+  | "contributions"
+  | "isQaLead";
+
+export const BADGE_METRICS: { value: BadgeMetric; label: string }[] = [
+  { value: "evidences", label: "Evidências registradas" },
+  { value: "bugs", label: "Bugs registrados" },
+  { value: "executions", label: "Execuções de teste" },
+  { value: "cases", label: "Casos de teste criados" },
+  { value: "retests", label: "Retestes realizados" },
+  { value: "uxBugs", label: "Bugs de UX" },
+  { value: "severeBugs", label: "Bugs de severidade alta/crítica" },
+  { value: "contributions", label: "Contribuições no grupo" },
+  { value: "isQaLead", label: "É QA Líder (1 = sim)" },
+];
+
+export const BADGE_OPERATORS = [">=", ">", "=", "<=", "<"] as const;
+export type BadgeOperator = (typeof BADGE_OPERATORS)[number];
+
+export type BadgeCondition = { metric: BadgeMetric; op: BadgeOperator; value: number };
+export type BadgeRuleConfig = { all: BadgeCondition[] };
+
 export type Badge = {
   code: string;
   name: string;
@@ -65,8 +94,32 @@ export type Badge = {
   criteria: string;
   position: number;
   enabled: boolean;
+  rule_config: BadgeRuleConfig;
   updated_at?: string;
 };
+
+export function normalizeRule(raw: unknown): BadgeRuleConfig {
+  const all = (raw as { all?: unknown })?.all;
+  if (!Array.isArray(all)) return { all: [] };
+  return {
+    all: all
+      .map((c) => c as Partial<BadgeCondition>)
+      .filter((c) => !!c && !!c.metric)
+      .map((c) => ({
+        metric: c.metric as BadgeMetric,
+        op: (BADGE_OPERATORS as readonly string[]).includes(String(c.op)) ? (c.op as BadgeOperator) : ">=",
+        value: Number(c.value) || 0,
+      })),
+  };
+}
+
+export function describeRule(rule: BadgeRuleConfig): string {
+  if (rule.all.length === 0) return "Sem regra automática configurada";
+  return rule.all
+    .map((c) => `${BADGE_METRICS.find((m) => m.value === c.metric)?.label ?? c.metric} ${c.op} ${c.value}`)
+    .join(" e ");
+}
+
 
 export type GamSettings = {
   id: boolean;
@@ -138,7 +191,10 @@ export function useBadgeCatalog() {
     queryFn: async () => {
       const { data, error } = await supabase.from("gam_badges").select("*").order("position");
       if (error) throw error;
-      return (data ?? []) as Badge[];
+      return ((data ?? []) as Record<string, unknown>[]).map(
+        (b) => ({ ...b, rule_config: normalizeRule(b["rule_config"]) }) as Badge,
+      );
+
     },
   });
 }
@@ -169,6 +225,40 @@ export function useUpdateBadge() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["gam"] }),
   });
 }
+
+/** Instrutor: cria um novo badge com regra automática. */
+export function useCreateBadge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (badge: {
+      code: string;
+      name: string;
+      description: string;
+      icon: string;
+      criteria: string;
+      position: number;
+      rule_config: BadgeRuleConfig;
+    }) => {
+      const { error } = await supabase.from("gam_badges").insert(badge as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gam"] }),
+  });
+}
+
+/** Instrutor: exclui um badge do catálogo. */
+export function useDeleteBadge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const { error } = await supabase.from("gam_badges").delete().eq("code", code);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gam"] }),
+  });
+}
+
+
 
 export type BadgeAward = { badge_code: string; awarded_at: string; student_id: string; name: string };
 
@@ -414,21 +504,33 @@ async function collect(userId: string) {
   return { events, stats };
 }
 
-function earnedBadges(stats: GamStats) {
-  const out: string[] = [];
-  if (stats.evidences >= 1) out.push("primeira_evidencia");
-  if (stats.bugs >= 5) out.push("cacador_de_bugs");
-  if (stats.executions >= 5) out.push("tester_funcional");
-  if (stats.uxBugs >= 3) out.push("ux_detective");
-  if (stats.cases >= 10) out.push("code_inspector");
-  if (stats.severeBugs >= 3) out.push("stress_tester");
-  if (stats.retests >= 5) out.push("mestre_do_reteste");
-  if (stats.isQaLead) out.push("qa_lead");
-  if (stats.contributions >= 1) out.push("trabalho_em_equipe");
-  if (stats.cases >= 1 && stats.executions >= 1 && stats.bugs >= 1 && stats.evidences >= 1 && stats.retests >= 1)
-    out.push("qa_360");
-  return out;
+/** Avalia a regra estruturada do badge contra as estatísticas reais do aluno. */
+export function matchesRule(rule: BadgeRuleConfig, stats: GamStats): boolean {
+  if (rule.all.length === 0) return false;
+  return rule.all.every((c) => {
+    const lhs = c.metric === "isQaLead" ? (stats.isQaLead ? 1 : 0) : Number(stats[c.metric] ?? 0);
+    switch (c.op) {
+      case ">=":
+        return lhs >= c.value;
+      case ">":
+        return lhs > c.value;
+      case "=":
+        return lhs === c.value;
+      case "<=":
+        return lhs <= c.value;
+      case "<":
+        return lhs < c.value;
+      default:
+        return false;
+    }
+  });
 }
+
+/** Badges conquistados a partir do catálogo ativo (regras configuradas pelo instrutor). */
+export function earnedBadges(stats: GamStats, catalog: Badge[]) {
+  return catalog.filter((b) => b.enabled && matchesRule(b.rule_config, stats)).map((b) => b.code);
+}
+
 
 /**
  * Recalcula o XP e as badges do aluno a partir dos registros reais.
@@ -460,9 +562,15 @@ export function useSyncGamification(userId: string | null) {
       }
 
       // A concessão de badges é feita no servidor (função segura `gam_sync_my_badges`),
-      // que recalcula os mesmos critérios e impede que o aluno conceda badges a si mesmo.
-      const badges = earnedBadges(stats);
+      // que reavalia as mesmas regras configuradas (rule_config) e impede que o aluno
+      // conceda badges a si mesmo. Aqui só usamos o catálogo para saber se algo mudou.
+      const catalogRes = await supabase.from("gam_badges").select("*");
+      const catalog = ((catalogRes.data ?? []) as Record<string, unknown>[]).map(
+        (b) => ({ ...b, rule_config: normalizeRule(b["rule_config"]) }) as Badge,
+      );
+      const badges = earnedBadges(stats, catalog);
       await supabase.rpc("gam_sync_my_badges");
+
 
       if (missing.length > 0 || badges.length > 0) {
         void qc.invalidateQueries({ queryKey: ["gam", "xp", userId] });
