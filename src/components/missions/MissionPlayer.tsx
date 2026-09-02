@@ -350,6 +350,8 @@ export function MissionPlayer({
           handlers={handlers}
           readOnly={readOnly}
           authorName={authorName}
+          sectionExtra={sectionExtra}
+
         />
       ))}
 
