@@ -528,9 +528,15 @@ export function useSyncGamification(userId: string | null) {
       }
 
       // A concessão de badges é feita no servidor (função segura `gam_sync_my_badges`),
-      // que recalcula os mesmos critérios e impede que o aluno conceda badges a si mesmo.
-      const badges = earnedBadges(stats);
+      // que reavalia as mesmas regras configuradas (rule_config) e impede que o aluno
+      // conceda badges a si mesmo. Aqui só usamos o catálogo para saber se algo mudou.
+      const catalogRes = await supabase.from("gam_badges").select("*");
+      const catalog = ((catalogRes.data ?? []) as Record<string, unknown>[]).map(
+        (b) => ({ ...b, rule_config: normalizeRule(b["rule_config"]) }) as Badge,
+      );
+      const badges = earnedBadges(stats, catalog);
       await supabase.rpc("gam_sync_my_badges");
+
 
       if (missing.length > 0 || badges.length > 0) {
         void qc.invalidateQueries({ queryKey: ["gam", "xp", userId] });
