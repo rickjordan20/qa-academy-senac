@@ -226,6 +226,40 @@ export function useUpdateBadge() {
   });
 }
 
+/** Instrutor: cria um novo badge com regra automática. */
+export function useCreateBadge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (badge: {
+      code: string;
+      name: string;
+      description: string;
+      icon: string;
+      criteria: string;
+      position: number;
+      rule_config: BadgeRuleConfig;
+    }) => {
+      const { error } = await supabase.from("gam_badges").insert(badge as never);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gam"] }),
+  });
+}
+
+/** Instrutor: exclui um badge do catálogo. */
+export function useDeleteBadge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const { error } = await supabase.from("gam_badges").delete().eq("code", code);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["gam"] }),
+  });
+}
+
+
+
 export type BadgeAward = { badge_code: string; awarded_at: string; student_id: string; name: string };
 
 /** Instrutor: todas as conquistas visíveis (RLS limita aos alunos das suas turmas). */
