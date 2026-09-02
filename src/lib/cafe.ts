@@ -676,7 +676,9 @@ export type MissionTask = CafeTask & {
   mission_id: string | null;
   module_id: string | null;
   feature_id: string | null;
+  section_id: string | null;
 };
+
 
 export type MissionContribution = CafeContribution & {
   builder_run_id: string | null;
