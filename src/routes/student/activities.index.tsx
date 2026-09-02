@@ -18,7 +18,8 @@ export const Route = createFileRoute("/student/activities/")({
 });
 
 function StudentActivitiesPage() {
-  const { data: missions, isPending } = useStudentMissions();
+  const { data: all, isPending } = useStudentMissions();
+  const missions = (all ?? []).filter((m) => (m.activity_kind ?? "presencial") !== "assincrona");
 
   return (
     <div className="max-w-4xl space-y-4">

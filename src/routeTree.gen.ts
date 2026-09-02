@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as InstructorAsyncRouteImport } from './routes/instructor/async'
 import { Route as InstructorCafeRouteImport } from './routes/instructor/cafe'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor/dashboard'
 import { Route as InstructorDossierRouteImport } from './routes/instructor/dossier'
@@ -91,6 +92,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const InstructorAsyncRoute = InstructorAsyncRouteImport.update({
+  id: '/async',
+  path: '/async',
+  getParentRoute: () => InstructorRouteRoute,
 } as any)
 const InstructorCafeRoute = InstructorCafeRouteImport.update({
   id: '/cafe',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/async': typeof InstructorAsyncRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/async': typeof InstructorAsyncRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -406,6 +414,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/instructor/async': typeof InstructorAsyncRoute
   '/instructor/cafe': typeof InstructorCafeRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/instructor/dossier': typeof InstructorDossierRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/async'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/async'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/auth/callback'
+    | '/instructor/async'
     | '/instructor/cafe'
     | '/instructor/dashboard'
     | '/instructor/dossier'
@@ -657,6 +669,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/instructor/async': {
+      id: '/instructor/async'
+      path: '/async'
+      fullPath: '/instructor/async'
+      preLoaderRoute: typeof InstructorAsyncRouteImport
+      parentRoute: typeof InstructorRouteRoute
     }
     '/instructor/cafe': {
       id: '/instructor/cafe'
@@ -942,6 +961,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface InstructorRouteRouteChildren {
+  InstructorAsyncRoute: typeof InstructorAsyncRoute
   InstructorCafeRoute: typeof InstructorCafeRoute
   InstructorDashboardRoute: typeof InstructorDashboardRoute
   InstructorDossierRoute: typeof InstructorDossierRoute
@@ -967,6 +987,7 @@ interface InstructorRouteRouteChildren {
 }
 
 const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
+  InstructorAsyncRoute: InstructorAsyncRoute,
   InstructorCafeRoute: InstructorCafeRoute,
   InstructorDashboardRoute: InstructorDashboardRoute,
   InstructorDossierRoute: InstructorDossierRoute,
