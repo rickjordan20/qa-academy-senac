@@ -68,6 +68,10 @@ export type BuilderMission = {
   project: string;
   template: MissionTemplate;
   modality: string;
+  /** Presencial | Assíncrona | Avaliação Final | Recuperação */
+  activity_kind: ActivityKind;
+  /** ordem de exibição dentro do tipo (usada nas atividades assíncronas) */
+  position: number;
   workload: string;
   objective: string;
   status: MissionStatus;
