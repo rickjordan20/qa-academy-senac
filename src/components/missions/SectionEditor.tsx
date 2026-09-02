@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MARKDOWN_HINT } from "@/components/missions/RichText";
 import { NativeSelect } from "@/components/missions/DynamicFields";
 import {
   blockDef,
@@ -96,7 +97,8 @@ export function SectionEditor({
           </div>
           <div className="sm:col-span-2 space-y-1">
             <Label className="text-xs">Descrição / orientação ao aluno</Label>
-            <Textarea rows={2} value={section.description} onChange={(e) => onChange({ description: e.target.value })} />
+            <Textarea rows={3} value={section.description} onChange={(e) => onChange({ description: e.target.value })} />
+            <p className="text-[11px] text-muted-foreground">{MARKDOWN_HINT}</p>
           </div>
         </div>
 
@@ -104,6 +106,7 @@ export function SectionEditor({
           <div className="space-y-1">
             <Label className="text-xs">Texto ({"##"} título, {"-"} lista)</Label>
             <Textarea rows={6} value={section.body ?? ""} onChange={(e) => onChange({ body: e.target.value })} />
+            <p className="text-[11px] text-muted-foreground">{MARKDOWN_HINT}</p>
           </div>
         ) : null}
 
@@ -120,8 +123,9 @@ export function SectionEditor({
                     onChange({ items: next });
                   }}
                 />
-                <Input
-                  placeholder="Descrição"
+                <Textarea
+                  rows={2}
+                  placeholder="Descrição (## título, - lista)"
                   value={m.description ?? ""}
                   onChange={(e) => {
                     const next = [...(items as MaterialItem[])];
