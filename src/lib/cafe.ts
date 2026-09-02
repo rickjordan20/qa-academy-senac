@@ -714,6 +714,7 @@ export type MissionTaskInput = {
   area: string;
   module_id: string | null;
   feature_id: string | null;
+  section_id: string | null;
   assignee_id: string | null;
   status: TaskStatus;
 };
@@ -737,11 +738,13 @@ export function useCreateMissionTask(
         area: input.area,
         module_id: input.module_id,
         feature_id: input.feature_id,
+        section_id: input.section_id,
         assignee_id: input.assignee_id,
         status: input.status,
       } as never);
       if (error) throw error;
     },
+
     onSuccess: () => invalidate("mission-tasks"),
   });
 }
