@@ -64,6 +64,8 @@ export type Badge = {
   icon: string;
   criteria: string;
   position: number;
+  enabled: boolean;
+  updated_at?: string;
 };
 
 export type GamSettings = {
