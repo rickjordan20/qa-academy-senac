@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RichText } from "@/components/missions/RichText";
 import type { FieldDef } from "@/lib/mission-builder";
 
 export function NativeSelect({
@@ -45,7 +46,9 @@ export function FieldInput({
         {field.label}
         {field.required ? <span className="text-destructive"> *</span> : null}
       </Label>
-      {field.description ? <p className="text-xs text-muted-foreground">{field.description}</p> : null}
+      {field.description ? (
+        <RichText text={field.description} className="space-y-1 text-xs leading-relaxed text-muted-foreground" />
+      ) : null}
       {field.type === "textarea" ? (
         <Textarea rows={3} value={value} onChange={(e) => onChange(e.target.value)} {...common} />
       ) : field.type === "select" ? (

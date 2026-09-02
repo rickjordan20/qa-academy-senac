@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { FieldInput } from "@/components/missions/DynamicFields";
+import { RichText } from "@/components/missions/RichText";
 import {
   blockDef,
   type BuilderMission,
@@ -30,22 +31,6 @@ export type PlayerHandlers = {
   onAddEntry: (section: Section, values: Record<string, string>) => Promise<void> | void;
   onDeleteEntry: (id: string) => void;
 };
-
-/** Texto simples com quebras de linha e listas leves. */
-function RichText({ text }: { text: string }) {
-  if (!text?.trim()) return null;
-  return (
-    <div className="space-y-1 text-sm leading-relaxed text-muted-foreground">
-      {text.split("\n").map((line, i) => {
-        const t = line.trim();
-        if (!t) return <div key={i} className="h-2" />;
-        if (t.startsWith("## ")) return <h4 key={i} className="text-sm font-semibold text-foreground">{t.slice(3)}</h4>;
-        if (t.startsWith("- ")) return <p key={i} className="pl-4">• {t.slice(2)}</p>;
-        return <p key={i}>{t}</p>;
-      })}
-    </div>
-  );
-}
 
 function EntryForm({
   section,
@@ -179,7 +164,7 @@ function SectionCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {sectionExtra ? sectionExtra(section) : null}
-        {section.description ? <p className="text-sm text-muted-foreground">{section.description}</p> : null}
+        {section.description ? <RichText text={section.description} /> : null}
 
         {def.family === "content" ? (
           section.kind === "material" ? (
@@ -187,7 +172,7 @@ function SectionCard({
               {((section.items ?? []) as MaterialItem[]).map((m) => (
                 <li key={m.id} className="rounded-md border border-border p-3 text-sm">
                   <p className="font-medium">{m.label}</p>
-                  {m.description ? <p className="text-muted-foreground">{m.description}</p> : null}
+                  {m.description ? <RichText text={m.description} /> : null}
                   {m.link ? (
                     <a className="text-accent underline" href={m.link} target="_blank" rel="noreferrer">
                       Abrir material
@@ -262,7 +247,7 @@ function SectionCard({
                         .map(([k, v]) => (
                           <div key={k}>
                             <dt className="text-xs uppercase text-muted-foreground">{k}</dt>
-                            <dd className="whitespace-pre-wrap">{v}</dd>
+                            <dd><RichText text={String(v)} className="space-y-1 text-sm leading-relaxed text-foreground" /></dd>
                           </div>
                         ))}
                     </dl>
