@@ -14,6 +14,8 @@ import { SectionEditor } from "@/components/missions/SectionEditor";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
 import { useAuth } from "@/lib/auth";
 import {
+  ACTIVITY_KINDS,
+  ACTIVITY_KIND_LABEL,
   BLOCK_CATALOG,
   PRESETS,
   STATUS_LABEL,
