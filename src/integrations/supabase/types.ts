@@ -510,39 +510,48 @@ export type Database = {
       }
       cafe_contributions: {
         Row: {
+          builder_run_id: string | null
           created_at: string
           description: string
           group_id: string
           id: string
           kind: string
           link: string | null
-          run_id: string
+          mission_id: string | null
+          reflection: string
+          run_id: string | null
           student_id: string
           task_id: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          builder_run_id?: string | null
           created_at?: string
           description?: string
           group_id: string
           id?: string
           kind?: string
           link?: string | null
-          run_id: string
+          mission_id?: string | null
+          reflection?: string
+          run_id?: string | null
           student_id: string
           task_id?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          builder_run_id?: string | null
           created_at?: string
           description?: string
           group_id?: string
           id?: string
           kind?: string
           link?: string | null
-          run_id?: string
+          mission_id?: string | null
+          reflection?: string
+          run_id?: string | null
           student_id?: string
           task_id?: string | null
           title?: string
@@ -550,10 +559,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "cafe_contributions_builder_run_id_fkey"
+            columns: ["builder_run_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_runs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cafe_contributions_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_contributions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
             referencedColumns: ["id"]
           },
           {
@@ -743,13 +766,17 @@ export type Database = {
         Row: {
           area: string
           assignee_id: string | null
+          builder_run_id: string | null
           created_at: string
           created_by: string
           description: string
+          feature_id: string | null
           group_id: string
           id: string
+          mission_id: string | null
+          module_id: string | null
           position: number
-          run_id: string
+          run_id: string | null
           status: string
           title: string
           updated_at: string
@@ -757,13 +784,17 @@ export type Database = {
         Insert: {
           area?: string
           assignee_id?: string | null
+          builder_run_id?: string | null
           created_at?: string
           created_by: string
           description?: string
+          feature_id?: string | null
           group_id: string
           id?: string
+          mission_id?: string | null
+          module_id?: string | null
           position?: number
-          run_id: string
+          run_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -771,23 +802,55 @@ export type Database = {
         Update: {
           area?: string
           assignee_id?: string | null
+          builder_run_id?: string | null
           created_at?: string
           created_by?: string
           description?: string
+          feature_id?: string | null
           group_id?: string
           id?: string
+          mission_id?: string | null
+          module_id?: string | null
           position?: number
-          run_id?: string
+          run_id?: string | null
           status?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "cafe_tasks_builder_run_id_fkey"
+            columns: ["builder_run_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_tasks_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "app_features"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cafe_tasks_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_tasks_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_tasks_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "app_modules"
             referencedColumns: ["id"]
           },
           {
