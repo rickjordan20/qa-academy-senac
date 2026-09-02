@@ -10,7 +10,6 @@ import {
   useCafeMission,
   useContributions,
   useCreateContribution,
-  useCreateTask,
   useDeleteContribution,
   useDeleteTask,
   useEnsureGroupRun,
@@ -18,7 +17,6 @@ import {
   useMyGroups,
   useRequestEvidence,
   useSetMemberFunction,
-  useSetTaskCollaborators,
   useTasks,
   useUpdateEvidenceRequest,
   useUpdateRun,
@@ -308,13 +306,20 @@ function GroupPanel() {
             <ManageGroupCard group={group} userId={user?.id ?? null} />
 
 
-            <NewTaskForm
-              runId={runId}
-              groupId={group.id}
-              userId={user?.id ?? null}
-              members={group.members}
-              areas={mission?.practice.areas ?? []}
-            />
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Distribuição de tarefas</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                A distribuição de tarefas agora acontece dentro da própria missão do Café Central, no{" "}
+                <span className="font-semibold text-foreground">Quadro de Tarefas da Equipe</span>. Abra a
+                missão em{" "}
+                <Link to="/student/activities" className="text-primary underline">
+                  Missões
+                </Link>{" "}
+                e distribua as tarefas por lá.
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader className="pb-2">
@@ -439,131 +444,6 @@ function TaskCard({
   );
 }
 
-function NewTaskForm({
-  runId,
-  groupId,
-  userId,
-  members,
-  areas,
-}: {
-  runId: string | null;
-  groupId: string;
-  userId: string | null;
-  members: { student_id: string; full_name: string }[];
-  areas: string[];
-}) {
-  const create = useCreateTask(runId, groupId, userId);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [area, setArea] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [collabs, setCollabs] = useState<string[]>([]);
-
-  function toggle(id: string) {
-    setCollabs((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  }
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!runId || !title.trim()) return;
-    create.mutate(
-      {
-        title: title.trim(),
-        description: description.trim(),
-        area,
-        assignee_id: assignee || null,
-        collaborators: collabs,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Tarefa distribuída");
-          setTitle("");
-          setDescription("");
-          setArea("");
-          setAssignee("");
-          setCollabs([]);
-        },
-        onError: (err: unknown) => toast.error((err as Error).message),
-      },
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Distribuir nova tarefa</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form className="space-y-3" onSubmit={submit}>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="t-title">Título</Label>
-              <Input id="t-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </div>
-            <div>
-              <Label htmlFor="t-area">Área de investigação</Label>
-              <select
-                id="t-area"
-                className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-              >
-                <option value="">Selecione</option>
-                {areas.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="t-desc">Descrição</Label>
-            <Textarea id="t-desc" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="t-assignee">Responsável</Label>
-            <select
-              id="t-assignee"
-              className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-            >
-              <option value="">Sem responsável</option>
-              {members.map((m) => (
-                <option key={m.student_id} value={m.student_id}>
-                  {m.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label>Colaboradores</Label>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {members.map((m) => (
-                <button
-                  key={m.student_id}
-                  type="button"
-                  onClick={() => toggle(m.student_id)}
-                  className={`rounded-full border px-3 py-1 text-xs ${
-                    collabs.includes(m.student_id)
-                      ? "border-primary text-primary"
-                      : "border-border text-muted-foreground"
-                  }`}
-                >
-                  {m.full_name}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Button type="submit" disabled={create.isPending}>
-            Distribuir tarefa
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
 
 function MemberFunctionRow({
   groupId,
