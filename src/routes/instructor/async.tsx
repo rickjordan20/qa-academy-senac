@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ACTIVITY_KIND_LABEL, STATUS_LABEL, useBuilderMissions } from "@/lib/mission-builder";
 import { SITUATION_FILTERS, fmtDateTime, runSituation, useAllSubmissions } from "@/lib/mission-submissions";
+import { fmtMissionDateTime, isMissionLate } from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/instructor/async")({
   head: () => ({
@@ -75,7 +76,7 @@ function InstructorAsyncPage() {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {STATUS_LABEL[m.status]}
-                  {m.due_at ? ` · prazo ${fmtDateTime(m.due_at)}` : ""} · XP base {m.base_xp}
+                  {m.due_at ? ` · prazo ${fmtMissionDateTime(m.due_at, "due")}` : ""} · XP base {m.base_xp}
                   {m.indicator_codes?.length ? ` · indicadores ${m.indicator_codes.join(", ")}` : ""}
                 </p>
               </div>
@@ -135,7 +136,7 @@ function InstructorAsyncPage() {
       <div className="space-y-3">
         {rows.map((r) => {
           const sit = runSituation(r);
-          const late = !r.submitted_at && r.mission?.due_at && new Date(r.mission.due_at).getTime() < Date.now();
+          const late = r.mission ? isMissionLate(r.mission, r) : false;
           return (
             <Card key={r.id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">

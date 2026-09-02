@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, TEMPLATE_LABEL, useStudentMissions } from "@/lib/mission-builder";
+import { useAuth } from "@/lib/auth";
+import { useMySubmissions } from "@/lib/mission-submissions";
+import { fmtMissionDateTime, missionSituation } from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/student/activities/")({
   head: () => ({
@@ -18,7 +21,10 @@ export const Route = createFileRoute("/student/activities/")({
 });
 
 function StudentActivitiesPage() {
+  const { user } = useAuth();
   const { data: all, isPending } = useStudentMissions();
+  const { data: runs } = useMySubmissions(user?.id ?? null);
+  const runByMission = new Map((runs ?? []).map((r) => [r.mission_id, r] as const));
   const missions = (all ?? []).filter((m) => (m.activity_kind ?? "presencial") !== "assincrona");
 
   return (
@@ -33,28 +39,38 @@ function StudentActivitiesPage() {
 
       {isPending ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
 
-      {(missions ?? []).map((m) => (
-        <Card key={m.id}>
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-            <div>
-              <p className="font-semibold">
-                {m.lesson_number ? `Aula ${m.lesson_number} · ` : ""}
-                {m.title}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {TEMPLATE_LABEL[m.template]} · {STATUS_LABEL[m.status]}
-                {m.due_at ? ` · prazo ${new Date(m.due_at).toLocaleDateString("pt-BR")}` : ""}
-              </p>
-              {m.objective ? <p className="mt-1 text-sm text-muted-foreground">{m.objective}</p> : null}
-            </div>
-            <Button size="sm" asChild>
-              <Link to="/student/activities/$missionId" params={{ missionId: m.id }}>
-                {m.status === "closed" ? "Consultar" : "Abrir missão"}
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+      {(missions ?? []).map((m) => {
+        const sit = missionSituation(m, runByMission.get(m.id) ?? null);
+        return (
+          <Card key={m.id}>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <div>
+                <p className="font-semibold">
+                  {m.lesson_number ? `Aula ${m.lesson_number} · ` : ""}
+                  {m.title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {TEMPLATE_LABEL[m.template]} · {STATUS_LABEL[m.status]}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {m.opens_at ? `Abertura: ${fmtMissionDateTime(m.opens_at, "opens")}` : "Abertura: livre"}
+                  {" · "}
+                  {m.due_at ? `Prazo: ${fmtMissionDateTime(m.due_at, "due")}` : "Prazo: sem prazo"}
+                </p>
+                {m.objective ? <p className="mt-1 text-sm text-muted-foreground">{m.objective}</p> : null}
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.tone}`}>{sit.label}</span>
+                <Button size="sm" asChild>
+                  <Link to="/student/activities/$missionId" params={{ missionId: m.id }}>
+                    {m.status === "closed" ? "Consultar" : "Abrir missão"}
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {!isPending && (missions ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhuma missão publicada para você ainda.</p>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { missionSituation } from "@/lib/mission-schedule";
 
 /* ==================================================================== */
 /* MOTOR DE MISSÕES — tipos                                             */
@@ -622,25 +623,18 @@ export const ACTIVITY_KIND_LABEL: Record<ActivityKind, string> = {
 
 export const ACTIVITY_KINDS: ActivityKind[] = ["presencial", "assincrona", "final", "recuperacao"];
 
-/** Situação de uma atividade assíncrona para o aluno. */
+/**
+ * Situação de uma atividade assíncrona para o aluno.
+ * Delegada à regra central (`@/lib/mission-schedule`); aqui só renomeamos
+ * "Agendada" para "Bloqueada", pois a atividade ainda não pode ser aberta.
+ */
 export function asyncActivityState(
   mission: Pick<BuilderMission, "status" | "opens_at" | "due_at">,
   run: { submitted_at: string | null; eval_status?: string; progress?: number } | null,
 ) {
-  if (run?.eval_status === "evaluated") return { key: "evaluated", label: "Avaliada", tone: "bg-success/15 text-success" };
-  if (run?.submitted_at) return { key: "submitted", label: "Entregue", tone: "bg-accent/15 text-accent" };
-  const now = Date.now();
-  if (mission.opens_at && new Date(mission.opens_at).getTime() > now)
-    return { key: "locked", label: "Bloqueada", tone: "bg-secondary text-muted-foreground" };
-  if (mission.status === "closed") return { key: "closed", label: "Encerrada", tone: "bg-secondary text-muted-foreground" };
-  if (run) {
-    if (mission.due_at && new Date(mission.due_at).getTime() < now)
-      return { key: "late", label: "Atrasada", tone: "bg-destructive/15 text-destructive" };
-    return { key: "in_progress", label: "Em andamento", tone: "bg-warning/15 text-warning" };
-  }
-  if (mission.due_at && new Date(mission.due_at).getTime() < now)
-    return { key: "late", label: "Atrasada", tone: "bg-destructive/15 text-destructive" };
-  return { key: "available", label: "Disponível", tone: "bg-accent/10 text-accent" };
+  const badge = missionSituation(mission, run);
+  if (badge.key === "scheduled") return { ...badge, key: "locked", label: "Bloqueada" };
+  return badge;
 }
 
 export const STATUS_LABEL: Record<string, string> = {

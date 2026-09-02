@@ -11,6 +11,7 @@ import {
   useMySubmissions,
   type SubmissionRow,
 } from "@/lib/mission-submissions";
+import { fmtMissionDateTime, isMissionLate } from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/student/missions/")({
   head: () => ({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/student/missions/")({
 
 function SubmissionCard({ row }: { row: SubmissionRow }) {
   const sit = runSituation(row);
+  const late = row.mission ? isMissionLate(row.mission, row) : false;
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -42,7 +44,14 @@ function SubmissionCard({ row }: { row: SubmissionRow }) {
             {row.mission?.lesson_number ? `Aula ${row.mission.lesson_number} · ` : ""}
             {row.mission?.title ?? "Missão"}
           </CardTitle>
-          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.tone}`}>{sit.label}</span>
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.tone}`}>{sit.label}</span>
+            {late ? (
+              <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">
+                Atrasada
+              </span>
+            ) : null}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -50,6 +59,7 @@ function SubmissionCard({ row }: { row: SubmissionRow }) {
           <span>{row.mission?.template === "cafe" ? "🚀 Café Central" : "🎓 TechEduca"}</span>
           {row.groupName ? <span>Grupo: {row.groupName}</span> : null}
           <span>Tentativa {row.attempt}</span>
+          {row.mission?.due_at ? <span>Prazo: {fmtMissionDateTime(row.mission.due_at, "due")}</span> : null}
           {row.submitted_at ? <span>Enviada em {fmtDateTime(row.submitted_at)}</span> : null}
           {row.eval_status === "evaluated" ? <span>XP: {row.xp_awarded ?? 0}</span> : null}
         </div>
