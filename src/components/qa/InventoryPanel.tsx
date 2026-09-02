@@ -62,6 +62,7 @@ export function InventoryPanel({
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
   const [moduleName, setModuleName] = useState("");
+  const [editingModule, setEditingModule] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
 
