@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type MissionTemplate = "techeduca" | "cafe" | "custom";
 export type MissionStatus = "draft" | "published" | "closed" | "archived";
+export type ActivityKind = "presencial" | "assincrona" | "final" | "recuperacao";
 
 export type FieldType =
   | "text"
