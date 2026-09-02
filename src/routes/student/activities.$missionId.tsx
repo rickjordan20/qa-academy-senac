@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/missions/DynamicFields";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
-import { MissionTaskBoard } from "@/components/cafe/MissionTaskBoard";
+import { MissionTaskBoard, SectionAssign } from "@/components/cafe/MissionTaskBoard";
 import { useAuth } from "@/lib/auth";
 import { useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
