@@ -39,6 +39,7 @@ export function InventoryPanel({
   userId,
   canManage = false,
   canDelete = false,
+  canManageBase = false,
   groupName,
   scope,
 }: {
@@ -47,6 +48,7 @@ export function InventoryPanel({
   userId: string | null;
   canManage?: boolean;
   canDelete?: boolean;
+  canManageBase?: boolean;
   groupName?: string | null;
   scope?: QaScope;
 }) {
