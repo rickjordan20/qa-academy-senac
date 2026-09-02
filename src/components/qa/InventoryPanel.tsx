@@ -282,14 +282,15 @@ export function InventoryPanel({
 
           {tree.map(({ module, features: list }) => {
             const isClosed = collapsed[module.id] ?? false;
+            const ownScope = module.group_id !== null || canManageBase;
             return (
               <div key={module.id} className="rounded-lg border border-border">
-                <button
-                  type="button"
-                  onClick={() => setCollapsed((c) => ({ ...c, [module.id]: !isClosed }))}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => setCollapsed((c) => ({ ...c, [module.id]: !isClosed }))}
+                    className="flex flex-1 items-center gap-2 text-left text-sm font-medium"
+                  >
                     {isClosed ? (
                       <ChevronRight className="h-4 w-4" />
                     ) : (
@@ -299,11 +300,44 @@ export function InventoryPanel({
                     {module.status !== "active" && (
                       <span className="rounded-md bg-secondary px-2 py-0.5 text-xs">Inativo</span>
                     )}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {list.length} funcionalidade(s)
-                  </span>
-                </button>
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {list.length} funcionalidade(s)
+                    </span>
+                  </button>
+                  {canManage && ownScope && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setEditingModule((m) => (m === module.id ? null : module.id))
+                        }
+                      >
+                        {editingModule === module.id ? "Cancelar" : "Editar"}
+                      </Button>
+                      {canDelete && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteModule(module.id, list.length)}
+                        >
+                          Excluir
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {editingModule === module.id && (
+                  <ModuleEditForm
+                    name={module.name}
+                    description={module.description}
+                    onCancel={() => setEditingModule(null)}
+                    onSave={async (values) => {
+                      await renameModule(module.id, values);
+                      setEditingModule(null);
+                    }}
+                  />
+                )}
                 {!isClosed && (
                   <div className="space-y-2 border-t border-border p-3">
                     {module.description && (
@@ -314,30 +348,27 @@ export function InventoryPanel({
                         Nenhuma funcionalidade cadastrada neste módulo.
                       </p>
                     )}
-                    {list.map((f) => (
-                      <FeatureRow
-                        key={f.id}
-                        code={f.code}
-                        name={f.name}
-                        description={f.description}
-                        kind={f.kind}
-                        origin={f.kind === "additional" ? f.origin : undefined}
-                        onDelete={
-                          canManage && f.kind === "additional"
-                            ? () =>
-                                remove.mutate(f.id, {
-                                  onSuccess: () => toast.success("Funcionalidade removida."),
-                                  onError: (e) => toast.error(e.message),
-                                })
-                            : undefined
-                        }
-                      />
-                    ))}
+                    {list.map((f) => {
+                      const editable = canManage && (f.group_id !== null || canManageBase);
+                      return (
+                        <FeatureRow
+                          key={f.id}
+                          code={f.code}
+                          name={f.name}
+                          description={f.description}
+                          kind={f.kind}
+                          origin={f.kind === "additional" ? f.origin : undefined}
+                          onSave={editable ? (values) => saveFeature(f.id, values) : undefined}
+                          onDelete={editable && canDelete ? () => deleteFeature(f.id) : undefined}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
             );
           })}
+
 
           {orphans.length > 0 && (
             <div className="rounded-lg border border-dashed border-border p-3">
