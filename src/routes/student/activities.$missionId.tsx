@@ -101,13 +101,11 @@ function StudentMissionPage() {
   const pickers: MissionPickers = useMemo(() => {
     const allowed = mission?.feature_ids ?? [];
     const feats = (invFeatures ?? []).filter((f) => (allowed.length ? allowed.includes(f.id) : true));
-    const tree = groupByModule(invModules ?? [], feats);
+    const { tree, orphans: looseFeats } = groupByModule(invModules ?? [], feats);
     const features = tree.flatMap((node) =>
       node.features.map((f) => ({ value: f.id, label: f.name, group: node.module.name })),
     );
-    const orphans = feats
-      .filter((f) => !features.some((o) => o.value === f.id))
-      .map((f) => ({ value: f.id, label: f.name, group: "Sem módulo" }));
+    const orphans = looseFeats.map((f) => ({ value: f.id, label: f.name, group: "Sem módulo" }));
 
     const caseSections = new Map((mission?.sections ?? []).map((sec) => [sec.id, sec]));
     const cases = (entries ?? [])
