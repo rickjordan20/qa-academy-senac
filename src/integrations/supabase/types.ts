@@ -466,6 +466,72 @@ export type Database = {
         }
         Relationships: []
       }
+      builder_run_evaluations: {
+        Row: {
+          block_results: Json
+          created_at: string
+          evaluator_id: string | null
+          feedback: string
+          group_snapshot: Json
+          id: string
+          indicator_finals: Json
+          is_current: boolean
+          mission_id: string
+          run_id: string
+          target_student_ids: string[]
+          updated_at: string
+          version: number
+          xp: number | null
+        }
+        Insert: {
+          block_results?: Json
+          created_at?: string
+          evaluator_id?: string | null
+          feedback?: string
+          group_snapshot?: Json
+          id?: string
+          indicator_finals?: Json
+          is_current?: boolean
+          mission_id: string
+          run_id: string
+          target_student_ids?: string[]
+          updated_at?: string
+          version?: number
+          xp?: number | null
+        }
+        Update: {
+          block_results?: Json
+          created_at?: string
+          evaluator_id?: string | null
+          feedback?: string
+          group_snapshot?: Json
+          id?: string
+          indicator_finals?: Json
+          is_current?: boolean
+          mission_id?: string
+          run_id?: string
+          target_student_ids?: string[]
+          updated_at?: string
+          version?: number
+          xp?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_run_evaluations_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_run_evaluations_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       builder_run_events: {
         Row: {
           actor_id: string | null
@@ -1417,6 +1483,9 @@ export type Database = {
           id: string
           indicator_id: string
           notes: string | null
+          source_evaluation_id: string | null
+          source_mission_id: string | null
+          source_run_id: string | null
           stage: string
           student_id: string
           updated_at: string
@@ -1431,6 +1500,9 @@ export type Database = {
           id?: string
           indicator_id: string
           notes?: string | null
+          source_evaluation_id?: string | null
+          source_mission_id?: string | null
+          source_run_id?: string | null
           stage?: string
           student_id: string
           updated_at?: string
@@ -1445,6 +1517,9 @@ export type Database = {
           id?: string
           indicator_id?: string
           notes?: string | null
+          source_evaluation_id?: string | null
+          source_mission_id?: string | null
+          source_run_id?: string | null
           stage?: string
           student_id?: string
           updated_at?: string

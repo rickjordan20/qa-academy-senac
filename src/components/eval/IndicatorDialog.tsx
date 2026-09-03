@@ -17,6 +17,7 @@ import {
   type StudentInfo,
 } from "@/lib/assessment";
 import { ConceptBadge } from "@/components/ConceptBadge";
+import { fmtDateTime, useIndicatorOrigins } from "@/lib/mission-submissions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -50,11 +51,13 @@ export function IndicatorDialog({
   const { data: dossier } = useStudentDossier(open ? student.id : null);
   const { data: history } = useEvalHistory(open ? student.id : null);
   const { data: feedbacks } = useFeedbacks(open ? student.id : null);
+  const { data: origins } = useIndicatorOrigins(open ? student.id : null);
   const upsert = useUpsertEvaluation(classId);
   const addFeedback = useAddFeedback();
   const delFeedback = useDeleteFeedback();
 
   const indHistory = (history ?? []).filter((h) => h.indicator_id === indicator.id);
+  const indOrigins = (origins ?? []).filter((o) => !!o.indicator_finals?.[indicator.code]);
   const indFeedbacks = (feedbacks ?? []).filter(
     (f) => f.indicator_id === indicator.id || f.indicator_id === null,
   );
@@ -92,6 +95,7 @@ export function IndicatorDialog({
             <TabsTrigger value="techeduca">TechEduca</TabsTrigger>
             <TabsTrigger value="cafe">Café Central</TabsTrigger>
             <TabsTrigger value="feedbacks">Feedbacks</TabsTrigger>
+            <TabsTrigger value="origem">Origem</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
 
@@ -216,6 +220,36 @@ export function IndicatorDialog({
                 <p className="text-sm text-muted-foreground">Nenhum feedback ainda.</p>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="origem" className="space-y-2 pt-4">
+            {indOrigins.map((o) => (
+              <div key={o.id} className="rounded-lg border border-border p-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">Missão: {o.missionTitle}</span>
+                  <ConceptBadge concept={(o.indicator_finals?.[indicator.code] ?? null) as never} />
+                </div>
+                <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                  {(o.block_results ?? [])
+                    .filter((b) => b.indicators?.[indicator.code])
+                    .map((b) => (
+                      <p key={b.section_id}>
+                        Bloco: {b.title} — resultado {b.indicators[indicator.code]}
+                        {b.comment ? ` · ${b.comment}` : ""}
+                      </p>
+                    ))}
+                  <p>
+                    Menção consolidada da missão: {o.indicator_finals?.[indicator.code]} ·{" "}
+                    {o.is_current ? "avaliação vigente" : "avaliação anterior"} · {fmtDateTime(o.created_at)}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {indOrigins.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma menção deste indicador veio de avaliação de missão.
+              </p>
+            )}
           </TabsContent>
 
           <TabsContent value="historico" className="space-y-2 pt-4">

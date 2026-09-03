@@ -378,6 +378,79 @@ export function useSubmitRun() {
   });
 }
 
+/* ------------------ Avaliação por bloco / histórico ------------------ */
+
+export type BlockResult = {
+  section_id: string;
+  title: string;
+  comment: string;
+  /** indicator_code -> A|PA|NA */
+  indicators: Record<string, string>;
+};
+
+export type RunEvaluation = {
+  id: string;
+  run_id: string;
+  mission_id: string;
+  version: number;
+  evaluator_id: string | null;
+  xp: number | null;
+  feedback: string;
+  block_results: BlockResult[];
+  indicator_finals: Record<string, string>;
+  group_snapshot: { id: string; name: string }[];
+  target_student_ids: string[];
+  is_current: boolean;
+  created_at: string;
+};
+
+/** Histórico de avaliações de um envio (mais recente primeiro). */
+export function useRunEvaluations(runId: string | null) {
+  return useQuery({
+    queryKey: ["mission-submissions", "evaluations", runId],
+    enabled: !!runId,
+    queryFn: async (): Promise<RunEvaluation[]> => {
+      const { data, error } = await supabase
+        .from("builder_run_evaluations")
+        .select("*")
+        .eq("run_id", runId!)
+        .order("version", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as RunEvaluation[];
+    },
+  });
+}
+
+export type IndicatorOrigin = RunEvaluation & { missionTitle: string };
+
+/** Rastreabilidade: de quais missões vieram as menções de um aluno. */
+export function useIndicatorOrigins(studentId: string | null) {
+  return useQuery({
+    queryKey: ["mission-submissions", "origins", studentId],
+    enabled: !!studentId,
+    queryFn: async (): Promise<IndicatorOrigin[]> => {
+      const { data, error } = await supabase
+        .from("builder_run_evaluations")
+        .select("*, mission:builder_missions(title)")
+        .contains("target_student_ids", [studentId!])
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return ((data ?? []) as unknown as (RunEvaluation & { mission: { title: string } | null })[]).map((r) => ({
+        ...r,
+        missionTitle: r.mission?.title ?? "Missão",
+      }));
+    },
+  });
+}
+
+/** Sugestão de menção final: qualquer NA → NA; todas A → A; caso contrário PA. */
+export function suggestConcept(values: string[]): string {
+  const list = values.filter(Boolean);
+  if (!list.length) return "";
+  if (list.includes("NA")) return "NA";
+  return list.every((v) => v === "A") ? "A" : "PA";
+}
+
 /** Avaliação do instrutor: status, XP, feedback e indicadores A/PA/NA. */
 export function useEvaluateSubmission() {
   const qc = useQueryClient();
@@ -388,7 +461,12 @@ export function useEvaluateSubmission() {
       decision: "draft" | "evaluated" | "revision";
       xp: number | null;
       feedback: string;
-      indicators: Record<string, string>; // indicator_id -> A|PA|NA
+      /** indicator_id -> A|PA|NA (menções finais consolidadas) */
+      indicators: Record<string, string>;
+      /** code -> indicator_id, para rastrear as menções por código */
+      indicatorIdByCode?: Record<string, string>;
+      blocks?: BlockResult[];
+      members?: { id: string; name: string }[];
     }) => {
       const evalStatus: EvalStatus =
         input.decision === "evaluated" ? "evaluated" : input.decision === "revision" ? "revision" : "in_review";
@@ -415,29 +493,82 @@ export function useEvaluateSubmission() {
         note: input.feedback,
       });
 
-      // Indicadores A/PA/NA — usa a matriz de avaliação existente
-      const targets = input.run.student_id
-        ? [input.run.student_id]
-        : []; // envios de grupo: avaliação por indicador é feita por aluno na matriz
-      if (input.run.classId && targets.length) {
-        for (const [indicatorId, concept] of Object.entries(input.indicators)) {
-          if (!concept) continue;
-          const { error: evalErr } = await supabase.from("indicator_evaluations").upsert(
-            {
-              class_id: input.run.classId,
-              student_id: targets[0]!,
-              indicator_id: indicatorId,
-              concept,
-              stage: "regular",
-              notes: input.feedback,
-              evaluated_by: input.instructorId,
-              evaluated_at: new Date().toISOString(),
-            } as never,
-            { onConflict: "class_id,student_id,indicator_id" },
-          );
-          if (evalErr) throw evalErr;
+      // Alvos: envio individual → o aluno; envio de grupo → integrantes no momento da avaliação
+      const members = input.members ?? [];
+      const targets = input.run.student_id ? [input.run.student_id] : members.map((m) => m.id);
+
+      // Histórico de avaliações (a anterior nunca é apagada)
+      const lastRes = await supabase
+        .from("builder_run_evaluations")
+        .select("id, version")
+        .eq("run_id", input.run.id)
+        .order("version", { ascending: false })
+        .limit(1);
+      if (lastRes.error) throw lastRes.error;
+      const version = ((lastRes.data?.[0] as { version?: number } | undefined)?.version ?? 0) + 1;
+
+      const finalsByCode: Record<string, string> = {};
+      const idByCode = input.indicatorIdByCode ?? {};
+      for (const [code, id] of Object.entries(idByCode)) {
+        const concept = input.indicators[id];
+        if (concept) finalsByCode[code] = concept;
+      }
+
+      const insEval = await supabase
+        .from("builder_run_evaluations")
+        .insert({
+          run_id: input.run.id,
+          mission_id: input.run.mission_id,
+          version,
+          evaluator_id: input.instructorId,
+          xp: input.xp,
+          feedback: input.feedback,
+          block_results: (input.blocks ?? []) as never,
+          indicator_finals: finalsByCode as never,
+          group_snapshot: members as never,
+          target_student_ids: targets,
+          is_current: input.decision === "evaluated",
+        } as never)
+        .select("id")
+        .maybeSingle();
+      if (insEval.error) throw insEval.error;
+      const evaluationId = (insEval.data as { id: string } | null)?.id ?? null;
+
+      if (input.decision === "evaluated") {
+        const upd = await supabase
+          .from("builder_run_evaluations")
+          .update({ is_current: false } as never)
+          .eq("run_id", input.run.id)
+          .neq("version", version);
+        if (upd.error) throw upd.error;
+      }
+
+      // Indicadores A/PA/NA — grava na matriz para todos os alvos
+      if (input.decision === "evaluated" && input.run.classId && targets.length) {
+        for (const studentId of targets) {
+          for (const [indicatorId, concept] of Object.entries(input.indicators)) {
+            if (!concept) continue;
+            const { error: evalErr } = await supabase.from("indicator_evaluations").upsert(
+              {
+                class_id: input.run.classId,
+                student_id: studentId,
+                indicator_id: indicatorId,
+                concept,
+                stage: "regular",
+                notes: input.feedback,
+                evaluated_by: input.instructorId,
+                evaluated_at: new Date().toISOString(),
+                source_mission_id: input.run.mission_id,
+                source_run_id: input.run.id,
+                source_evaluation_id: evaluationId,
+              } as never,
+              { onConflict: "class_id,student_id,indicator_id" },
+            );
+            if (evalErr) throw evalErr;
+          }
         }
       }
+
 
       // XP — registrado uma única vez por execução (regravado se a nota mudar)
       if (input.decision === "evaluated" && input.run.student_id) {
@@ -466,6 +597,9 @@ export function useEvaluateSubmission() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["mission-submissions"] });
+      void qc.invalidateQueries({ queryKey: ["class-evaluations"] });
+      void qc.invalidateQueries({ queryKey: ["eval-history"] });
+      void qc.invalidateQueries({ queryKey: ["my-evaluations"] });
       void qc.invalidateQueries({ queryKey: ["gam"] });
       void qc.invalidateQueries({ queryKey: ["builder-participation"] });
     },
@@ -486,4 +620,19 @@ export function answerSummary(sections: Section[], answers: Record<string, Recor
     if (pairs.length) out.push({ section: s, pairs });
   }
   return out;
+}
+
+/** IDs dos envios que já passaram por reavaliação (mais de uma avaliação registrada). */
+export function useReevaluatedRuns() {
+  return useQuery({
+    queryKey: ["mission-submissions", "reevaluated"],
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase
+        .from("builder_run_evaluations")
+        .select("run_id, version")
+        .gt("version", 1);
+      if (error) throw error;
+      return new Set((data ?? []).map((r) => (r as { run_id: string }).run_id));
+    },
+  });
 }
