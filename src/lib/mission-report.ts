@@ -178,7 +178,7 @@ export function useMissionReport(classId: string | null, missionId: string | nul
       const [missionRes, classRes, indRes] = await Promise.all([
         supabase.from("builder_missions").select("*").eq("id", missionId!).maybeSingle(),
         supabase.from("classes").select("id, name, code").eq("id", classId!).maybeSingle(),
-        supabase.from("indicators").select("code, description").eq("uc_code", "UC10").order("position"),
+        supabase.from("indicators").select("id, code, description").eq("uc_code", "UC10").order("position"),
       ]);
       if (missionRes.error) throw missionRes.error;
       if (classRes.error) throw classRes.error;
