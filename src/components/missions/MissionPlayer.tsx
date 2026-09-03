@@ -36,15 +36,20 @@ function EntryForm({
   section,
   fields,
   disabled,
+  pickers,
   onSubmit,
 }: {
   section: Section;
   fields: FieldDef[];
   disabled: boolean;
+  pickers?: MissionPickers | undefined;
   onSubmit: (values: Record<string, string>) => void;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
+
+  const featureOptions = pickers?.features ?? [];
+  const caseOptions = pickers?.cases ?? [];
 
   if (!open)
     return (
@@ -57,15 +62,76 @@ function EntryForm({
     <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
       {section.kind === "evidence" ? <EvidenceGuide /> : null}
       <div className="grid gap-3 sm:grid-cols-2">
-        {fields.map((f) => (
-          <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
-            <FieldInput
-              field={f}
-              value={values[f.key] ?? ""}
-              onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}
-            />
-          </div>
-        ))}
+        {fields.map((f) => {
+          const isFeaturePicker = section.kind === "test_case" && f.key === "funcionalidade" && !!pickers;
+          const isCasePicker = section.kind === "execution" && f.key === "titulo" && !!pickers;
+
+          if (isFeaturePicker)
+            return (
+              <div key={f.key}>
+                <Label className="text-xs">
+                  Funcionalidade<span className="text-destructive"> *</span>
+                </Label>
+                <SearchableSelect
+                  value={values["feature_id"] ?? ""}
+                  disabled={disabled}
+                  options={featureOptions}
+                  placeholder="Selecione uma funcionalidade..."
+                  emptyMessage="Nenhuma funcionalidade disponível para esta missão. Verifique o Inventário da Aplicação."
+                  onChange={(id) => {
+                    const opt = featureOptions.find((o) => o.value === id);
+                    setValues((s) => ({
+                      ...s,
+                      feature_id: id,
+                      funcionalidade: opt ? opt.label : "",
+                    }));
+                  }}
+                />
+              </div>
+            );
+
+          if (isCasePicker)
+            return (
+              <div key={f.key}>
+                <Label className="text-xs">
+                  Caso de teste relacionado<span className="text-destructive"> *</span>
+                </Label>
+                <SearchableSelect
+                  value={values["case_id"] ?? ""}
+                  disabled={disabled}
+                  options={caseOptions}
+                  placeholder="Selecione um caso de teste..."
+                  emptyMessage="Nenhum caso de teste disponível. Crie primeiro um caso de teste nesta missão."
+                  onChange={(id) => {
+                    const opt = caseOptions.find((o) => o.value === id);
+                    setValues((s) => ({
+                      ...s,
+                      case_id: id,
+                      titulo: opt ? opt.label : "",
+                      ...(opt?.expected ? { esperado: opt.expected } : {}),
+                      ...(opt?.featureId ? { feature_id: opt.featureId } : {}),
+                      ...(opt?.featureLabel ? { funcionalidade: opt.featureLabel } : {}),
+                    }));
+                  }}
+                />
+                {values["funcionalidade"] ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Funcionalidade: {values["funcionalidade"]}
+                  </p>
+                ) : null}
+              </div>
+            );
+
+          return (
+            <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
+              <FieldInput
+                field={f}
+                value={values[f.key] ?? ""}
+                onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}
+              />
+            </div>
+          );
+        })}
 
       </div>
       <div className="flex gap-2">
