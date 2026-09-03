@@ -18,7 +18,7 @@ import { ClassPicker } from "@/components/eval/ClassPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/instructor/reports")({
+export const Route = createFileRoute("/instructor/reports/")({
   head: () => ({
     meta: [
       { title: "Relatórios | QA Academy" },
