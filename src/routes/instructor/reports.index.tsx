@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import { useInstructorGroups } from "@/lib/cafe";
@@ -138,9 +138,14 @@ function ReportsPage() {
             Informações objetivas para acompanhamento e fechamento da UC10.
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={() => window.print()}>
-          Imprimir / PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild size="sm">
+            <Link to="/instructor/reports/deliveries">Entregas por Missão</Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => window.print()}>
+            Imprimir / PDF
+          </Button>
+        </div>
       </div>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
