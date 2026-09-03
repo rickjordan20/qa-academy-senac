@@ -317,6 +317,40 @@ export function useMissionReport(classId: string | null, missionId: string | nul
           .sort((a, b) => a.name.localeCompare(b.name));
       }
 
+      // avaliações individuais registradas na matriz a partir desta missão
+      if (isGroup) {
+        const codeByIndicatorId = new Map(
+          ((indRes.data ?? []) as { id: string; code: string }[]).map((i) => [i.id, i.code] as const),
+        );
+        const indEvalRes = await supabase
+          .from("indicator_evaluations")
+          .select("student_id, indicator_id, concept")
+          .eq("class_id", classId!)
+          .eq("source_mission_id", mission.id);
+        if (indEvalRes.error) throw indEvalRes.error;
+        const rows = (indEvalRes.data ?? []) as {
+          student_id: string;
+          indicator_id: string;
+          concept: string | null;
+        }[];
+        for (const t of targets) {
+          const ids = memberRows.filter((m) => m.group_id === t.key).map((m) => m.student_id);
+          for (const sid of ids) {
+            const mine = rows.filter((r) => r.student_id === sid && r.concept);
+            if (!mine.length) continue;
+            const map: Record<string, string> = {};
+            let differs = false;
+            for (const r of mine) {
+              const code = codeByIndicatorId.get(r.indicator_id);
+              if (!code) continue;
+              map[code] = r.concept!;
+              if (t.indicatorFinals[code] && t.indicatorFinals[code] !== r.concept) differs = true;
+            }
+            if (differs) t.individual.push({ name: nameById.get(sid) ?? "Aluno", indicators: map });
+          }
+        }
+      }
+
       const summary = {
         expected: targets.length,
         delivered: targets.filter((t) => !!t.run?.submitted_at).length,
