@@ -8,6 +8,7 @@ import {
   fmtDateTime,
   runSituation,
   useAllSubmissions,
+  useReevaluatedRuns,
 } from "@/lib/mission-submissions";
 
 export const Route = createFileRoute("/instructor/submissions/")({
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/instructor/submissions/")({
 
 function SubmissionsPage() {
   const { data, isPending } = useAllSubmissions();
+  const { data: reevaluated } = useReevaluatedRuns();
   const [filter, setFilter] = useState("awaiting");
   const [term, setTerm] = useState("");
   const [missionId, setMissionId] = useState("");
@@ -38,15 +40,19 @@ function SubmissionsPage() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: data?.length ?? 0 };
+    c["reevaluated"] = 0;
     for (const r of data ?? []) {
       const k = runSituation(r).key;
       c[k] = (c[k] ?? 0) + 1;
+      if (reevaluated?.has(r.id)) c["reevaluated"] = (c["reevaluated"] ?? 0) + 1;
     }
     return c;
-  }, [data]);
+  }, [data, reevaluated]);
 
   const rows = (data ?? []).filter((r) => {
-    if (filter !== "all" && runSituation(r).key !== filter) return false;
+    if (filter === "reevaluated") {
+      if (!reevaluated?.has(r.id)) return false;
+    } else if (filter !== "all" && runSituation(r).key !== filter) return false;
     if (missionId && r.mission_id !== missionId) return false;
     const t = term.trim().toLowerCase();
     if (!t) return true;
@@ -67,7 +73,7 @@ function SubmissionsPage() {
 
       <div className="mb-4 space-y-3">
         <div className="flex flex-wrap gap-2">
-          {SITUATION_FILTERS.map((f) => (
+          {[...SITUATION_FILTERS, { key: "reevaluated", label: "Reavaliadas" }].map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
@@ -121,7 +127,7 @@ function SubmissionsPage() {
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.tone}`}>{sit.label}</span>
                   <Button asChild size="sm">
                     <Link to="/instructor/submissions/$runId" params={{ runId: r.id }}>
-                      Abrir ficha
+                      {r.eval_status === "evaluated" ? "Reavaliar" : "Avaliar"}
                     </Link>
                   </Button>
                 </div>
