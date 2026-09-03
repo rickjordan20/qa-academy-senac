@@ -621,3 +621,18 @@ export function answerSummary(sections: Section[], answers: Record<string, Recor
   }
   return out;
 }
+
+/** IDs dos envios que já passaram por reavaliação (mais de uma avaliação registrada). */
+export function useReevaluatedRuns() {
+  return useQuery({
+    queryKey: ["mission-submissions", "reevaluated"],
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase
+        .from("builder_run_evaluations")
+        .select("run_id, version")
+        .gt("version", 1);
+      if (error) throw error;
+      return new Set((data ?? []).map((r) => (r as { run_id: string }).run_id));
+    },
+  });
+}
