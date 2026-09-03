@@ -975,6 +975,10 @@ export function useCreateEntry(runId: string) {
       status: string;
       data: Record<string, string>;
       link?: string | null;
+      /** rastreabilidade por ID: funcionalidade do inventário */
+      featureId?: string | null;
+      /** rastreabilidade por ID: caso de teste relacionado (execução/bug/reteste) */
+      parentId?: string | null;
     }) => {
       const { data, error } = await supabase.from("builder_mission_entries").insert({
         run_id: runId,
@@ -986,6 +990,8 @@ export function useCreateEntry(runId: string) {
         title: input.title,
         status: input.status,
         data: input.data as never,
+        feature_id: input.featureId ?? null,
+        parent_id: input.parentId ?? null,
         link: input.link ?? null,
         file_path: null,
       } as never).select("id").maybeSingle();
