@@ -1,9 +1,85 @@
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichText } from "@/components/missions/RichText";
 import type { FieldDef } from "@/lib/mission-builder";
+
+export type PickerOption = {
+  /** id real do registro relacionado */
+  value: string;
+  label: string;
+  /** agrupamento visual (Módulo/Tela) */
+  group?: string | undefined;
+};
+
+/** Select pesquisável simples (filtro + <select> com optgroup), sem dependências novas. */
+export function SearchableSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  emptyMessage,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: PickerOption[];
+  placeholder: string;
+  emptyMessage: string;
+  disabled?: boolean | undefined;
+}) {
+  const [term, setTerm] = useState("");
+  const filtered = useMemo(() => {
+    const t = term.trim().toLowerCase();
+    if (!t) return options;
+    return options.filter((o) => `${o.group ?? ""} ${o.label}`.toLowerCase().includes(t));
+  }, [options, term]);
+
+  const groups = useMemo(() => {
+    const map = new Map<string, PickerOption[]>();
+    for (const o of filtered) {
+      const key = o.group ?? "";
+      map.set(key, [...(map.get(key) ?? []), o]);
+    }
+    return [...map.entries()];
+  }, [filtered]);
+
+  if (options.length === 0) return <p className="text-xs text-muted-foreground">{emptyMessage}</p>;
+
+  return (
+    <div className="space-y-1">
+      <Input
+        value={term}
+        disabled={disabled}
+        placeholder="Pesquisar..."
+        onChange={(e) => setTerm(e.target.value)}
+        className="h-8 text-xs"
+      />
+      <NativeSelect value={value} onChange={onChange} disabled={disabled}>
+        <option value="">{placeholder}</option>
+        {groups.map(([g, opts]) =>
+          g ? (
+            <optgroup key={g} label={g}>
+              {opts.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </optgroup>
+          ) : (
+            opts.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))
+          ),
+        )}
+      </NativeSelect>
+    </div>
+  );
+}
 
 export function NativeSelect({
   value,

@@ -25,6 +25,8 @@ import {
 } from "@/lib/mission-builder";
 import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
 import { useBadgeCatalog } from "@/lib/gamification";
+import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
+import type { MissionPickers } from "@/components/missions/MissionPlayer";
 
 export const Route = createFileRoute("/student/activities/$missionId")({
   head: () => ({
@@ -90,6 +92,44 @@ function StudentMissionPage() {
   const readOnly = mission?.status !== "published" || !run;
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
+
+  /* Inventário real da missão: TechEduca (base) ou apenas o inventário do grupo no Café Central */
+  const project: AppProject = isCafe ? "cafe_central" : "techeduca";
+  const { data: invFeatures } = useFeatures(project, isCafe ? groupId : null);
+  const { data: invModules } = useModules(project, isCafe ? groupId : null);
+
+  const pickers: MissionPickers = useMemo(() => {
+    const allowed = mission?.feature_ids ?? [];
+    const feats = (invFeatures ?? []).filter((f) => (allowed.length ? allowed.includes(f.id) : true));
+    const { tree, orphans: looseFeats } = groupByModule(invModules ?? [], feats);
+    const features = tree.flatMap((node) =>
+      node.features.map((f) => ({ value: f.id, label: f.name, group: node.module.name })),
+    );
+    const orphans = looseFeats.map((f) => ({ value: f.id, label: f.name, group: "Sem módulo" }));
+
+    const caseSections = new Map((mission?.sections ?? []).map((sec) => [sec.id, sec]));
+    const cases = (entries ?? [])
+      .filter((e) => e.kind === "test_case")
+      .filter((e) => {
+        if (!isCafe) return e.author_id === userId;
+        const sec = caseSections.get(e.section_id);
+        return sec?.scope === "individual" ? e.author_id === userId : true;
+      })
+      .map((e, i) => {
+        const featureLabel =
+          [...features, ...orphans].find((f) => f.value === e.feature_id)?.label ??
+          (e.data?.["funcionalidade"] ?? "");
+        return {
+          value: e.id,
+          label: `CT-${String(i + 1).padStart(3, "0")} — ${e.title || "(sem título)"}`,
+          expected: e.data?.["esperado"] ?? "",
+          featureId: e.feature_id,
+          featureLabel,
+        };
+      });
+
+    return { features: [...features, ...orphans], cases };
+  }, [invFeatures, invModules, mission, entries, isCafe, userId]);
   const progress = useMemo(
     () =>
       mission
@@ -129,6 +169,11 @@ function StudentMissionPage() {
     if (!run || !userId) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
+    const featureId = values["feature_id"] || null;
+    const parentId = values["case_id"] || null;
+    const data = { ...values };
+    delete data["feature_id"];
+    delete data["case_id"];
     const entryId = await createEntry.mutateAsync({
       missionId: mission!.id,
       sectionId: section.id,
@@ -137,7 +182,9 @@ function StudentMissionPage() {
       groupId: run.group_id,
       title: values[titleKey] ?? "",
       status: values["status"] ?? "",
-      data: values,
+      data,
+      featureId,
+      parentId,
       link: values["url"] ?? values["link"] ?? null,
     });
     const individual = !isCafe || section.scope === "individual";
@@ -279,6 +326,7 @@ function StudentMissionPage() {
                 section.scope === "individual" ? entry.author_id === userId : true
             : undefined
         }
+        pickers={pickers}
         state={{ answers, checklist, entries: entries ?? [] }}
 
         handlers={{
