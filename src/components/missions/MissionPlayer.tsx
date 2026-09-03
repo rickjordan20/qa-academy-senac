@@ -198,6 +198,7 @@ function SectionCard({
   authorName,
   sectionExtra,
   entryFilter,
+  pickers,
 }: {
   section: Section;
   index: number;
@@ -208,6 +209,7 @@ function SectionCard({
   authorName: (id: string) => string;
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
   entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
+  pickers?: MissionPickers | undefined;
 }) {
   const def = blockDef(section.kind);
   const answers = state.answers[section.id] ?? {};
@@ -351,6 +353,7 @@ function SectionCard({
               <EntryForm
                 section={section}
                 fields={def.fields ?? []}
+                pickers={pickers}
                 disabled={readOnly}
                 onSubmit={(values) => handlers.onAddEntry(section, values)}
               />
@@ -378,6 +381,7 @@ export function MissionPlayer({
   header,
   sectionExtra,
   entryFilter,
+  pickers,
 }: {
   mission: BuilderMission;
   state: PlayerState;
@@ -388,6 +392,7 @@ export function MissionPlayer({
   header?: React.ReactNode;
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
   entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
+  pickers?: MissionPickers | undefined;
 }) {
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
@@ -422,6 +427,7 @@ export function MissionPlayer({
           authorName={authorName}
           sectionExtra={sectionExtra}
           entryFilter={entryFilter}
+          pickers={pickers}
 
         />
       ))}
