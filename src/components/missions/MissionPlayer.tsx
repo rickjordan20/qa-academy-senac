@@ -26,6 +26,18 @@ export type PlayerState = {
   entries: MissionEntry[];
 };
 
+export type CaseOption = PickerOption & {
+  expected?: string | undefined;
+  featureId?: string | null | undefined;
+  featureLabel?: string | undefined;
+};
+
+/** Opções reais do inventário e dos casos de teste da missão (rastreabilidade por ID). */
+export type MissionPickers = {
+  features: PickerOption[];
+  cases: CaseOption[];
+};
+
 export type PlayerHandlers = {
   onAnswer: (sectionId: string, key: string, value: string) => void;
   onToggle: (itemId: string, value: boolean) => void;
