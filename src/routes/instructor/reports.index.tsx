@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import { useInstructorGroups } from "@/lib/cafe";
@@ -18,7 +18,7 @@ import { ClassPicker } from "@/components/eval/ClassPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute("/instructor/reports")({
+export const Route = createFileRoute("/instructor/reports/")({
   head: () => ({
     meta: [
       { title: "Relatórios | QA Academy" },
@@ -138,9 +138,14 @@ function ReportsPage() {
             Informações objetivas para acompanhamento e fechamento da UC10.
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={() => window.print()}>
-          Imprimir / PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild size="sm">
+            <Link to="/instructor/reports/deliveries">Entregas por Missão</Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => window.print()}>
+            Imprimir / PDF
+          </Button>
+        </div>
       </div>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />

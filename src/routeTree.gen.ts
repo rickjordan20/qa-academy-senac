@@ -31,7 +31,6 @@ import { Route as InstructorPortfoliosRouteImport } from './routes/instructor/po
 import { Route as InstructorProfileRouteImport } from './routes/instructor/profile'
 import { Route as InstructorQaRouteImport } from './routes/instructor/qa'
 import { Route as InstructorRecoveryRouteImport } from './routes/instructor/recovery'
-import { Route as InstructorReportsRouteImport } from './routes/instructor/reports'
 import { Route as StudentAsyncRouteImport } from './routes/student/async'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
@@ -48,6 +47,8 @@ import { Route as InstructorClassesIndexRouteImport } from './routes/instructor/
 import { Route as InstructorClassesClassIdRouteImport } from './routes/instructor/classes.$classId'
 import { Route as InstructorMissionsIndexRouteImport } from './routes/instructor/missions.index'
 import { Route as InstructorMissionsMissionIdRouteImport } from './routes/instructor/missions.$missionId'
+import { Route as InstructorReportsIndexRouteImport } from './routes/instructor/reports.index'
+import { Route as InstructorReportsDeliveriesRouteImport } from './routes/instructor/reports.deliveries'
 import { Route as InstructorStudentsIndexRouteImport } from './routes/instructor/students.index'
 import { Route as InstructorStudentsStudentIdRouteImport } from './routes/instructor/students.$studentId'
 import { Route as InstructorSubmissionsIndexRouteImport } from './routes/instructor/submissions.index'
@@ -169,11 +170,6 @@ const InstructorRecoveryRoute = InstructorRecoveryRouteImport.update({
   path: '/recovery',
   getParentRoute: () => InstructorRouteRoute,
 } as any)
-const InstructorReportsRoute = InstructorReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => InstructorRouteRoute,
-} as any)
 const StudentAsyncRoute = StudentAsyncRouteImport.update({
   id: '/async',
   path: '/async',
@@ -256,6 +252,17 @@ const InstructorMissionsMissionIdRoute =
     path: '/missions/$missionId',
     getParentRoute: () => InstructorRouteRoute,
   } as any)
+const InstructorReportsIndexRoute = InstructorReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => InstructorRouteRoute,
+} as any)
+const InstructorReportsDeliveriesRoute =
+  InstructorReportsDeliveriesRouteImport.update({
+    id: '/reports/deliveries',
+    path: '/reports/deliveries',
+    getParentRoute: () => InstructorRouteRoute,
+  } as any)
 const InstructorStudentsIndexRoute = InstructorStudentsIndexRouteImport.update({
   id: '/students/',
   path: '/students/',
@@ -334,7 +341,6 @@ export interface FileRoutesByFullPath {
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
-  '/instructor/reports': typeof InstructorReportsRoute
   '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/missions/$missionId': typeof InstructorMissionsMissionIdRoute
+  '/instructor/reports/deliveries': typeof InstructorReportsDeliveriesRoute
   '/instructor/students/$studentId': typeof InstructorStudentsStudentIdRoute
   '/instructor/submissions/$runId': typeof InstructorSubmissionsRunIdRoute
   '/student/activities/$missionId': typeof StudentActivitiesMissionIdRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/student/missions/$runId': typeof StudentMissionsRunIdRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
   '/instructor/missions/': typeof InstructorMissionsIndexRoute
+  '/instructor/reports/': typeof InstructorReportsIndexRoute
   '/instructor/students/': typeof InstructorStudentsIndexRoute
   '/instructor/submissions/': typeof InstructorSubmissionsIndexRoute
   '/student/activities/': typeof StudentActivitiesIndexRoute
@@ -385,7 +393,6 @@ export interface FileRoutesByTo {
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
-  '/instructor/reports': typeof InstructorReportsRoute
   '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -400,6 +407,7 @@ export interface FileRoutesByTo {
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/missions/$missionId': typeof InstructorMissionsMissionIdRoute
+  '/instructor/reports/deliveries': typeof InstructorReportsDeliveriesRoute
   '/instructor/students/$studentId': typeof InstructorStudentsStudentIdRoute
   '/instructor/submissions/$runId': typeof InstructorSubmissionsRunIdRoute
   '/student/activities/$missionId': typeof StudentActivitiesMissionIdRoute
@@ -407,6 +415,7 @@ export interface FileRoutesByTo {
   '/student/missions/$runId': typeof StudentMissionsRunIdRoute
   '/instructor/classes': typeof InstructorClassesIndexRoute
   '/instructor/missions': typeof InstructorMissionsIndexRoute
+  '/instructor/reports': typeof InstructorReportsIndexRoute
   '/instructor/students': typeof InstructorStudentsIndexRoute
   '/instructor/submissions': typeof InstructorSubmissionsIndexRoute
   '/student/activities': typeof StudentActivitiesIndexRoute
@@ -437,7 +446,6 @@ export interface FileRoutesById {
   '/instructor/profile': typeof InstructorProfileRoute
   '/instructor/qa': typeof InstructorQaRoute
   '/instructor/recovery': typeof InstructorRecoveryRoute
-  '/instructor/reports': typeof InstructorReportsRoute
   '/student/async': typeof StudentAsyncRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
@@ -452,6 +460,7 @@ export interface FileRoutesById {
   '/student/records': typeof StudentRecordsRoute
   '/instructor/classes/$classId': typeof InstructorClassesClassIdRoute
   '/instructor/missions/$missionId': typeof InstructorMissionsMissionIdRoute
+  '/instructor/reports/deliveries': typeof InstructorReportsDeliveriesRoute
   '/instructor/students/$studentId': typeof InstructorStudentsStudentIdRoute
   '/instructor/submissions/$runId': typeof InstructorSubmissionsRunIdRoute
   '/student/activities/$missionId': typeof StudentActivitiesMissionIdRoute
@@ -459,6 +468,7 @@ export interface FileRoutesById {
   '/student/missions/$runId': typeof StudentMissionsRunIdRoute
   '/instructor/classes/': typeof InstructorClassesIndexRoute
   '/instructor/missions/': typeof InstructorMissionsIndexRoute
+  '/instructor/reports/': typeof InstructorReportsIndexRoute
   '/instructor/students/': typeof InstructorStudentsIndexRoute
   '/instructor/submissions/': typeof InstructorSubmissionsIndexRoute
   '/student/activities/': typeof StudentActivitiesIndexRoute
@@ -490,7 +500,6 @@ export interface FileRouteTypes {
     | '/instructor/profile'
     | '/instructor/qa'
     | '/instructor/recovery'
-    | '/instructor/reports'
     | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -505,6 +514,7 @@ export interface FileRouteTypes {
     | '/student/records'
     | '/instructor/classes/$classId'
     | '/instructor/missions/$missionId'
+    | '/instructor/reports/deliveries'
     | '/instructor/students/$studentId'
     | '/instructor/submissions/$runId'
     | '/student/activities/$missionId'
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/student/missions/$runId'
     | '/instructor/classes/'
     | '/instructor/missions/'
+    | '/instructor/reports/'
     | '/instructor/students/'
     | '/instructor/submissions/'
     | '/student/activities/'
@@ -541,7 +552,6 @@ export interface FileRouteTypes {
     | '/instructor/profile'
     | '/instructor/qa'
     | '/instructor/recovery'
-    | '/instructor/reports'
     | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -556,6 +566,7 @@ export interface FileRouteTypes {
     | '/student/records'
     | '/instructor/classes/$classId'
     | '/instructor/missions/$missionId'
+    | '/instructor/reports/deliveries'
     | '/instructor/students/$studentId'
     | '/instructor/submissions/$runId'
     | '/student/activities/$missionId'
@@ -563,6 +574,7 @@ export interface FileRouteTypes {
     | '/student/missions/$runId'
     | '/instructor/classes'
     | '/instructor/missions'
+    | '/instructor/reports'
     | '/instructor/students'
     | '/instructor/submissions'
     | '/student/activities'
@@ -592,7 +604,6 @@ export interface FileRouteTypes {
     | '/instructor/profile'
     | '/instructor/qa'
     | '/instructor/recovery'
-    | '/instructor/reports'
     | '/student/async'
     | '/student/dashboard'
     | '/student/evaluation'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/student/records'
     | '/instructor/classes/$classId'
     | '/instructor/missions/$missionId'
+    | '/instructor/reports/deliveries'
     | '/instructor/students/$studentId'
     | '/instructor/submissions/$runId'
     | '/student/activities/$missionId'
@@ -614,6 +626,7 @@ export interface FileRouteTypes {
     | '/student/missions/$runId'
     | '/instructor/classes/'
     | '/instructor/missions/'
+    | '/instructor/reports/'
     | '/instructor/students/'
     | '/instructor/submissions/'
     | '/student/activities/'
@@ -787,13 +800,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorRecoveryRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
-    '/instructor/reports': {
-      id: '/instructor/reports'
-      path: '/reports'
-      fullPath: '/instructor/reports'
-      preLoaderRoute: typeof InstructorReportsRouteImport
-      parentRoute: typeof InstructorRouteRoute
-    }
     '/student/async': {
       id: '/student/async'
       path: '/async'
@@ -906,6 +912,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorMissionsMissionIdRouteImport
       parentRoute: typeof InstructorRouteRoute
     }
+    '/instructor/reports/': {
+      id: '/instructor/reports/'
+      path: '/reports'
+      fullPath: '/instructor/reports/'
+      preLoaderRoute: typeof InstructorReportsIndexRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
+    '/instructor/reports/deliveries': {
+      id: '/instructor/reports/deliveries'
+      path: '/reports/deliveries'
+      fullPath: '/instructor/reports/deliveries'
+      preLoaderRoute: typeof InstructorReportsDeliveriesRouteImport
+      parentRoute: typeof InstructorRouteRoute
+    }
     '/instructor/students/': {
       id: '/instructor/students/'
       path: '/students'
@@ -995,13 +1015,14 @@ interface InstructorRouteRouteChildren {
   InstructorProfileRoute: typeof InstructorProfileRoute
   InstructorQaRoute: typeof InstructorQaRoute
   InstructorRecoveryRoute: typeof InstructorRecoveryRoute
-  InstructorReportsRoute: typeof InstructorReportsRoute
   InstructorClassesClassIdRoute: typeof InstructorClassesClassIdRoute
   InstructorMissionsMissionIdRoute: typeof InstructorMissionsMissionIdRoute
+  InstructorReportsDeliveriesRoute: typeof InstructorReportsDeliveriesRoute
   InstructorStudentsStudentIdRoute: typeof InstructorStudentsStudentIdRoute
   InstructorSubmissionsRunIdRoute: typeof InstructorSubmissionsRunIdRoute
   InstructorClassesIndexRoute: typeof InstructorClassesIndexRoute
   InstructorMissionsIndexRoute: typeof InstructorMissionsIndexRoute
+  InstructorReportsIndexRoute: typeof InstructorReportsIndexRoute
   InstructorStudentsIndexRoute: typeof InstructorStudentsIndexRoute
   InstructorSubmissionsIndexRoute: typeof InstructorSubmissionsIndexRoute
 }
@@ -1022,13 +1043,14 @@ const InstructorRouteRouteChildren: InstructorRouteRouteChildren = {
   InstructorProfileRoute: InstructorProfileRoute,
   InstructorQaRoute: InstructorQaRoute,
   InstructorRecoveryRoute: InstructorRecoveryRoute,
-  InstructorReportsRoute: InstructorReportsRoute,
   InstructorClassesClassIdRoute: InstructorClassesClassIdRoute,
   InstructorMissionsMissionIdRoute: InstructorMissionsMissionIdRoute,
+  InstructorReportsDeliveriesRoute: InstructorReportsDeliveriesRoute,
   InstructorStudentsStudentIdRoute: InstructorStudentsStudentIdRoute,
   InstructorSubmissionsRunIdRoute: InstructorSubmissionsRunIdRoute,
   InstructorClassesIndexRoute: InstructorClassesIndexRoute,
   InstructorMissionsIndexRoute: InstructorMissionsIndexRoute,
+  InstructorReportsIndexRoute: InstructorReportsIndexRoute,
   InstructorStudentsIndexRoute: InstructorStudentsIndexRoute,
   InstructorSubmissionsIndexRoute: InstructorSubmissionsIndexRoute,
 }
