@@ -144,7 +144,10 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
                 <span className="font-semibold">
                   {blockDef(e.kind).icon} {e.title || blockDef(e.kind).label}
                 </span>
-                <span className="text-xs text-muted-foreground">{fmtDateTime(e.created_at)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {names[e.author_id] ?? "Autor não registrado"} · {fmtDateTime(e.created_at)}
+                </span>
+
               </div>
               <div className="mt-2 space-y-1">
                 {Object.entries(e.data ?? {})
