@@ -344,6 +344,8 @@ async function logEvent(input: {
   } as never);
 }
 
+export const AUTHOR_UNKNOWN = "Autor não registrado";
+
 export const EVENT_LABEL: Record<string, string> = {
   started: "Aluno iniciou a missão",
   submitted: "Aluno realizou envio",
@@ -352,6 +354,28 @@ export const EVENT_LABEL: Record<string, string> = {
   revision: "Instrutor solicitou revisão",
   evaluated: "Instrutor concluiu a avaliação",
 };
+
+/** Ação do evento, para compor com o nome real do autor. */
+export const EVENT_ACTION: Record<string, string> = {
+  started: "iniciou a missão",
+  submitted: "realizou o envio",
+  resubmitted: "reenviou a missão",
+  in_review: "iniciou a avaliação",
+  revision: "solicitou revisão",
+  evaluated: "concluiu a avaliação",
+};
+
+/** Texto do histórico com autoria real (nunca “Aluno” quando o id resolve o nome). */
+export function eventText(
+  ev: { kind: string; actor_id: string | null },
+  names: Record<string, string>,
+): string {
+  const action = EVENT_ACTION[ev.kind];
+  const who = ev.actor_id ? (names[ev.actor_id] ?? AUTHOR_UNKNOWN) : AUTHOR_UNKNOWN;
+  if (!action) return `${who} · ${EVENT_LABEL[ev.kind] ?? ev.kind}`;
+  return `${who} ${action}`;
+}
+
 
 /** Envio do aluno (1ª vez ou reenvio) — nunca apaga a tentativa anterior. */
 export function useSubmitRun() {
