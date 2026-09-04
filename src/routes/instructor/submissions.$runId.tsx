@@ -9,6 +9,8 @@ import { useAuth } from "@/lib/auth";
 import { useIndicators } from "@/lib/uc10";
 import { blockDef, type Section } from "@/lib/mission-builder";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
+import { GroupParticipation } from "@/components/missions/GroupParticipation";
+
 import {
   answerSummary,
   fmtDateTime,
