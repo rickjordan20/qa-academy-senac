@@ -177,7 +177,7 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
           {events.map((ev) => (
             <div key={ev.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-1">
               <span>
-                {EVENT_LABEL[ev.kind] ?? ev.kind} · tentativa {ev.attempt}
+                {eventText(ev, names)} · tentativa {ev.attempt}
                 {ev.note ? ` — ${ev.note}` : ""}
               </span>
               <span className="text-xs text-muted-foreground">{fmtDateTime(ev.created_at)}</span>
