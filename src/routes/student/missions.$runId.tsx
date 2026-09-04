@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { blockDef, type ChecklistItemDef, type Section } from "@/lib/mission-builder";
 import {
-  EVENT_LABEL,
+  eventText,
   answerSummary,
   fmtDateTime,
   runSituation,
