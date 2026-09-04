@@ -276,12 +276,32 @@ export function useSubmission(runId: string | null) {
         }
       }
 
+      const entries = (entriesRes.data ?? []) as unknown as MissionEntry[];
+      const events = (eventsRes.data ?? []) as unknown as RunEvent[];
+
+      // nomes reais de autores (eventos, registros e quem realizou o envio)
+      const authorIds = new Set<string>();
+      events.forEach((e) => e.actor_id && authorIds.add(e.actor_id));
+      entries.forEach((e) => e.author_id && authorIds.add(e.author_id));
+      if (row.submitted_by) authorIds.add(row.submitted_by);
+      members.forEach((m) => authorIds.add(m.id));
+      const names: Record<string, string> = {};
+      if (authorIds.size) {
+        const profs = await supabase.from("profiles").select("id, full_name, email").in("id", [...authorIds]);
+        if (profs.error) throw profs.error;
+        for (const p of (profs.data ?? []) as { id: string; full_name: string | null; email: string }[]) {
+          names[p.id] = (p.full_name || "").trim() || p.email || AUTHOR_UNKNOWN;
+        }
+      }
+
       return {
         run: row,
-        entries: (entriesRes.data ?? []) as unknown as MissionEntry[],
-        events: (eventsRes.data ?? []) as unknown as RunEvent[],
+        entries,
+        events,
         members,
+        names,
       };
+
     },
   });
 }
