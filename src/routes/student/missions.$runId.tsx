@@ -31,7 +31,7 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
   if (isPending) return <p className="text-sm text-muted-foreground">Carregando envio...</p>;
   if (!data) return <p className="text-sm text-muted-foreground">Envio não encontrado.</p>;
 
-  const { run, entries, events, members } = data;
+  const { run, entries, events, members, names } = data;
   const sections = (run.mission?.sections ?? []) as Section[];
   const sit = runSituation(run);
   const answers = answerSummary(sections, run.answers);
