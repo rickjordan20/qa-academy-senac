@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { blockDef, type ChecklistItemDef, type Section } from "@/lib/mission-builder";
 import {
-  EVENT_LABEL,
+  eventText,
   answerSummary,
   fmtDateTime,
   runSituation,
@@ -31,7 +31,7 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
   if (isPending) return <p className="text-sm text-muted-foreground">Carregando envio...</p>;
   if (!data) return <p className="text-sm text-muted-foreground">Envio não encontrado.</p>;
 
-  const { run, entries, events, members } = data;
+  const { run, entries, events, members, names } = data;
   const sections = (run.mission?.sections ?? []) as Section[];
   const sit = runSituation(run);
   const answers = answerSummary(sections, run.answers);
@@ -144,7 +144,10 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
                 <span className="font-semibold">
                   {blockDef(e.kind).icon} {e.title || blockDef(e.kind).label}
                 </span>
-                <span className="text-xs text-muted-foreground">{fmtDateTime(e.created_at)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {names[e.author_id] ?? "Autor não registrado"} · {fmtDateTime(e.created_at)}
+                </span>
+
               </div>
               <div className="mt-2 space-y-1">
                 {Object.entries(e.data ?? {})
@@ -177,7 +180,7 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
           {events.map((ev) => (
             <div key={ev.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-1">
               <span>
-                {EVENT_LABEL[ev.kind] ?? ev.kind} · tentativa {ev.attempt}
+                {eventText(ev, names)} · tentativa {ev.attempt}
                 {ev.note ? ` — ${ev.note}` : ""}
               </span>
               <span className="text-xs text-muted-foreground">{fmtDateTime(ev.created_at)}</span>

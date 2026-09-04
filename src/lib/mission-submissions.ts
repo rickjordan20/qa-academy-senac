@@ -276,12 +276,32 @@ export function useSubmission(runId: string | null) {
         }
       }
 
+      const entries = (entriesRes.data ?? []) as unknown as MissionEntry[];
+      const events = (eventsRes.data ?? []) as unknown as RunEvent[];
+
+      // nomes reais de autores (eventos, registros e quem realizou o envio)
+      const authorIds = new Set<string>();
+      events.forEach((e) => e.actor_id && authorIds.add(e.actor_id));
+      entries.forEach((e) => e.author_id && authorIds.add(e.author_id));
+      if (row.submitted_by) authorIds.add(row.submitted_by);
+      members.forEach((m) => authorIds.add(m.id));
+      const names: Record<string, string> = {};
+      if (authorIds.size) {
+        const profs = await supabase.from("profiles").select("id, full_name, email").in("id", [...authorIds]);
+        if (profs.error) throw profs.error;
+        for (const p of (profs.data ?? []) as { id: string; full_name: string | null; email: string }[]) {
+          names[p.id] = (p.full_name || "").trim() || p.email || AUTHOR_UNKNOWN;
+        }
+      }
+
       return {
         run: row,
-        entries: (entriesRes.data ?? []) as unknown as MissionEntry[],
-        events: (eventsRes.data ?? []) as unknown as RunEvent[],
+        entries,
+        events,
         members,
+        names,
       };
+
     },
   });
 }
@@ -324,6 +344,8 @@ async function logEvent(input: {
   } as never);
 }
 
+export const AUTHOR_UNKNOWN = "Autor não registrado";
+
 export const EVENT_LABEL: Record<string, string> = {
   started: "Aluno iniciou a missão",
   submitted: "Aluno realizou envio",
@@ -332,6 +354,28 @@ export const EVENT_LABEL: Record<string, string> = {
   revision: "Instrutor solicitou revisão",
   evaluated: "Instrutor concluiu a avaliação",
 };
+
+/** Ação do evento, para compor com o nome real do autor. */
+export const EVENT_ACTION: Record<string, string> = {
+  started: "iniciou a missão",
+  submitted: "realizou o envio",
+  resubmitted: "reenviou a missão",
+  in_review: "iniciou a avaliação",
+  revision: "solicitou revisão",
+  evaluated: "concluiu a avaliação",
+};
+
+/** Texto do histórico com autoria real (nunca “Aluno” quando o id resolve o nome). */
+export function eventText(
+  ev: { kind: string; actor_id: string | null },
+  names: Record<string, string>,
+): string {
+  const action = EVENT_ACTION[ev.kind];
+  const who = ev.actor_id ? (names[ev.actor_id] ?? AUTHOR_UNKNOWN) : AUTHOR_UNKNOWN;
+  if (!action) return `${who} · ${EVENT_LABEL[ev.kind] ?? ev.kind}`;
+  return `${who} ${action}`;
+}
+
 
 /** Envio do aluno (1ª vez ou reenvio) — nunca apaga a tentativa anterior. */
 export function useSubmitRun() {

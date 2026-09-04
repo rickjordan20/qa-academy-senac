@@ -9,6 +9,8 @@ import { useAuth } from "@/lib/auth";
 import { useIndicators } from "@/lib/uc10";
 import { blockDef, type Section } from "@/lib/mission-builder";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
+import { GroupParticipation } from "@/components/missions/GroupParticipation";
+
 import {
   answerSummary,
   fmtDateTime,
@@ -201,6 +203,9 @@ function EvaluatePage() {
           </Link>
         }
       />
+
+      {run?.group_id ? <GroupParticipation runId={runId} /> : null}
+
 
       {run ? (
         <div className="max-w-4xl space-y-5">
