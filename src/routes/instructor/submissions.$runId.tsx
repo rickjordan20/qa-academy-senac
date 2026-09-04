@@ -202,6 +202,9 @@ function EvaluatePage() {
         }
       />
 
+      {run?.group_id ? <GroupParticipation runId={runId} /> : null}
+
+
       {run ? (
         <div className="max-w-4xl space-y-5">
           {alreadyEvaluated ? (
