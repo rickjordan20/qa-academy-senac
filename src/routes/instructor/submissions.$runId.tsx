@@ -185,6 +185,8 @@ function EvaluatePage() {
         indicatorIdByCode,
         blocks,
         members: members.map((m) => ({ id: m.id, name: m.name })),
+        memberOverrides,
+        overrideNotes,
       });
       toast.success(
         decision === "evaluated"
