@@ -46,15 +46,24 @@ function RecoveryPage() {
   const { data: students } = useClassStudents(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: plans } = useRecoveryPlans(active);
+  const { data: results } = useUcResults(active);
   const createPlan = useCreateRecoveryPlan(active);
   const updatePlan = useUpdateRecoveryPlan(active);
 
   const inds = (indicators ?? []) as IndicatorRow[];
   const codeOf = new Map(inds.map((i) => [i.id, i.code]));
+  const resultMap = new Map((results ?? []).map((r) => [r.student_id, r]));
   const evFor = (sid: string) =>
     new Map<string, EvaluationRow>(
       (evaluations ?? []).filter((e) => e.student_id === sid).map((e) => [e.indicator_id, e]),
     );
+  /** Recuperação Final é exclusiva de indicadores fechados em NA (regra central). */
+  const recoveryFor = (sid: string) => {
+    const sit = ucSituation(inds, evFor(sid), resultMap.get(sid));
+    const eligible = sit.key === "needs_recovery" || sit.key === "in_recovery";
+    return { sit, pend: eligible ? sit.pending : [] };
+  };
+
 
   return (
     <div>
