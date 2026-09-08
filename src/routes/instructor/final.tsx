@@ -100,19 +100,31 @@ function FinalPage() {
               <CardTitle className="text-base">Indicadores I1 – I6</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {inds.map((i) => (
-                <button
-                  key={i.id}
-                  onClick={() => setCell(i)}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-border p-3 text-left hover:border-primary"
-                >
-                  <div>
-                    <span className="mr-2 font-semibold text-primary">{i.code}</span>
-                    <span className="text-sm text-muted-foreground">{i.description}</span>
-                  </div>
-                  <ConceptBadge concept={evMap.get(i.id)?.concept ?? null} />
-                </button>
-              ))}
+              {inds.map((i) => {
+                const evolution = (origins ?? [])
+                  .filter((o) => o.indicator_finals?.[i.code])
+                  .map((o) => `${o.missionTitle}: ${o.indicator_finals[i.code]}`);
+                return (
+                  <button
+                    key={i.id}
+                    onClick={() => setCell(i)}
+                    className="w-full rounded-lg border border-border p-3 text-left hover:border-primary"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <span className="mr-2 font-semibold text-primary">{i.code}</span>
+                        <span className="text-sm text-muted-foreground">{i.description}</span>
+                      </div>
+                      <ConceptBadge concept={evMap.get(i.id)?.concept ?? null} />
+                    </div>
+                    {evolution.length ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Evidências durante a UC: {evolution.join(" · ")}
+                      </p>
+                    ) : null}
+                  </button>
+                );
+              })}
             </CardContent>
           </Card>
 
