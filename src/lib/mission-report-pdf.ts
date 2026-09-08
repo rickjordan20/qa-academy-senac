@@ -155,6 +155,35 @@ export function generateMissionReportPdf(report: MissionReport) {
       ctx.y += 4;
     }
 
+    if (isGroup && t.participation.length) {
+      ensure(ctx, 60);
+      heading(ctx, "DIVISÃO DE TAREFAS E PARTICIPAÇÃO REAL");
+      text(ctx, "Atribuição não é prova de execução: as colunas abaixo separam o que foi atribuído do que foi registrado.", {
+        size: 9,
+        style: "italic",
+        color: 90,
+      });
+      for (const p of t.participation) {
+        text(ctx, `${p.name}${p.isLead ? " (QA Lead)" : ""}`, { size: 10, style: "bold", gap: 0 });
+        text(ctx, `Tarefas atribuídas (${p.assignedTasks.length}): ${p.assignedTasks.join("; ") || "—"}`, {
+          size: 9,
+          indent: 12,
+          gap: 0,
+        });
+        text(ctx, `Tarefas concluídas (${p.doneTasks.length}): ${p.doneTasks.join("; ") || "—"}`, {
+          size: 9,
+          indent: 12,
+          gap: 0,
+        });
+        text(
+          ctx,
+          `Registros na missão: ${p.entries} | Evidências: ${p.evidences} | Contribuições: ${p.contributions} | Última atividade: ${fmtDateTime(p.lastActivity)}`,
+          { size: 9, indent: 12, gap: 0 },
+        );
+        ctx.y += 3;
+      }
+    }
+
     if (isGroup && t.individual.length) {
       heading(ctx, "AVALIAÇÕES INDIVIDUAIS");
       for (const ind of t.individual) {
@@ -162,6 +191,29 @@ export function generateMissionReportPdf(report: MissionReport) {
         for (const [code, concept] of Object.entries(ind.indicators))
           text(ctx, `${code}: ${concept}`, { size: 10, indent: 12, gap: 0 });
         ctx.y += 2;
+      }
+      if (t.overrideNotes.trim()) {
+        text(ctx, "Justificativa da diferenciação individual:", { size: 10, style: "bold", gap: 0 });
+        text(ctx, t.overrideNotes, { size: 10, indent: 8 });
+      }
+    }
+
+    if (t.evaluationHistory.length > 1) {
+      ensure(ctx, 60);
+      heading(ctx, "HISTÓRICO DE AVALIAÇÕES");
+      for (const v of t.evaluationHistory) {
+        text(ctx, `Versão ${v.version}${v.is_current ? " (vigente)" : ""} — ${fmtDateTime(v.created_at)}`, {
+          size: 10,
+          style: "bold",
+          gap: 0,
+        });
+        text(ctx, `XP: ${v.xp ?? "—"}${v.superseded_reason ? ` | Substituída: ${v.superseded_reason}` : ""}`, {
+          size: 9,
+          indent: 12,
+          gap: 0,
+        });
+        if (v.feedback.trim()) text(ctx, `Feedback: ${v.feedback}`, { size: 9, indent: 12, gap: 0 });
+        ctx.y += 3;
       }
     }
 
@@ -177,11 +229,6 @@ export function generateMissionReportPdf(report: MissionReport) {
   }
 
   footer(ctx);
-  const slug = missionLabel
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-  doc.save(`entregas-${slug || "missao"}.pdf`);
+  doc.save(`entregas-${slugify(missionLabel) || "missao"}.pdf`);
+
 }
