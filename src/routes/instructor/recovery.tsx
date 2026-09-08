@@ -3,15 +3,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import {
-  pendingIndicators,
+  ucSituation,
   useClassEvaluations,
   useClassStudents,
   useCreateRecoveryPlan,
   useRecoveryPlans,
+  useUcResults,
   useUpdateRecoveryPlan,
   type EvaluationRow,
   type IndicatorRow,
 } from "@/lib/assessment";
+
 import { ClassPicker } from "@/components/eval/ClassPicker";
 import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
