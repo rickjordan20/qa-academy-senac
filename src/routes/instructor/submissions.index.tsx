@@ -121,13 +121,18 @@ function SubmissionsPage() {
                     {r.groupName ? `Grupo ${r.groupName}` : r.studentName}
                     {r.className ? ` · ${r.className}` : ""} · tentativa {r.attempt} · {fmtDateTime(r.submitted_at)}
                   </p>
+                  {(r.mission?.indicator_codes ?? []).length ? (
+                    <p className="text-xs text-muted-foreground">
+                      Indicadores: {(r.mission?.indicator_codes ?? []).join(", ")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground">{r.progress}%</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.tone}`}>{sit.label}</span>
                   <Button asChild size="sm">
                     <Link to="/instructor/submissions/$runId" params={{ runId: r.id }}>
-                      {r.eval_status === "evaluated" ? "Reavaliar" : "Avaliar"}
+                      {r.eval_status === "evaluated" || r.eval_status === "reeval" ? "Reavaliar" : "Avaliar"}
                     </Link>
                   </Button>
                 </div>
