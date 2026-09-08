@@ -46,6 +46,7 @@ function Student360() {
   const { data: dossier } = useStudentDossier(studentId);
   const { data: history } = useEvalHistory(studentId);
   const { data: indicators } = useIndicators();
+  const { data: evalAck } = useStudentEvaluationAck(studentId);
 
   const enrollment = (roster ?? []).find((r) => r.student_id === studentId) ?? null;
   const group =
@@ -103,6 +104,13 @@ function Student360() {
           {group?.qa_lead_id === studentId ? <Badge>QA Lead</Badge> : null}
           <Badge>{labelOf(ENROLLMENT_STATUS, enrollment?.status ?? "active")}</Badge>
           {enrollment?.student_code ? <Badge variant="outline">Matrícula {enrollment.student_code}</Badge> : null}
+          {evalAck ? (
+            <Badge variant="secondary">
+              Ciência da avaliação em {new Date(evalAck.acknowledged_at).toLocaleDateString("pt-BR")}
+            </Badge>
+          ) : (
+            <Badge variant="outline">Ciência da avaliação pendente</Badge>
+          )}
         </div>
       </div>
 
