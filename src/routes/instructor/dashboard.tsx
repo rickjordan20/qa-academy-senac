@@ -3,7 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ConceptBadge } from "@/components/ConceptBadge";
 import { useAllSubmissions } from "@/lib/mission-submissions";
 import { fmtMissionDateTimeShort } from "@/lib/mission-schedule";
 import {
@@ -363,7 +362,7 @@ function Stat({
   label: string;
   value: number;
   to?: string;
-  tone?: "urgent";
+  tone?: "urgent" | undefined;
 }) {
   const body = (
     <Card className={tone === "urgent" && value > 0 ? "border-danger/50" : undefined}>
@@ -437,7 +436,6 @@ function RiskRow({ s }: { s: OverviewStudent }) {
         ))}
       </ul>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <ConceptBadge concept={null} />
         <span>
           {s.evaluatedCount} indicador(es) avaliado(s) · {s.deliveries} entrega(s)
         </span>
