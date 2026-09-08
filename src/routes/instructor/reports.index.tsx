@@ -179,14 +179,18 @@ function ReportsPage() {
             Informações objetivas para acompanhamento e fechamento da UC10.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild size="sm">
             <Link to="/instructor/reports/deliveries">Entregas por Missão</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link to="/instructor/reports/closure">Fechamento da UC10</Link>
           </Button>
           <Button size="sm" variant="outline" onClick={() => window.print()}>
             Imprimir / PDF
           </Button>
         </div>
+
       </div>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
