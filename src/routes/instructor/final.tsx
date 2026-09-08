@@ -135,7 +135,9 @@ function FinalPage() {
             <CardContent className="space-y-3 text-sm">
               <p>
                 Sugestão da plataforma:{" "}
-                <span className="font-semibold text-accent">{suggestion ?? "avaliação incompleta"}</span>
+                <span className="font-semibold text-accent">
+                  {suggestion ?? "fechamento incompleto (cada indicador precisa de A ou NA)"}
+                </span>
               </p>
               {pend.length > 0 && (
                 <p className="text-muted-foreground">
