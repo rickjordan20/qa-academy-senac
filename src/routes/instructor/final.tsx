@@ -57,11 +57,17 @@ function FinalPage() {
       .filter((e) => e.student_id === student?.id)
       .map((e) => [e.indicator_id, e]),
   );
+  const { data: origins } = useIndicatorOrigins(student?.id ?? null);
   const result = (results ?? []).find((r) => r.student_id === student?.id);
-  const suggestion = suggestResult(
-    inds.map((i) => evMap.get(i.id)?.concept ?? null),
-    inds.length,
-  );
+
+  // No fechamento da UC cada indicador vale apenas A ou NA.
+  const finalConcepts = inds.map((i) => evMap.get(i.id)?.concept ?? null);
+  const closed = inds.length > 0 && finalConcepts.every((c) => c === "A" || c === "NA");
+  const suggestion = closed
+    ? finalConcepts.every((c) => c === "A")
+      ? ("D" as const)
+      : ("ND" as const)
+    : suggestResult([], inds.length);
   const pend = pendingIndicators(inds, evMap);
 
   return (
