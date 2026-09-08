@@ -250,6 +250,66 @@ export function ucSituation(
   };
 }
 
+/* ---------------- Próxima ação (derivada da situação, sem nova regra) ------- */
+
+export type NextAction = { label: string; to: string | null; tone: "urgent" | "todo" | "done" };
+
+/**
+ * Traduz a situação já calculada por ucSituation() + o trabalho pendente de
+ * missões em uma única indicação objetiva. Não cria regra pedagógica nova.
+ */
+export function nextAction(
+  situation: UcSituation,
+  work: { awaiting?: number; reeval?: number; awaitingTitle?: string | null; reevalTitle?: string | null } = {},
+): NextAction {
+  const reeval = work.reeval ?? 0;
+  const awaiting = work.awaiting ?? 0;
+
+  if (reeval > 0)
+    return {
+      label: `Reavaliar ${work.reevalTitle ?? `${reeval} missão(ões)`}`,
+      to: "/instructor/submissions",
+      tone: "urgent",
+    };
+  if (awaiting > 0)
+    return {
+      label: `Avaliar ${work.awaitingTitle ?? `${awaiting} entrega(s)`}`,
+      to: "/instructor/submissions",
+      tone: "urgent",
+    };
+
+  switch (situation.key) {
+    case "not_evaluated":
+      return { label: "Registrar as primeiras menções I1–I6", to: "/instructor/evaluations", tone: "todo" };
+    case "in_progress":
+      return { label: "Continuar a avaliação formativa dos indicadores", to: "/instructor/evaluations", tone: "todo" };
+    case "final_open":
+      return { label: "Realizar fechamento da Avaliação Final (A ou NA)", to: "/instructor/final", tone: "todo" };
+    case "needs_recovery":
+      return {
+        label: `Abrir Recuperação Final — ${situation.pending.map((p) => p.code).join(", ")}`,
+        to: "/instructor/recovery",
+        tone: "urgent",
+      };
+    case "in_recovery":
+      return {
+        label: `Avaliar a recuperação de ${situation.pending
+          .map((p) => p.code)
+          .join(", ")}`,
+        to: "/instructor/final",
+        tone: "urgent",
+      };
+    case "ready_d":
+      return { label: "Confirmar resultado D", to: "/instructor/final", tone: "todo" };
+    case "ready_nd":
+      return { label: "Confirmar resultado ND", to: "/instructor/final", tone: "todo" };
+    default:
+      return { label: "Fechamento concluído", to: "/instructor/reports/closure", tone: "done" };
+  }
+}
+
+
+
 export function studentSituation(
   indicators: IndicatorRow[],
   byIndicator: Map<string, EvaluationRow>,
