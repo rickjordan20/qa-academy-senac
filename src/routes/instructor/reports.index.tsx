@@ -61,20 +61,38 @@ function ReportsPage() {
     );
   const resultMap = new Map((results ?? []).map((r) => [r.student_id, r]));
   const situationFor = (sid: string) => ucSituation(inds, evFor(sid), resultMap.get(sid));
+  const classSubmissions = (submissions ?? []).filter((r) => !active || r.classId === active);
+  const workFor = (sid: string) => {
+    const runs = classSubmissions.filter((r) => r.student_id === sid);
+    const awaiting = runs.filter(
+      (r) => r.eval_status === "awaiting" || (!!r.submitted_at && r.eval_status === "none"),
+    );
+    const reevalRuns = runs.filter((r) => r.eval_status === "reeval");
+    return {
+      awaiting: awaiting.length,
+      reeval: reevalRuns.length,
+      awaitingTitle: awaiting.length === 1 ? awaiting[0]?.mission?.title ?? null : null,
+      reevalTitle: reevalRuns.length === 1 ? reevalRuns[0]?.mission?.title ?? null : null,
+    };
+  };
+  const nextActionFor = (sid: string) => nextAction(situationFor(sid), workFor(sid));
 
   const studentRows: (string | number)[][] = [
-    ["Aluno", "E-mail", ...inds.map((i) => i.code), "Situação", "Resultado"],
+    ["Aluno", "E-mail", ...inds.map((i) => i.code), "Situação", "Resultado", "Próxima ação"],
     ...(students ?? []).map((s) => {
       const map = evFor(s.id);
       return [
         s.full_name || s.email,
         s.email,
-        ...inds.map((i) => map.get(i.id)?.concept ?? "—"),
+        /* Ausência de avaliação nunca vira NA. */
+        ...inds.map((i) => map.get(i.id)?.concept ?? "Não avaliado"),
         situationFor(s.id).label,
-        resultMap.get(s.id)?.final_result ?? "—",
+        resultMap.get(s.id)?.final_result ?? "Não confirmado",
+        nextActionFor(s.id).label,
       ];
     }),
   ];
+
 
   const indicatorRows: (string | number)[][] = [
     ["Indicador", "Descrição", "A", "PA", "NA", "Não avaliado"],
