@@ -130,7 +130,7 @@ function ReportsPage() {
   ];
 
   /* Reavaliações de missões (somente leitura). */
-  const classSubmissions = (submissions ?? []).filter((r) => !active || r.classId === active);
+
   const reevalRows: (string | number)[][] = [
     ["Aluno / Grupo", "Missão", "Situação", "Tentativa", "Reavaliada", "Última atualização"],
     ...classSubmissions
