@@ -1,4 +1,4 @@
-import { CONCEPT_LABELS, stageLabel } from "@/lib/assessment";
+import { CONCEPT_LABELS, nextAction, stageLabel } from "@/lib/assessment";
 import { fmtDateTime } from "@/lib/mission-submissions";
 import type { ClosureReport, ClosureStudent } from "@/lib/closure-report";
 import { createCtx, ensure, footer, heading, newPage, rule, slugify, text, type Ctx } from "@/lib/pdf-kit";
@@ -33,6 +33,8 @@ function studentPage(ctx: Ctx, s: ClosureStudent) {
       gap: 0,
     });
   if (s.result?.notes?.trim()) text(ctx, `Observações do fechamento: ${s.result.notes}`, { size: 9, gap: 0 });
+  text(ctx, `Próxima ação sugerida: ${nextAction(s.situation).label}`, { size: 9, color: 110, gap: 0 });
+
 
   heading(ctx, "INDICADORES I1–I6");
   for (const i of s.indicators) {

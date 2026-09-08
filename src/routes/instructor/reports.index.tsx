@@ -5,7 +5,9 @@ import { useIndicators, useMyClasses } from "@/lib/uc10";
 import { useInstructorGroups } from "@/lib/cafe";
 import {
   downloadCsv,
+  nextAction,
   ucSituation,
+
   useClassEvaluations,
   useClassStudents,
   useRecoveryPlans,
@@ -16,6 +18,7 @@ import {
 import { useClosureReport } from "@/lib/closure-report";
 import { EVAL_LABEL, fmtDateTime, useAllSubmissions, useReevaluatedRuns } from "@/lib/mission-submissions";
 import { ClassPicker } from "@/components/eval/ClassPicker";
+import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -58,20 +61,38 @@ function ReportsPage() {
     );
   const resultMap = new Map((results ?? []).map((r) => [r.student_id, r]));
   const situationFor = (sid: string) => ucSituation(inds, evFor(sid), resultMap.get(sid));
+  const classSubmissions = (submissions ?? []).filter((r) => !active || r.classId === active);
+  const workFor = (sid: string) => {
+    const runs = classSubmissions.filter((r) => r.student_id === sid);
+    const awaiting = runs.filter(
+      (r) => r.eval_status === "awaiting" || (!!r.submitted_at && r.eval_status === "none"),
+    );
+    const reevalRuns = runs.filter((r) => r.eval_status === "reeval");
+    return {
+      awaiting: awaiting.length,
+      reeval: reevalRuns.length,
+      awaitingTitle: awaiting.length === 1 ? awaiting[0]?.mission?.title ?? null : null,
+      reevalTitle: reevalRuns.length === 1 ? reevalRuns[0]?.mission?.title ?? null : null,
+    };
+  };
+  const nextActionFor = (sid: string) => nextAction(situationFor(sid), workFor(sid));
 
   const studentRows: (string | number)[][] = [
-    ["Aluno", "E-mail", ...inds.map((i) => i.code), "Situação", "Resultado"],
+    ["Aluno", "E-mail", ...inds.map((i) => i.code), "Situação", "Resultado", "Próxima ação"],
     ...(students ?? []).map((s) => {
       const map = evFor(s.id);
       return [
         s.full_name || s.email,
         s.email,
-        ...inds.map((i) => map.get(i.id)?.concept ?? "—"),
+        /* Ausência de avaliação nunca vira NA. */
+        ...inds.map((i) => map.get(i.id)?.concept ?? "Não avaliado"),
         situationFor(s.id).label,
-        resultMap.get(s.id)?.final_result ?? "—",
+        resultMap.get(s.id)?.final_result ?? "Não confirmado",
+        nextActionFor(s.id).label,
       ];
     }),
   ];
+
 
   const indicatorRows: (string | number)[][] = [
     ["Indicador", "Descrição", "A", "PA", "NA", "Não avaliado"],
@@ -109,7 +130,7 @@ function ReportsPage() {
   ];
 
   /* Reavaliações de missões (somente leitura). */
-  const classSubmissions = (submissions ?? []).filter((r) => !active || r.classId === active);
+
   const reevalRows: (string | number)[][] = [
     ["Aluno / Grupo", "Missão", "Situação", "Tentativa", "Reavaliada", "Última atualização"],
     ...classSubmissions
@@ -194,6 +215,82 @@ function ReportsPage() {
       </div>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
+
+      {/* Painel de acompanhamento: resumo → situação → próxima ação → detalhes */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Acompanhamento da turma</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2 text-xs">
+            {[
+              { label: "Em avaliação", n: (s?.inProgress ?? 0) },
+              { label: "Avaliação Final", n: (s?.finalOpen ?? 0) },
+              { label: "Necessita Recuperação Final", n: s?.needsRecovery ?? 0 },
+              { label: "Em Recuperação Final", n: s?.inRecovery ?? 0 },
+              { label: "D — Desenvolvido", n: s?.d ?? 0 },
+              { label: "ND — Não Desenvolvido", n: s?.nd ?? 0 },
+            ].map((c) => (
+              <span key={c.label} className="rounded-md border border-border px-2 py-1">
+                {c.label}: <strong>{c.n}</strong>
+              </span>
+            ))}
+          </div>
+
+          {(students ?? []).map((st) => {
+            const sit = situationFor(st.id);
+            const na = nextActionFor(st.id);
+            const map = evFor(st.id);
+
+            return (
+              <details key={st.id} className="rounded-lg border border-border p-3">
+                <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">{st.full_name || st.email}</span>
+                  <span className="rounded-md border border-border px-2 py-0.5 text-xs">{sit.label}</span>
+                </summary>
+
+                <p className="mt-2 text-sm">
+                  <span className="text-muted-foreground">Próxima ação: </span>
+                  <strong>{na.label}</strong>
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {na.to && (
+                    <Button asChild size="sm">
+                      <Link to={na.to}>Ir para a ação</Link>
+                    </Button>
+                  )}
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/instructor/submissions">Ver entregas</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/instructor/dossier">Ver dossiê</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/instructor/portfolios">Ver portfólio</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/instructor/evaluations">Matriz I1–I6</Link>
+                  </Button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {inds.map((i) => (
+                    <span key={i.id} className="flex items-center gap-1 text-xs">
+                      <span className="font-semibold text-primary">{i.code}</span>
+                      <ConceptBadge concept={map.get(i.id)?.concept ?? null} />
+                    </span>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
+          {(students ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum aluno matriculado nesta turma.</p>
+          )}
+        </CardContent>
+      </Card>
+
 
       <div className="space-y-6">
         {reports.map((r) => {

@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import {
+  nextAction,
+  ucSituation,
   stageLabel,
   useClassEvaluations,
   useClassStudents,
@@ -92,9 +94,25 @@ function DossierPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base">{student.full_name || student.email}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Resultado da UC: <span className="font-semibold">{result?.final_result ?? "em aberto"}</span>
+            <CardContent className="space-y-1 text-sm text-muted-foreground">
+              <p>
+                Situação:{" "}
+                <span className="font-semibold text-accent">
+                  {ucSituation(inds, evMap, result).label}
+                </span>
+              </p>
+              <p>
+                Resultado confirmado:{" "}
+                <span className="font-semibold">{result?.final_result ?? "não confirmado"}</span>
+              </p>
+              <p>
+                Próxima ação:{" "}
+                <span className="font-semibold">
+                  {nextAction(ucSituation(inds, evMap, result)).label}
+                </span>
+              </p>
             </CardContent>
+
           </Card>
 
           {inds.map((ind) => {

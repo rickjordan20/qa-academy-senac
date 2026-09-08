@@ -3,15 +3,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import {
-  pendingIndicators,
+  ucSituation,
   useClassEvaluations,
   useClassStudents,
   useCreateRecoveryPlan,
   useRecoveryPlans,
+  useUcResults,
   useUpdateRecoveryPlan,
   type EvaluationRow,
   type IndicatorRow,
 } from "@/lib/assessment";
+
 import { ClassPicker } from "@/components/eval/ClassPicker";
 import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
@@ -44,22 +46,32 @@ function RecoveryPage() {
   const { data: students } = useClassStudents(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: plans } = useRecoveryPlans(active);
+  const { data: results } = useUcResults(active);
   const createPlan = useCreateRecoveryPlan(active);
   const updatePlan = useUpdateRecoveryPlan(active);
 
   const inds = (indicators ?? []) as IndicatorRow[];
   const codeOf = new Map(inds.map((i) => [i.id, i.code]));
+  const resultMap = new Map((results ?? []).map((r) => [r.student_id, r]));
   const evFor = (sid: string) =>
     new Map<string, EvaluationRow>(
       (evaluations ?? []).filter((e) => e.student_id === sid).map((e) => [e.indicator_id, e]),
     );
+  /** Recuperação Final é exclusiva de indicadores fechados em NA (regra central). */
+  const recoveryFor = (sid: string) => {
+    const sit = ucSituation(inds, evFor(sid), resultMap.get(sid));
+    const eligible = sit.key === "needs_recovery" || sit.key === "in_recovery";
+    return { sit, pend: eligible ? sit.pending : [] };
+  };
+
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-bold">Recuperação</h1>
+      <h1 className="mb-1 text-2xl font-bold">Recuperação Final</h1>
       <p className="mb-4 text-sm text-muted-foreground">
-        Alunos com PA ou NA ficam “Em recuperação”. Crie a Operação Resgate apenas para os
-        indicadores pendentes; a avaliação anterior é preservada no histórico.
+        Somente indicadores fechados em NA na Avaliação Final entram na Recuperação Final. PA é
+        etapa formativa e não envia o aluno para recuperação. A avaliação anterior é sempre
+        preservada no histórico.
       </p>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
@@ -67,12 +79,12 @@ function RecoveryPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Alunos em recuperação</CardTitle>
+            <CardTitle className="text-base">Alunos em Recuperação Final</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {(students ?? []).map((s) => {
               const map = evFor(s.id);
-              const pend = pendingIndicators(inds, map);
+              const { sit, pend } = recoveryFor(s.id);
               if (pend.length === 0) return null;
               const title = `Operação Resgate – ${pend.map((p) => p.code).join(" e ")}`;
               const already = (plans ?? []).some(
@@ -83,9 +95,10 @@ function RecoveryPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">{s.full_name || s.email}</span>
                     <span className="rounded-md bg-warning px-2 py-0.5 text-xs text-warning-foreground">
-                      Em recuperação
+                      {sit.key === "in_recovery" ? "Em Recuperação Final" : "Necessita Recuperação Final"}
                     </span>
                   </div>
+
                   <div className="mt-2 flex flex-wrap gap-2">
                     {pend.map((p) => (
                       <span key={p.id} className="flex items-center gap-1 text-xs">
@@ -120,11 +133,12 @@ function RecoveryPage() {
                 </div>
               );
             })}
-            {(students ?? []).every((s) => pendingIndicators(inds, evFor(s.id)).length === 0) && (
+            {(students ?? []).every((s) => recoveryFor(s.id).pend.length === 0) && (
               <p className="text-sm text-muted-foreground">
-                Nenhum aluno com indicador pendente nesta turma.
+                Nenhum aluno em Recuperação Final nesta turma.
               </p>
             )}
+
           </CardContent>
         </Card>
 

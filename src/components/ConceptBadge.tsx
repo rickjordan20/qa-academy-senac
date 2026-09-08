@@ -6,11 +6,22 @@ const labels: Record<string, string> = {
   NA: "Não Atendido",
 };
 
-export function ConceptBadge({ concept }: { concept: Concept }) {
+const icons: Record<string, string> = { A: "✓", PA: "◐", NA: "✕" };
+
+/**
+ * Menção do indicador. Nunca converte ausência de avaliação em NA:
+ * sem conceito registrado, o estado é sempre "Não avaliado".
+ * Usa cor + texto + ícone (não depende apenas de cor).
+ */
+export function ConceptBadge({ concept, full = false }: { concept: Concept; full?: boolean }) {
   if (!concept) {
     return (
-      <span className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">
-        Não avaliado
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
+        title="Não avaliado"
+      >
+        <span aria-hidden>—</span>
+        <span>Não avaliado</span>
       </span>
     );
   }
@@ -21,8 +32,14 @@ export function ConceptBadge({ concept }: { concept: Concept }) {
         ? "bg-warning text-warning-foreground"
         : "bg-danger text-danger-foreground";
   return (
-    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`} title={labels[concept]}>
-      {concept}
+    <span
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}
+      title={`${concept} — ${labels[concept]}`}
+    >
+      <span aria-hidden>{icons[concept]}</span>
+      <span>{concept}</span>
+      {full && <span className="font-normal">— {labels[concept]}</span>}
+      <span className="sr-only">{labels[concept]}</span>
     </span>
   );
 }
