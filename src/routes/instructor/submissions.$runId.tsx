@@ -216,7 +216,13 @@ function EvaluatePage() {
 
       {run ? (
         <div className="max-w-4xl space-y-5">
-          {alreadyEvaluated ? (
+          {needsReeval ? (
+            <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
+              <strong>Reavaliação necessária.</strong> Esta entrega já havia sido avaliada no modelo anterior. Toda a
+              produção do aluno foi preservada; a avaliação anterior continua no histórico, mas não vale mais como
+              avaliação vigente.
+            </div>
+          ) : alreadyEvaluated ? (
             <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
               Esta entrega possui uma avaliação anterior. A nova avaliação será considerada a avaliação vigente,
               mantendo a anterior no histórico.
@@ -225,10 +231,12 @@ function EvaluatePage() {
 
           {run.group_id ? (
             <div className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm">
-              Esta é uma entrega em grupo. As menções atribuídas aos indicadores serão registradas para todos os
-              integrantes do grupo{members.length ? `: ${members.map((m) => m.name).join(", ")}.` : "."}
+              Esta é uma entrega em grupo. A menção sugerida vale para todos os integrantes
+              {members.length ? `: ${members.map((m) => m.name).join(", ")}` : ""}, mas você pode diferenciar
+              individualmente logo abaixo da consolidação, com base nas evidências reais de participação.
             </div>
           ) : null}
+
 
           <Card>
             <CardHeader className="pb-2">
