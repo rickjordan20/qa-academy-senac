@@ -1,11 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { GraduationCap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useMyGroups } from "@/lib/cafe";
 import { XpOverview } from "@/components/gam/XpOverview";
 import { useIndicators, useMyEnrollment, useMyEvaluations } from "@/lib/uc10";
+import { useMyEvaluationAck } from "@/lib/assessment";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/student/dashboard")({
   head: () => ({

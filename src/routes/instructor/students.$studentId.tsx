@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useAdminClasses, useAdminGroups, useRoster, ENROLLMENT_STATUS, labelOf } from "@/lib/admin";
-import { useStudentDossier, useEvalHistory } from "@/lib/assessment";
+import { useStudentDossier, useEvalHistory, useStudentEvaluationAck } from "@/lib/assessment";
 import { useIndicators } from "@/lib/uc10";
 import { AuditList } from "@/components/admin/AuditList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
