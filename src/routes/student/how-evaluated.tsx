@@ -10,7 +10,6 @@ import {
   Trophy,
   XCircle,
   CheckCircle2,
-  MinusCircle,
   Target,
   ZoomIn,
 } from "lucide-react";
