@@ -151,18 +151,18 @@ function HowEvaluatedPage() {
         </CardContent>
       </Card>
 
-      {/* Passos 1–6 */}
+      {/* Passos 1–9 */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Step number={1} icon={ClipboardList} title="Você realiza a missão">
+        <Step number={1} icon={ClipboardList} title="Realize as missões">
           <p className="text-muted-foreground">
-            Estuda, pratica e entrega o que foi solicitado.
+            Coloque em prática o que aprendeu!
           </p>
           <ul className="space-y-1">
-            <Check>Responde atividades</Check>
-            <Check>Cria casos de teste</Check>
-            <Check>Registra bugs</Check>
-            <Check>Anexa evidências (links, prints, etc.)</Check>
-            <Check>Entrega no prazo</Check>
+            <Check>Responda atividades</Check>
+            <Check>Crie casos de teste</Check>
+            <Check>Registre bugs</Check>
+            <Check>Anexe evidências (prints, links, etc.)</Check>
+            <Check>Entregue no prazo</Check>
           </ul>
           <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
             Tudo o que você faz fica registrado na plataforma.
@@ -171,8 +171,7 @@ function HowEvaluatedPage() {
 
         <Step number={2} icon={BadgeCheck} title="O instrutor avalia sua entrega">
           <p className="text-muted-foreground">
-            O instrutor analisa o que você produziu em cada parte da missão. Cada parte pode
-            receber um conceito:
+            Ele analisa suas evidências e dá um conceito em cada parte da missão:
           </p>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -186,104 +185,126 @@ function HowEvaluatedPage() {
             </div>
           </div>
           <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
-            O instrutor também pode deixar um feedback para você saber o que foi bem e o que
-            pode melhorar.
+            Você também recebe um <strong>feedback</strong> com orientações para melhorar!
           </p>
         </Step>
 
-        <Step number={3} icon={ListChecks} title="Como é calculada a sua nota?">
+        <Step number={3} icon={ListChecks} title="Acompanhe seu progresso">
           <p className="text-muted-foreground">
-            Cada missão avalia alguns indicadores (habilidades da UC10).
+            Veja suas notas, feedbacks e evolução na sua área do aluno:
           </p>
-          <p className="font-medium">Regra simples:</p>
           <ul className="space-y-1">
-            <li className="flex items-start gap-2">
-              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <span>
-                Se tiver algum <strong>NA</strong> → o resultado é <strong>NA</strong>.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-              <span>
-                Se tudo for <strong>A</strong> → o resultado é <strong>A</strong>.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <MinusCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <span>
-                Em qualquer outro caso → o resultado é <strong>PA</strong>.
-              </span>
-            </li>
-          </ul>
-          <div className="rounded-md border border-border p-2 text-xs">
-            <p className="mb-1 font-medium">Exemplo:</p>
-            <div className="flex flex-wrap items-center gap-2">
-              <span>
-                Bloco 1 <ConceptBadge concept="A" />
-              </span>
-              <span>
-                Bloco 2 <ConceptBadge concept="A" />
-              </span>
-              <span>
-                Bloco 3 <ConceptBadge concept="PA" />
-              </span>
-              <span>→ Resultado do indicador:</span>
-              <ConceptBadge concept="PA" />
-            </div>
-          </div>
-        </Step>
-
-        <Step number={4} icon={Coffee} title="Em missões de grupo">
-          <p className="text-muted-foreground">
-            Todos do grupo recebem a mesma nota da missão, mas a participação individual é
-            registrada.
-          </p>
-          <p className="font-medium">O instrutor consegue ver:</p>
-          <ul className="space-y-1">
-            <Check>quais tarefas foram atribuídas</Check>
-            <Check>quem realmente contribuiu</Check>
-            <Check>quais registros e evidências cada um fez</Check>
+            <Check>Suas notas (A/PA/NA)</Check>
+            <Check>Feedbacks do instrutor</Check>
+            <Check>Seu progresso nos indicadores (I1–I6)</Check>
+            <Check>XP e badges conquistados</Check>
           </ul>
           <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
-            Atribuição de tarefa não é prova de execução. Sua participação é baseada nos seus
-            registros reais.
+            <strong>PA ou NA não é o fim!</strong> Você terá novas oportunidades para aprender
+            e mostrar que evoluiu.
           </p>
         </Step>
 
-        <Step number={5} icon={GraduationCap} title="Avaliação Final e Recuperação">
+        <Step number={4} icon={Target} title="Melhore e tente novamente">
           <p className="text-muted-foreground">
-            No final da UC10 (e na recuperação, se necessário), o instrutor avalia sua
-            evolução geral nos indicadores I1–I6.
+            Recebeu <strong>PA</strong> ou <strong>NA</strong>? Sem problema! Isso faz parte
+            da sua aprendizagem.
+          </p>
+          <ul className="space-y-1">
+            <Check>Reenvie a missão (quando permitido)</Check>
+            <Check>Estude e pratique mais</Check>
+            <Check>Aplique as orientações do feedback</Check>
+            <Check>Mostre novas evidências</Check>
+          </ul>
+          <p className="rounded-md bg-surface p-2 text-xs italic text-muted-foreground">
+            "Errar, corrigir e evoluir faz parte do processo!"
+          </p>
+        </Step>
+
+        <Step number={5} icon={Coffee} title="Missões em grupo">
+          <p className="text-muted-foreground">
+            Todos do grupo recebem a mesma nota da missão, mas sua participação individual é
+            registrada.
+          </p>
+          <p className="font-medium">O instrutor analisa:</p>
+          <ul className="space-y-1">
+            <Check>Quais tarefas foram atribuídas</Check>
+            <Check>Quem realmente realizou</Check>
+            <Check>Suas contribuições e evidências</Check>
+            <Check>A participação de cada integrante</Check>
+          </ul>
+          <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
+            A nota pode ser ajustada individualmente quando houver evidências que justifiquem.
+          </p>
+        </Step>
+
+        <Step number={6} icon={GraduationCap} title="Avaliação Final (Aula 21)">
+          <p className="text-muted-foreground">
+            O instrutor analisa todo o seu percurso na UC10:
+          </p>
+          <ul className="space-y-1">
+            <Check>Histórico das suas missões</Check>
+            <Check>Evolução dos indicadores (I1–I6)</Check>
+            <Check>Qualidade das evidências</Check>
+            <Check>Avaliação Final</Check>
+          </ul>
+          <p className="font-medium">Cada indicador recebe apenas:</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <ConceptBadge concept="A" /> <span>Atendido</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ConceptBadge concept="NA" /> <span>Não atendido</span>
+            </div>
+          </div>
+          <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
+            Todos os indicadores <strong>A</strong> → Conceito <strong>D</strong>{" "}
+            (Desenvolvido). Se houver algum <strong>NA</strong> → você vai para a{" "}
+            <strong>Recuperação Final</strong>.
+          </p>
+        </Step>
+
+        <Step number={7} icon={ListChecks} title="Recuperação Final">
+          <p className="text-muted-foreground">
+            Ainda ficou algum indicador <strong>NA</strong>? Você terá uma nova oportunidade!
+          </p>
+          <ul className="space-y-1">
+            <Check>Realize as atividades de recuperação</Check>
+            <Check>Foque nos indicadores pendentes</Check>
+            <Check>Envie suas novas evidências</Check>
+            <Check>O instrutor avalia novamente</Check>
+          </ul>
+          <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
+            Após a recuperação: todos <strong>A</strong> → <strong>D</strong> (Desenvolvido).
+            Se ainda houver algum <strong>NA</strong> → <strong>ND</strong> (Não Desenvolvido).
+          </p>
+        </Step>
+
+        <Step number={8} icon={BadgeCheck} title="Resultado final da UC10">
+          <p className="text-muted-foreground">
+            O resultado é manual, confirmado pelo instrutor, com base em tudo o que você
+            realizou.
           </p>
           <ul className="space-y-1">
             <Check>
-              Se todos os indicadores estiverem com <strong>A</strong> → você é aprovado{" "}
-              <strong>(D)</strong>.
+              <span>
+                <strong>D</strong> – Desenvolvido (competência alcançada)
+              </span>
             </Check>
             <li className="flex items-start gap-2">
               <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
               <span>
-                Se tiver qualquer <strong>PA</strong> ou <strong>NA</strong> → o resultado
-                será <strong>ND</strong> (ainda não aprovado).
+                <strong>ND</strong> – Não Desenvolvido (competência não alcançada)
               </span>
             </li>
           </ul>
-          <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
-            O resultado final é manual, confirmado pelo instrutor, com base em tudo o que
-            você realizou.
-          </p>
         </Step>
 
-        <Step number={6} icon={Trophy} title="XP e badges (sua evolução)">
+        <Step number={9} icon={Trophy} title="XP e badges (motivação extra!)">
           <p className="text-muted-foreground">
-            Além das notas, você também ganha XP por suas atividades na plataforma.
+            Você ganha XP por suas atividades na plataforma (entregas, participação,
+            colaboração, etc.) e conquista badges.
           </p>
-          <ul className="space-y-1">
-            <Check>XP mostra o quanto você se dedicou e evoluiu.</Check>
-            <Check>Conforme você acumula XP, conquista novos níveis.</Check>
-            <Check>Badges são conquistas por participações e realizações.</Check>
-          </ul>
           <div className="flex flex-wrap gap-1.5 pt-1">
             {["QA Rookie", "QA Júnior", "QA Pleno", "QA Sênior", "QA Especialista", "QA Master"].map(
               (n, i) => (
@@ -294,8 +315,8 @@ function HowEvaluatedPage() {
             )}
           </div>
           <p className="rounded-md bg-surface p-2 text-xs text-muted-foreground">
-            <strong>Importante:</strong> XP e badges não influenciam a sua nota. Eles servem
-            para reconhecer o seu esforço e incentivar o seu aprendizado!
+            <strong>XP não é nota!</strong> Eles reconhecem seu esforço e incentivam sua
+            jornada, mas não influenciam no conceito A/PA/NA ou no resultado final da UC.
           </p>
         </Step>
       </div>
