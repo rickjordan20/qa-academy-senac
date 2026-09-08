@@ -28,6 +28,26 @@ export type ReportBlock = {
   result: BlockResult | null;
 };
 
+export type ReportParticipant = {
+  name: string;
+  isLead: boolean;
+  assignedTasks: string[];
+  doneTasks: string[];
+  entries: number;
+  contributions: number;
+  evidences: number;
+  lastActivity: string | null;
+};
+
+export type ReportEvaluationVersion = {
+  version: number;
+  is_current: boolean;
+  created_at: string;
+  xp: number | null;
+  feedback: string;
+  superseded_reason: string;
+};
+
 export type ReportTarget = {
   key: string;
   /** nome do aluno ou do grupo */
@@ -48,6 +68,12 @@ export type ReportTarget = {
   hasPreviousAttempts: boolean;
   /** avaliações individuais (missão em grupo) */
   individual: { name: string; indicators: Record<string, string> }[];
+  /** justificativa registrada para a diferenciação individual */
+  overrideNotes: string;
+  /** divisão de tarefas e participação real (missão em grupo) */
+  participation: ReportParticipant[];
+  /** versões da avaliação (vigente + histórico) */
+  evaluationHistory: ReportEvaluationVersion[];
 };
 
 export type MissionReport = {
@@ -63,9 +89,12 @@ export type MissionReport = {
     inProgress: number;
     awaiting: number;
     inReview: number;
+    revision: number;
+    reeval: number;
     evaluated: number;
   };
 };
+
 
 type Row = Record<string, unknown>;
 
