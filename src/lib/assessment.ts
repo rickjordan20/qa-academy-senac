@@ -158,18 +158,104 @@ export function pendingIndicators(
   });
 }
 
+/* ---------------- Situação única da UC (função de domínio) ---------------- */
+
+export type UcSituationKey =
+  | "not_evaluated"
+  | "in_progress"
+  | "final_open"
+  | "needs_recovery"
+  | "in_recovery"
+  | "ready_d"
+  | "ready_nd"
+  | "D"
+  | "ND";
+
+export type UcSituation = {
+  key: UcSituationKey;
+  label: string;
+  /** Indicadores ainda NA (precisam de recuperação final). */
+  pending: IndicatorRow[];
+  /** Sugestão de resultado; null quando ainda não é possível sugerir. */
+  suggestion: "D" | "ND" | null;
+  /** true quando a etapa de Recuperação Final já foi avaliada em todos os NA. */
+  recoveryDone: boolean;
+};
+
+/**
+ * Regra única de status da UC.
+ * Fechamento (etapa final/recuperação) só aceita A ou NA.
+ * Todos A -> D. Algum NA antes da recuperação -> Necessita Recuperação Final.
+ * Algum NA depois da recuperação -> ND. Confirmação é sempre manual.
+ */
+export function ucSituation(
+  indicators: IndicatorRow[],
+  byIndicator: Map<string, EvaluationRow>,
+  result?: UcResult | undefined,
+): UcSituation {
+  const rows = indicators.map((i) => byIndicator.get(i.id));
+  const closedRows = rows.filter((r) => r?.concept === "A" || r?.concept === "NA");
+  const na = indicators.filter((i) => byIndicator.get(i.id)?.concept === "NA");
+  const recoveryDone =
+    na.length > 0 && na.every((i) => byIndicator.get(i.id)?.stage === "recuperacao");
+  const inRecovery =
+    na.length > 0 && na.some((i) => byIndicator.get(i.id)?.stage === "recuperacao");
+
+  if (result?.final_result) {
+    return {
+      key: result.final_result,
+      label: result.final_result === "D" ? "Desenvolvido" : "Não Desenvolvido",
+      pending: na,
+      suggestion: result.final_result,
+      recoveryDone,
+    };
+  }
+
+  const evaluated = rows.filter((r) => r?.concept).length;
+  if (evaluated === 0)
+    return { key: "not_evaluated", label: "Não avaliado", pending: [], suggestion: null, recoveryDone: false };
+
+  if (indicators.length === 0 || closedRows.length < indicators.length)
+    return {
+      key: evaluated < indicators.length ? "in_progress" : "final_open",
+      label:
+        evaluated < indicators.length
+          ? "Em andamento"
+          : "Avaliação Final (fechar cada indicador em A ou NA)",
+      pending: na,
+      suggestion: null,
+      recoveryDone: false,
+    };
+
+  if (na.length === 0)
+    return { key: "ready_d", label: "Todos os indicadores atendidos", pending: [], suggestion: "D", recoveryDone: false };
+
+  if (recoveryDone)
+    return {
+      key: "ready_nd",
+      label: `Recuperação Final concluída com pendência — ${na.map((i) => i.code).join(", ")}`,
+      pending: na,
+      suggestion: "ND",
+      recoveryDone: true,
+    };
+
+  return {
+    key: inRecovery ? "in_recovery" : "needs_recovery",
+    label: `${inRecovery ? "Em Recuperação Final" : "Necessita Recuperação Final"} — ${na
+      .map((i) => i.code)
+      .join(", ")}`,
+    pending: na,
+    suggestion: null,
+    recoveryDone: false,
+  };
+}
+
 export function studentSituation(
   indicators: IndicatorRow[],
   byIndicator: Map<string, EvaluationRow>,
   result: UcResult | undefined,
 ) {
-  if (result?.final_result) {
-    return result.final_result === "D" ? "D – Desenvolveu" : "ND – Não desenvolveu";
-  }
-  const evaluated = indicators.filter((i) => byIndicator.get(i.id)?.concept).length;
-  if (evaluated === 0) return "Não avaliado";
-  if (evaluated < indicators.length) return "Em avaliação";
-  return pendingIndicators(indicators, byIndicator).length > 0 ? "Em recuperação" : "Pronto para fechar";
+  return ucSituation(indicators, byIndicator, result).label;
 }
 
 /* ------------------------------------------------------------------ */
