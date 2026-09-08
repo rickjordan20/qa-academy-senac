@@ -12,6 +12,8 @@ import {
   type UcSituation,
   EVALUATION_ACK_VERSION,
 } from "@/lib/assessment";
+type EvalRowX = EvaluationRow & { invalidated_at?: string | null };
+
 import { temporalStatus } from "@/lib/mission-schedule";
 import type { SubmissionRow } from "@/lib/mission-submissions";
 
@@ -252,7 +254,7 @@ export function useInstructorOverview(
           profiles.get(e.student_id) ?? ({ id: e.student_id, full_name: "", email: "" } as StudentInfo);
         const byIndicator = new Map<string, EvaluationRow>();
         for (const ev of evaluations)
-          if (ev.student_id === e.student_id && ev.class_id === e.class_id && !ev.invalidated_at)
+          if (ev.student_id === e.student_id && ev.class_id === e.class_id && !(ev as EvalRowX).invalidated_at)
             byIndicator.set(ev.indicator_id, ev);
         const result = results.find((r) => r.student_id === e.student_id && r.class_id === e.class_id);
         const situation = ucSituation(inds, byIndicator, result);
@@ -359,7 +361,7 @@ export function indicatorBreakdown(
   const ids = new Set(students.map((s) => `${s.classId}:${s.student.id}`));
   return indicators.map((ind) => {
     const rows = evaluations.filter(
-      (e) => e.indicator_id === ind.id && !e.invalidated_at && ids.has(`${e.class_id}:${e.student_id}`),
+      (e) => e.indicator_id === ind.id && !(e as EvalRowX).invalidated_at && ids.has(`${e.class_id}:${e.student_id}`),
     );
     const count = (c: string) => rows.filter((r) => r.concept === c).length;
     const a = count("A");
