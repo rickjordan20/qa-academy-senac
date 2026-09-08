@@ -189,6 +189,7 @@ function FinalPage() {
           indicator={cell}
           current={evMap.get(cell.id)}
           defaultStage="final"
+          concepts={["A", "NA"]}
         />
       )}
     </div>
