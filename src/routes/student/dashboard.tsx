@@ -30,12 +30,8 @@ function StudentDashboard() {
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
   const { data: indicators } = useIndicators();
   const { data: groups } = useMyGroups(user?.id ?? null);
-
-  const byIndicator = new Map((evaluations ?? []).map((e) => [e.indicator_id, e]));
-  const total = indicators?.length ?? 0;
-  const met = (evaluations ?? []).filter((e) => e.concept === "A").length;
-  const progress = total ? Math.round((met / total) * 100) : 0;
-
+  const { data: evalAck } = useMyEvaluationAck(user?.id ?? null);
+...
   return (
     <div>
       <div className="mb-6 rounded-xl border border-border bg-surface p-6">
@@ -46,6 +42,31 @@ function StudentDashboard() {
           UC10 – Realizar testes nas aplicações desenvolvidas
         </h1>
       </div>
+
+      {!evalAck ? (
+        <div className="mb-6 flex flex-col items-start justify-between gap-3 rounded-xl border-2 border-accent/60 bg-accent/10 p-5 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3">
+            <GraduationCap className="mt-0.5 h-6 w-6 shrink-0 text-accent" />
+            <div>
+              <p className="font-semibold">Entenda como você será avaliado</p>
+              <p className="text-sm text-muted-foreground">
+                Antes de começar, veja como funcionam as missões, as notas A/PA/NA, os
+                indicadores I1–I6 e o XP — e registre sua ciência.
+              </p>
+            </div>
+          </div>
+          <Button asChild className="shrink-0">
+            <Link to="/student/how-evaluated">Ver como serei avaliado</Link>
+          </Button>
+        </div>
+      ) : (
+        <p className="mb-6 text-sm">
+          <Link to="/student/how-evaluated" className="text-accent hover:underline">
+            Como você será avaliado
+          </Link>
+          <span className="text-muted-foreground"> — ciência registrada. Revise quando quiser.</span>
+        </p>
+      )}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Card>
