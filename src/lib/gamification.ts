@@ -433,8 +433,15 @@ export type GamStats = {
 };
 
 async function collect(userId: string) {
-  const [runs, cases, bugs, qaEv, teEv, retests, contribs, leadGroups] = await Promise.all([
-    supabase.from("techeduca_mission_runs").select("id, status, checkpoint_answers, reflection").eq("student_id", userId),
+  /* Fonte real dos registros: missões do construtor (TechEduca e Café Central).
+     As tabelas antigas (techeduca_*/qa_*) continuam sendo lidas para não perder
+     histórico de quem registrou antes da migração. */
+  const [runs, entries, cases, bugs, qaEv, teEv, retests, contribs, leadGroups] = await Promise.all([
+    supabase.from("builder_mission_runs").select("id, mission_id, status, answers").eq("student_id", userId),
+    supabase
+      .from("builder_mission_entries")
+      .select("id, kind, title, mission_id, data")
+      .eq("author_id", userId),
     supabase.from("qa_test_cases").select("id, context, executed_at").eq("author_id", userId),
     supabase.from("qa_bugs").select("id, context, severity, title, description").eq("author_id", userId),
     supabase.from("qa_evidences").select("id, context").eq("author_id", userId),
@@ -444,20 +451,88 @@ async function collect(userId: string) {
     supabase.from("groups").select("id, name").eq("qa_lead_id", userId),
   ]);
 
+  const runRows = (runs.data ?? []) as {
+    id: string;
+    mission_id: string;
+    status: string;
+    answers: unknown;
+  }[];
+  const entryRows = (entries.data ?? []) as {
+    id: string;
+    kind: string;
+    title: string;
+    mission_id: string;
+    data: Record<string, unknown> | null;
+  }[];
+
+  const missionIds = [...new Set([...runRows.map((r) => r.mission_id), ...entryRows.map((e) => e.mission_id)])];
+  const templates = new Map<string, string>();
+  if (missionIds.length) {
+    const { data } = await supabase.from("builder_missions").select("id, template").in("id", missionIds);
+    for (const m of (data ?? []) as { id: string; template: string }[]) templates.set(m.id, m.template);
+  }
+  const ctxOf = (missionId: string) => (templates.get(missionId) === "cafe" ? "cafe" : "techeduca");
+
   const events: NewEvent[] = [];
 
-  for (const r of (runs.data ?? []) as { id: string; status: string; checkpoint_answers: unknown; reflection: string | null }[]) {
-    if (r.status === "concluida" || r.status === "completed" || r.status === "concluída") {
-      events.push({ student_id: userId, context: "techeduca", action_code: "mission_completed", ref_kind: "mission_run", ref_id: r.id });
+  const doneStatus = ["concluida", "concluída", "completed", "submitted", "enviada", "evaluated", "avaliada"];
+  for (const r of runRows) {
+    const ctx = ctxOf(r.mission_id);
+    if (doneStatus.includes(r.status)) {
+      events.push({ student_id: userId, context: ctx, action_code: "mission_completed", ref_kind: "mission_run", ref_id: r.id });
     }
-    const answers = (r.checkpoint_answers ?? {}) as Record<string, unknown>;
-    if (Object.keys(answers).length > 0) {
-      events.push({ student_id: userId, context: "techeduca", action_code: "checkpoint_done", ref_kind: "mission_run", ref_id: r.id });
+    const answers = (r.answers ?? {}) as Record<string, unknown>;
+    const answerKeys = Object.keys(answers);
+    if (answerKeys.length > 0) {
+      events.push({ student_id: userId, context: ctx, action_code: "checkpoint_done", ref_kind: "mission_run", ref_id: r.id });
     }
-    if (r.reflection && r.reflection.trim().length > 0) {
-      events.push({ student_id: userId, context: "techeduca", action_code: "reflection_done", ref_kind: "mission_run", ref_id: r.id });
+    const hasReflection = answerKeys.some(
+      (k) => /reflex/i.test(k) && String(answers[k] ?? "").trim().length > 0,
+    );
+    if (hasReflection) {
+      events.push({ student_id: userId, context: ctx, action_code: "reflection_done", ref_kind: "mission_run", ref_id: r.id });
     }
   }
+
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const entryCases = entryRows.filter((e) => e.kind === "test_case");
+  const entryExecs = entryRows.filter((e) => e.kind === "execution");
+  const entryBugs = entryRows.filter((e) => e.kind === "bug");
+  const entryEvidences = entryRows.filter((e) => e.kind === "evidence");
+
+  for (const c of entryCases)
+    events.push({
+      student_id: userId,
+      context: ctxOf(c.mission_id),
+      action_code: "test_case_created",
+      ref_kind: "test_case",
+      ref_id: c.id,
+    });
+  for (const x of entryExecs)
+    events.push({
+      student_id: userId,
+      context: ctxOf(x.mission_id),
+      action_code: "test_execution",
+      ref_kind: "test_case",
+      ref_id: x.id,
+    });
+  for (const b of entryBugs)
+    events.push({
+      student_id: userId,
+      context: ctxOf(b.mission_id),
+      action_code: "bug_confirmed",
+      ref_kind: "bug",
+      ref_id: b.id,
+      note: b.title,
+    });
+  for (const e of entryEvidences)
+    events.push({
+      student_id: userId,
+      context: ctxOf(e.mission_id),
+      action_code: "evidence_added",
+      ref_kind: "evidence",
+      ref_id: e.id,
+    });
 
   const caseRows = (cases.data ?? []) as { id: string; context: string; executed_at: string | null }[];
   for (const c of caseRows) {
@@ -488,14 +563,22 @@ async function collect(userId: string) {
   const contribRows = (contribs.data ?? []) as { id: string; group_id: string }[];
 
   const uxWords = ["ux", "usabilidade", "interface", "layout", "design"];
+  const severe = ["alta", "critica", "crítica"];
+  const bugText = (b: { title: string; data: Record<string, unknown> | null }) =>
+    `${b.title} ${str(b.data?.["descricao"])} ${str(b.data?.["titulo"])}`.toLowerCase();
+
   const stats: GamStats = {
     missions: events.filter((e) => e.action_code === "mission_completed").length,
-    cases: caseRows.length,
-    executions: caseRows.filter((c) => c.executed_at).length,
-    bugs: bugRows.length,
-    uxBugs: bugRows.filter((b) => uxWords.some((w) => `${b.title} ${b.description}`.toLowerCase().includes(w))).length,
-    severeBugs: bugRows.filter((b) => b.severity === "alta" || b.severity === "critica").length,
-    evidences: qaEvRows.length + ((teEv.data ?? []) as unknown[]).length,
+    cases: caseRows.length + entryCases.length,
+    executions: caseRows.filter((c) => c.executed_at).length + entryExecs.length,
+    bugs: bugRows.length + entryBugs.length,
+    uxBugs:
+      bugRows.filter((b) => uxWords.some((w) => `${b.title} ${b.description}`.toLowerCase().includes(w))).length +
+      entryBugs.filter((b) => uxWords.some((w) => bugText(b).includes(w))).length,
+    severeBugs:
+      bugRows.filter((b) => severe.includes(b.severity.toLowerCase())).length +
+      entryBugs.filter((b) => severe.includes(str(b.data?.["severidade"]).toLowerCase())).length,
+    evidences: qaEvRows.length + ((teEv.data ?? []) as unknown[]).length + entryEvidences.length,
     retests: retestRows.length,
     contributions: contribRows.length,
     isQaLead: ((leadGroups.data ?? []) as unknown[]).length > 0,
