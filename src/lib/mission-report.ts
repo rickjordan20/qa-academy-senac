@@ -462,7 +462,10 @@ export function useMissionReport(classId: string | null, missionId: string | nul
         inProgress: targets.filter((t) => t.run && !t.run.submitted_at).length,
         awaiting: targets.filter((t) => t.run?.eval_status === "awaiting").length,
         inReview: targets.filter((t) => t.run?.eval_status === "in_review").length,
+        revision: targets.filter((t) => t.run?.eval_status === "revision").length,
+        reeval: targets.filter((t) => t.run?.eval_status === "reeval").length,
         evaluated: targets.filter((t) => t.run?.eval_status === "evaluated").length,
+
       };
 
       return { mission, className, isGroup, indicators, targets, summary };
