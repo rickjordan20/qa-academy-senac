@@ -4,9 +4,9 @@ import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import {
   downloadCsv,
-  pendingIndicators,
   studentSituation,
-  suggestResult,
+  ucSituation,
+
   useClassEvaluations,
   useClassStudents,
   useConfirmUcResult,
