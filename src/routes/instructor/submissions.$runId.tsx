@@ -99,6 +99,7 @@ function EvaluatePage() {
   );
 
   const previous = history?.[0] ?? null;
+  const needsReeval = run?.eval_status === "reeval";
   const alreadyEvaluated = run?.eval_status === "evaluated" || (history ?? []).some((h) => h.is_current);
 
   // hidratação inicial (a partir da avaliação anterior, quando houver)
@@ -117,6 +118,8 @@ function EvaluatePage() {
       setBlockConcepts(bc);
       setBlockComments(cm);
       setFinals({ ...(previous.indicator_finals ?? {}) });
+      setMemberOverrides({ ...(previous.member_overrides ?? {}) });
+      setOverrideNotes(previous.override_notes ?? "");
     }
   }, [run, previous, hydrated]);
 
