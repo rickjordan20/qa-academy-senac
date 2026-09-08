@@ -375,11 +375,78 @@ function EvaluatePage() {
                 );
               })}
               <p className="text-xs text-muted-foreground">
-                A decisão final é sempre do instrutor. As menções confirmadas aqui são lançadas na Matriz de Avaliação
-                ao concluir.
+                A sugestão é apenas uma ajuda: a decisão é sempre do instrutor. As menções confirmadas aqui são
+                formativas (A/PA/NA) e não definem sozinhas o resultado D/ND da UC.
               </p>
             </CardContent>
           </Card>
+
+          {run.group_id && members.length ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Menções individuais dos integrantes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Todos recebem a menção do grupo por padrão. Se as evidências e a participação registrada acima
+                  justificarem, altere individualmente — a alteração de um integrante não afeta os demais.
+                </p>
+                {members.map((m) => (
+                  <div key={m.id} className="rounded-lg border border-border p-3">
+                    <p className="text-sm font-semibold">{m.name}</p>
+                    <div className="mt-2 space-y-2">
+                      {Object.keys(finals)
+                        .filter((code) => finals[code])
+                        .map((code) => {
+                          const groupConcept = finals[code];
+                          const value = memberOverrides[m.id]?.[code] ?? groupConcept;
+                          return (
+                            <div key={code} className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-sm">
+                                <span className="font-semibold">{code}</span>
+                                <span className="text-xs text-muted-foreground"> · grupo: {groupConcept}</span>
+                              </span>
+                              <ConceptPicker
+                                value={value}
+                                onChange={(v) =>
+                                  setMemberOverrides((prev) => {
+                                    const forStudent = { ...(prev[m.id] ?? {}) };
+                                    if (!v || v === groupConcept) delete forStudent[code];
+                                    else forStudent[code] = v;
+                                    const next = { ...prev };
+                                    if (Object.keys(forStudent).length) next[m.id] = forStudent;
+                                    else delete next[m.id];
+                                    return next;
+                                  })
+                                }
+                              />
+                            </div>
+                          );
+                        })}
+                      {Object.keys(finals).filter((c) => finals[c]).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          Defina as menções do grupo na consolidação para poder diferenciar integrantes.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+                {Object.keys(memberOverrides).length ? (
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Justificativa da diferenciação (registrada no histórico)
+                    </label>
+                    <Textarea
+                      rows={3}
+                      value={overrideNotes}
+                      onChange={(e) => setOverrideNotes(e.target.value)}
+                      placeholder="Ex.: o integrante não possui registros/evidências das tarefas atribuídas."
+                    />
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader className="pb-2">
