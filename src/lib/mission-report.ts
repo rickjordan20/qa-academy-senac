@@ -412,7 +412,10 @@ export function useMissionReport(classId: string | null, missionId: string | nul
               if (lead && !members.includes(lead)) members.unshift(lead);
             }
             const run = runs.find((r) => r.group_id === g.id);
-            return mkTarget(g.id, g.name, members, run);
+            const memberIds = memberRows.filter((m) => m.group_id === g.id).map((m) => m.student_id);
+            if (g.qa_lead_id && !memberIds.includes(g.qa_lead_id)) memberIds.unshift(g.qa_lead_id);
+            return mkTarget(g.id, g.name, members, run, memberIds, g.qa_lead_id);
+
           })
           .sort((a, b) => a.name.localeCompare(b.name));
       } else {
