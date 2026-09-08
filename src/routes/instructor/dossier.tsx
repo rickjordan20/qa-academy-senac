@@ -144,6 +144,9 @@ function DossierPage() {
                           const m = (dossier?.missions ?? []).find((x) => x.id === r.mission_id);
                           return `Execução: ${m?.title ?? r.mission_id} (${r.status})`;
                         }),
+                        ...(dossier?.bugs ?? [])
+                          .filter((b) => b.context === "techeduca")
+                          .map((b) => `Bug: ${b.title} (${b.status})`),
                         ...(dossier?.teEvidences ?? []).map((e) => `Evidência: ${e.title}`),
                         ...(dossier?.qaEvidences ?? [])
                           .filter((e) => e.context === "techeduca")
