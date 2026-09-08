@@ -476,8 +476,12 @@ export type Database = {
           id: string
           indicator_finals: Json
           is_current: boolean
+          member_overrides: Json
           mission_id: string
+          override_notes: string
           run_id: string
+          superseded_at: string | null
+          superseded_reason: string
           target_student_ids: string[]
           updated_at: string
           version: number
@@ -492,8 +496,12 @@ export type Database = {
           id?: string
           indicator_finals?: Json
           is_current?: boolean
+          member_overrides?: Json
           mission_id: string
+          override_notes?: string
           run_id: string
+          superseded_at?: string | null
+          superseded_reason?: string
           target_student_ids?: string[]
           updated_at?: string
           version?: number
@@ -508,8 +516,12 @@ export type Database = {
           id?: string
           indicator_finals?: Json
           is_current?: boolean
+          member_overrides?: Json
           mission_id?: string
+          override_notes?: string
           run_id?: string
+          superseded_at?: string | null
+          superseded_reason?: string
           target_student_ids?: string[]
           updated_at?: string
           version?: number
@@ -1506,6 +1518,8 @@ export type Database = {
           final_result: Database["public"]["Enums"]["final_result"] | null
           id: string
           indicator_id: string
+          invalidated_at: string | null
+          invalidation_reason: string
           notes: string | null
           source_evaluation_id: string | null
           source_mission_id: string | null
@@ -1523,6 +1537,8 @@ export type Database = {
           final_result?: Database["public"]["Enums"]["final_result"] | null
           id?: string
           indicator_id: string
+          invalidated_at?: string | null
+          invalidation_reason?: string
           notes?: string | null
           source_evaluation_id?: string | null
           source_mission_id?: string | null
@@ -1540,6 +1556,8 @@ export type Database = {
           final_result?: Database["public"]["Enums"]["final_result"] | null
           id?: string
           indicator_id?: string
+          invalidated_at?: string | null
+          invalidation_reason?: string
           notes?: string | null
           source_evaluation_id?: string | null
           source_mission_id?: string | null

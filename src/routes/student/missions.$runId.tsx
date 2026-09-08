@@ -64,7 +64,28 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
         <div className="mt-3">{backTo}</div>
       </div>
 
-      {run.eval_status === "evaluated" || run.feedback ? (
+      {run.eval_status === "reeval" ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Em reavaliação pelo instrutor</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>
+              Sua entrega continua registrada e nada foi perdido. O instrutor está analisando novamente esta missão
+              com o novo modelo de avaliação da UC10.
+            </p>
+            {run.feedback ? (
+              <div className="rounded-md border border-border bg-surface p-3">
+                <p className="text-xs font-semibold text-muted-foreground">Avaliação anterior</p>
+                <p className="mt-1 whitespace-pre-wrap">{run.feedback}</p>
+              </div>
+            ) : null}
+            <p className="text-xs text-muted-foreground">
+              As menções A/PA/NA voltam a aparecer em “Minha Avaliação” assim que a reavaliação for concluída.
+            </p>
+          </CardContent>
+        </Card>
+      ) : run.eval_status === "evaluated" || run.feedback ? (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Avaliação do instrutor</CardTitle>
@@ -75,7 +96,8 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
             </p>
             <p className="whitespace-pre-wrap">{run.feedback || "Sem comentários."}</p>
             <p className="text-xs text-muted-foreground">
-              As menções A/PA/NA dos indicadores aparecem em “Minha Avaliação”.
+              A/PA/NA são menções formativas: mostram seu desenvolvimento naquele momento e podem evoluir com novas
+              evidências. As menções aparecem em “Minha Avaliação”.
             </p>
           </CardContent>
         </Card>

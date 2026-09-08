@@ -13,6 +13,7 @@ import {
   type IndicatorRow,
   type StudentInfo,
 } from "@/lib/assessment";
+import { useIndicatorOrigins } from "@/lib/mission-submissions";
 import { ClassPicker } from "@/components/eval/ClassPicker";
 import { IndicatorDialog } from "@/components/eval/IndicatorDialog";
 import { ConceptBadge } from "@/components/ConceptBadge";
@@ -57,11 +58,17 @@ function FinalPage() {
       .filter((e) => e.student_id === student?.id)
       .map((e) => [e.indicator_id, e]),
   );
+  const { data: origins } = useIndicatorOrigins(student?.id ?? null);
   const result = (results ?? []).find((r) => r.student_id === student?.id);
-  const suggestion = suggestResult(
-    inds.map((i) => evMap.get(i.id)?.concept ?? null),
-    inds.length,
-  );
+
+  // No fechamento da UC cada indicador vale apenas A ou NA.
+  const finalConcepts = inds.map((i) => evMap.get(i.id)?.concept ?? null);
+  const closed = inds.length > 0 && finalConcepts.every((c) => c === "A" || c === "NA");
+  const suggestion = closed
+    ? finalConcepts.every((c) => c === "A")
+      ? ("D" as const)
+      : ("ND" as const)
+    : suggestResult([], inds.length);
   const pend = pendingIndicators(inds, evMap);
 
   return (
@@ -93,19 +100,31 @@ function FinalPage() {
               <CardTitle className="text-base">Indicadores I1 – I6</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {inds.map((i) => (
-                <button
-                  key={i.id}
-                  onClick={() => setCell(i)}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-border p-3 text-left hover:border-primary"
-                >
-                  <div>
-                    <span className="mr-2 font-semibold text-primary">{i.code}</span>
-                    <span className="text-sm text-muted-foreground">{i.description}</span>
-                  </div>
-                  <ConceptBadge concept={evMap.get(i.id)?.concept ?? null} />
-                </button>
-              ))}
+              {inds.map((i) => {
+                const evolution = (origins ?? [])
+                  .filter((o) => o.indicator_finals?.[i.code])
+                  .map((o) => `${o.missionTitle}: ${o.indicator_finals[i.code]}`);
+                return (
+                  <button
+                    key={i.id}
+                    onClick={() => setCell(i)}
+                    className="w-full rounded-lg border border-border p-3 text-left hover:border-primary"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <span className="mr-2 font-semibold text-primary">{i.code}</span>
+                        <span className="text-sm text-muted-foreground">{i.description}</span>
+                      </div>
+                      <ConceptBadge concept={evMap.get(i.id)?.concept ?? null} />
+                    </div>
+                    {evolution.length ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Evidências durante a UC: {evolution.join(" · ")}
+                      </p>
+                    ) : null}
+                  </button>
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -116,7 +135,9 @@ function FinalPage() {
             <CardContent className="space-y-3 text-sm">
               <p>
                 Sugestão da plataforma:{" "}
-                <span className="font-semibold text-accent">{suggestion ?? "avaliação incompleta"}</span>
+                <span className="font-semibold text-accent">
+                  {suggestion ?? "fechamento incompleto (cada indicador precisa de A ou NA)"}
+                </span>
               </p>
               {pend.length > 0 && (
                 <p className="text-muted-foreground">
@@ -168,6 +189,7 @@ function FinalPage() {
           indicator={cell}
           current={evMap.get(cell.id)}
           defaultStage="final"
+          concepts={["A", "NA"]}
         />
       )}
     </div>
