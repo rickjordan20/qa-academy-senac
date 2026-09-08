@@ -572,6 +572,8 @@ export function useEvaluateSubmission() {
         if (concept) finalsByCode[code] = concept;
       }
 
+      const overrides = input.memberOverrides ?? {};
+
       const insEval = await supabase
         .from("builder_run_evaluations")
         .insert({
@@ -585,6 +587,8 @@ export function useEvaluateSubmission() {
           indicator_finals: finalsByCode as never,
           group_snapshot: members as never,
           target_student_ids: targets,
+          member_overrides: overrides as never,
+          override_notes: input.overrideNotes ?? "",
           is_current: input.decision === "evaluated",
         } as never)
         .select("id")
@@ -601,24 +605,35 @@ export function useEvaluateSubmission() {
         if (upd.error) throw upd.error;
       }
 
-      // Indicadores A/PA/NA — grava na matriz para todos os alvos
+      // Indicadores A/PA/NA — grava na matriz para todos os alvos.
+      // Em grupo, o instrutor pode diferenciar integrantes com base em evidências reais.
       if (input.decision === "evaluated" && input.run.classId && targets.length) {
+        const codeById = new Map(Object.entries(idByCode).map(([code, id]) => [id, code] as const));
         for (const studentId of targets) {
+          const perStudent = overrides[studentId] ?? {};
+          const justified = Object.keys(perStudent).length > 0;
           for (const [indicatorId, concept] of Object.entries(input.indicators)) {
-            if (!concept) continue;
+            const code = codeById.get(indicatorId) ?? "";
+            const finalConcept = perStudent[code] || concept;
+            if (!finalConcept) continue;
+            const note = justified && perStudent[code] && perStudent[code] !== concept
+              ? `${input.feedback}${input.feedback ? "\n\n" : ""}Diferenciação individual: ${input.overrideNotes ?? "com base nas evidências e na participação registrada."}`
+              : input.feedback;
             const { error: evalErr } = await supabase.from("indicator_evaluations").upsert(
               {
                 class_id: input.run.classId,
                 student_id: studentId,
                 indicator_id: indicatorId,
-                concept,
+                concept: finalConcept,
                 stage: "regular",
-                notes: input.feedback,
+                notes: note,
                 evaluated_by: input.instructorId,
                 evaluated_at: new Date().toISOString(),
                 source_mission_id: input.run.mission_id,
                 source_run_id: input.run.id,
                 source_evaluation_id: evaluationId,
+                invalidated_at: null,
+                invalidation_reason: "",
               } as never,
               { onConflict: "class_id,student_id,indicator_id" },
             );
@@ -626,6 +641,8 @@ export function useEvaluateSubmission() {
           }
         }
       }
+
+
 
 
       // XP — registrado uma única vez por execução (regravado se a nota mudar)
