@@ -645,15 +645,28 @@ export function useEvaluateSubmission() {
 
 
 
-      // XP — registrado uma única vez por execução (regravado se a nota mudar)
+      // XP — um único registro por execução; na reavaliação o valor é atualizado
       if (input.decision === "evaluated" && input.run.student_id) {
-        const del = await supabase
+        const existing = await supabase
           .from("gam_xp_events")
-          .delete()
+          .select("id")
           .eq("ref_kind", "builder_run")
-          .eq("ref_id", input.run.id);
-        if (del.error) throw del.error;
-        if ((input.xp ?? 0) > 0) {
+          .eq("ref_id", input.run.id)
+          .eq("action_code", "builder_mission_evaluated")
+          .maybeSingle();
+        if (existing.error) throw existing.error;
+
+        if (existing.data?.id) {
+          const upd = await supabase
+            .from("gam_xp_events")
+            .update({
+              xp: input.xp ?? 0,
+              status: (input.xp ?? 0) > 0 ? "approved" : "rejected",
+              note: `Avaliação da missão ${input.run.mission?.title ?? ""}`,
+            } as never)
+            .eq("id", existing.data.id);
+          if (upd.error) throw upd.error;
+        } else if ((input.xp ?? 0) > 0) {
           const ins = await supabase.from("gam_xp_events").insert({
             student_id: input.run.student_id,
             group_id: input.run.group_id,
@@ -669,6 +682,7 @@ export function useEvaluateSubmission() {
           if (ins.error) throw ins.error;
         }
       }
+
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["mission-submissions"] });
