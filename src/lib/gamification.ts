@@ -433,9 +433,8 @@ export type GamStats = {
 };
 
 async function collect(userId: string) {
-  /* Fonte real dos registros: missões do construtor (TechEduca e Café Central).
-     As tabelas antigas (techeduca_*/qa_*) continuam sendo lidas para não perder
-     histórico de quem registrou antes da migração. */
+  // Fonte real dos registros: missões do construtor (TechEduca e Café Central).
+  // As tabelas antigas continuam sendo lidas para não perder histórico anterior.
   const [runs, entries, cases, bugs, qaEv, teEv, retests, contribs, leadGroups] = await Promise.all([
     supabase.from("builder_mission_runs").select("id, mission_id, status, answers").eq("student_id", userId),
     supabase
