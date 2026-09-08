@@ -3,8 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useIndicators, useMyClasses } from "@/lib/uc10";
 import {
-  pendingIndicators,
-  suggestResult,
+  ucSituation,
   useClassEvaluations,
   useClassStudents,
   useConfirmUcResult,
