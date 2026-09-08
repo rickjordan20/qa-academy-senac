@@ -80,6 +80,8 @@ function EvaluatePage() {
   const [blockConcepts, setBlockConcepts] = useState<Record<string, Record<string, string>>>({});
   const [blockComments, setBlockComments] = useState<Record<string, string>>({});
   const [finals, setFinals] = useState<Record<string, string>>({});
+  const [memberOverrides, setMemberOverrides] = useState<Record<string, Record<string, string>>>({});
+  const [overrideNotes, setOverrideNotes] = useState("");
   const hydrated = useState<{ id: string | null }>({ id: null })[0];
 
   const sections = useMemo(() => ((run?.mission?.sections ?? []) as Section[]).filter((s) => s.visible !== false), [run]);
