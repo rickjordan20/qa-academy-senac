@@ -450,6 +450,12 @@ export type RunEvaluation = {
   target_student_ids: string[];
   is_current: boolean;
   created_at: string;
+  /** student_id -> { indicator_code: A|PA|NA } (diferenciação individual no grupo) */
+  member_overrides?: Record<string, Record<string, string>>;
+  /** justificativa da diferenciação individual */
+  override_notes?: string;
+  /** motivo pelo qual a avaliação deixou de ser vigente */
+  superseded_reason?: string;
 };
 
 /** Histórico de avaliações de um envio (mais recente primeiro). */
