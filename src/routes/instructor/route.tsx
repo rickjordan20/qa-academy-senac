@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { BookOpen, ClipboardCheck, Home, Settings, TestTube2 } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardCheck, Home, Settings, TestTube2 } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";
 
@@ -66,7 +66,7 @@ const groups: NavGroup[] = [
   },
   {
     label: "Resultados e Relatórios",
-    icon: ClipboardCheck,
+    icon: BarChart3,
     items: [
       { to: "/instructor/portfolios", label: "Portfólios" },
       { to: "/instructor/reports", label: "Relatórios" },
