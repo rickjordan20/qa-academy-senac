@@ -31,7 +31,12 @@ function StudentDashboard() {
   const { data: indicators } = useIndicators();
   const { data: groups } = useMyGroups(user?.id ?? null);
   const { data: evalAck } = useMyEvaluationAck(user?.id ?? null);
-...
+
+  const byIndicator = new Map((evaluations ?? []).map((e) => [e.indicator_id, e]));
+  const total = indicators?.length ?? 0;
+  const met = (evaluations ?? []).filter((e) => e.concept === "A").length;
+  const progress = total ? Math.round((met / total) * 100) : 0;
+
   return (
     <div>
       <div className="mb-6 rounded-xl border border-border bg-surface p-6">
