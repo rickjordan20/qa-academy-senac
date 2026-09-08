@@ -26,7 +26,7 @@ const items: NavItem[] = [
 const groups: NavGroup[] = [
   { label: "Início", icon: Home, to: "/student/dashboard" },
   {
-    label: "Meu Aprendizado",
+    label: "Minha Jornada",
     icon: BookOpen,
     items: [
       { to: "/student/how-evaluated", label: "Como serei avaliado" },
@@ -34,19 +34,19 @@ const groups: NavGroup[] = [
       { to: "/student/qa", label: "Módulos QA" },
       { to: "/student/missions", label: "Minhas Missões" },
       { to: "/student/async", label: "Atividades Assíncronas" },
-      { to: "/student/inventory", label: "Inventário da Aplicação" },
     ],
   },
   {
-    label: "Café Central",
+    label: "Projeto Café Central",
     icon: Coffee,
     items: [
       { to: "/student/activities", label: "Missões da Turma" },
       { to: "/student/cafe", label: "Café Central" },
+      { to: "/student/inventory", label: "Inventário da Aplicação" },
     ],
   },
   {
-    label: "Meus Registros",
+    label: "Meu Trabalho",
     icon: FolderCheck,
     items: [
       { to: "/student/records", label: "Meus Registros" },

@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { BookOpen, ClipboardCheck, Home, Settings, TestTube2 } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardCheck, Home, Settings, TestTube2 } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";
 
@@ -34,21 +34,21 @@ const items: NavItem[] = [
 const groups: NavGroup[] = [
   { label: "Dashboard", icon: Home, to: "/instructor/dashboard" },
   {
-    label: "Ensino",
+    label: "Planejamento e Ensino",
     icon: BookOpen,
     items: [
       { to: "/instructor/missions", label: "Missões" },
       { to: "/instructor/async", label: "Atividades Assíncronas" },
-      { to: "/instructor/cafe", label: "Café Central" },
+      { to: "/instructor/qa", label: "Módulos QA" },
       { to: "/instructor/gamification", label: "Gamificação" },
       { to: "/instructor/badges", label: "Badges" },
     ],
   },
   {
-    label: "Aplicações & QA",
+    label: "Projeto Café Central",
     icon: TestTube2,
     items: [
-      { to: "/instructor/qa", label: "Módulos QA" },
+      { to: "/instructor/cafe", label: "Café Central" },
       { to: "/instructor/inventory", label: "Inventário" },
       { to: "/instructor/features", label: "Funcionalidades" },
     ],
@@ -62,11 +62,16 @@ const groups: NavGroup[] = [
       { to: "/instructor/dossier", label: "Dossiê do Aluno" },
       { to: "/instructor/final", label: "Avaliação Final" },
       { to: "/instructor/recovery", label: "Recuperação" },
+    ],
+  },
+  {
+    label: "Resultados e Relatórios",
+    icon: BarChart3,
+    items: [
       { to: "/instructor/portfolios", label: "Portfólios" },
       { to: "/instructor/reports", label: "Relatórios" },
       { to: "/instructor/reports/deliveries", label: "Entregas por Missão" },
       { to: "/instructor/reports/closure", label: "Fechamento da UC10" },
-
     ],
   },
   {
