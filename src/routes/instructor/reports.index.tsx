@@ -5,8 +5,7 @@ import { useIndicators, useMyClasses } from "@/lib/uc10";
 import { useInstructorGroups } from "@/lib/cafe";
 import {
   downloadCsv,
-  pendingIndicators,
-  studentSituation,
+  ucSituation,
   useClassEvaluations,
   useClassStudents,
   useRecoveryPlans,
@@ -14,6 +13,8 @@ import {
   type EvaluationRow,
   type IndicatorRow,
 } from "@/lib/assessment";
+import { useClosureReport } from "@/lib/closure-report";
+import { EVAL_LABEL, fmtDateTime, useAllSubmissions, useReevaluatedRuns } from "@/lib/mission-submissions";
 import { ClassPicker } from "@/components/eval/ClassPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,10 +25,10 @@ export const Route = createFileRoute("/instructor/reports/")({
       { title: "Relatórios | QA Academy" },
       {
         name: "description",
-        content: "Relatórios de aluno, grupo, turma, indicadores e recuperação da UC10.",
+        content: "Relatórios de aluno, grupo, turma, indicadores, reavaliações, XP e recuperação da UC10.",
       },
       { property: "og:title", content: "Relatórios | QA Academy" },
-      { property: "og:description", content: "Exporte em CSV ou imprima em PDF." },
+      { property: "og:description", content: "Exporte em CSV ou gere PDFs de entregas e fechamento." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -46,6 +47,9 @@ function ReportsPage() {
   const { data: results } = useUcResults(active);
   const { data: plans } = useRecoveryPlans(active);
   const { data: groups } = useInstructorGroups(user?.id ?? null);
+  const { data: closure } = useClosureReport(active);
+  const { data: submissions } = useAllSubmissions();
+  const { data: reevaluated } = useReevaluatedRuns();
 
   const inds = (indicators ?? []) as IndicatorRow[];
   const evFor = (sid: string) =>
@@ -53,6 +57,7 @@ function ReportsPage() {
       (evaluations ?? []).filter((e) => e.student_id === sid).map((e) => [e.indicator_id, e]),
     );
   const resultMap = new Map((results ?? []).map((r) => [r.student_id, r]));
+  const situationFor = (sid: string) => ucSituation(inds, evFor(sid), resultMap.get(sid));
 
   const studentRows: (string | number)[][] = [
     ["Aluno", "E-mail", ...inds.map((i) => i.code), "Situação", "Resultado"],
@@ -62,7 +67,7 @@ function ReportsPage() {
         s.full_name || s.email,
         s.email,
         ...inds.map((i) => map.get(i.id)?.concept ?? "—"),
-        studentSituation(inds, map, resultMap.get(s.id)),
+        situationFor(s.id).label,
         resultMap.get(s.id)?.final_result ?? "—",
       ];
     }),
@@ -84,21 +89,51 @@ function ReportsPage() {
     }),
   ];
 
+  /* Recuperação Final: somente indicadores fechados em NA. */
   const recoveryRows: (string | number)[][] = [
-    ["Aluno", "Indicadores pendentes", "Plano", "Situação do plano"],
+    ["Aluno", "Situação", "Indicadores NA", "Plano", "Situação do plano"],
     ...(students ?? [])
       .map((s) => {
-        const pend = pendingIndicators(inds, evFor(s.id));
-        if (pend.length === 0) return null;
+        const sit = situationFor(s.id);
+        if (!["needs_recovery", "in_recovery", "ready_nd", "ND"].includes(sit.key)) return null;
         const plan = (plans ?? []).find((p) => p.student_id === s.id);
         return [
           s.full_name || s.email,
-          pend.map((p) => p.code).join(", "),
+          sit.label,
+          sit.pending.map((p) => p.code).join(", ") || "—",
           plan?.title ?? "—",
           plan ? (plan.status === "closed" ? "Encerrado" : "Em andamento") : "não criado",
         ];
       })
       .filter(Boolean) as (string | number)[][],
+  ];
+
+  /* Reavaliações de missões (somente leitura). */
+  const classSubmissions = (submissions ?? []).filter((r) => !active || r.classId === active);
+  const reevalRows: (string | number)[][] = [
+    ["Aluno / Grupo", "Missão", "Situação", "Tentativa", "Reavaliada", "Última atualização"],
+    ...classSubmissions
+      .filter((r) => r.eval_status === "reeval" || reevaluated?.has(r.id) || (r.attempt ?? 1) > 1)
+      .map((r) => [
+        r.groupName ?? r.studentName,
+        r.mission?.title ?? "—",
+        EVAL_LABEL[r.eval_status] ?? r.eval_status,
+        r.attempt ?? 1,
+        reevaluated?.has(r.id) ? "Sim" : "Não",
+        fmtDateTime(r.updated_at),
+      ]),
+  ];
+
+  /* XP e badges — informativo, não influencia A/PA/NA nem D/ND. */
+  const xpRows: (string | number)[][] = [
+    ["Aluno", "XP aprovado", "XP pendente", "Badges", "Lista de badges"],
+    ...(closure?.students ?? []).map((s) => [
+      s.name,
+      s.xpTotal,
+      s.xpPending,
+      s.badges.length,
+      s.badges.map((b) => b.name).join(", ") || "—",
+    ]),
   ];
 
   const groupRows: (string | number)[][] = [
@@ -110,24 +145,30 @@ function ReportsPage() {
     ]),
   ];
 
+  const s = closure?.summary;
   const classRow: (string | number)[][] = [
-    ["Turma", "Alunos", "Concluíram (D)", "Não desenvolveram (ND)", "Em recuperação"],
+    ["Turma", "Alunos", "Em andamento", "Necessitam Recuperação", "Em Recuperação", "D", "ND"],
     [
       classes?.find((c) => c.id === active)?.name ?? "—",
-      (students ?? []).length,
-      (results ?? []).filter((r) => r.final_result === "D").length,
-      (results ?? []).filter((r) => r.final_result === "ND").length,
-      (students ?? []).filter((s) => pendingIndicators(inds, evFor(s.id)).length > 0).length,
+      s?.total ?? (students ?? []).length,
+      (s?.inProgress ?? 0) + (s?.finalOpen ?? 0),
+      s?.needsRecovery ?? 0,
+      s?.inRecovery ?? 0,
+      s?.d ?? 0,
+      s?.nd ?? 0,
     ],
   ];
 
   const reports = [
     { title: "Relatório de alunos", file: "relatorio-alunos.csv", rows: studentRows },
     { title: "Relatório de indicadores", file: "relatorio-indicadores.csv", rows: indicatorRows },
-    { title: "Relatório de recuperação", file: "relatorio-recuperacao.csv", rows: recoveryRows },
+    { title: "Relatório de Recuperação Final", file: "relatorio-recuperacao.csv", rows: recoveryRows },
+    { title: "Relatório de reavaliações de missões", file: "relatorio-reavaliacoes.csv", rows: reevalRows },
+    { title: "Relatório de XP e badges (informativo)", file: "relatorio-xp-badges.csv", rows: xpRows },
     { title: "Relatório de grupos", file: "relatorio-grupos.csv", rows: groupRows },
     { title: "Relatório da turma", file: "relatorio-turma.csv", rows: classRow },
   ];
+
 
   return (
     <div>
@@ -138,14 +179,18 @@ function ReportsPage() {
             Informações objetivas para acompanhamento e fechamento da UC10.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild size="sm">
             <Link to="/instructor/reports/deliveries">Entregas por Missão</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link to="/instructor/reports/closure">Fechamento da UC10</Link>
           </Button>
           <Button size="sm" variant="outline" onClick={() => window.print()}>
             Imprimir / PDF
           </Button>
         </div>
+
       </div>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />

@@ -28,6 +28,26 @@ export type ReportBlock = {
   result: BlockResult | null;
 };
 
+export type ReportParticipant = {
+  name: string;
+  isLead: boolean;
+  assignedTasks: string[];
+  doneTasks: string[];
+  entries: number;
+  contributions: number;
+  evidences: number;
+  lastActivity: string | null;
+};
+
+export type ReportEvaluationVersion = {
+  version: number;
+  is_current: boolean;
+  created_at: string;
+  xp: number | null;
+  feedback: string;
+  superseded_reason: string;
+};
+
 export type ReportTarget = {
   key: string;
   /** nome do aluno ou do grupo */
@@ -48,6 +68,12 @@ export type ReportTarget = {
   hasPreviousAttempts: boolean;
   /** avaliações individuais (missão em grupo) */
   individual: { name: string; indicators: Record<string, string> }[];
+  /** justificativa registrada para a diferenciação individual */
+  overrideNotes: string;
+  /** divisão de tarefas e participação real (missão em grupo) */
+  participation: ReportParticipant[];
+  /** versões da avaliação (vigente + histórico) */
+  evaluationHistory: ReportEvaluationVersion[];
 };
 
 export type MissionReport = {
@@ -63,9 +89,12 @@ export type MissionReport = {
     inProgress: number;
     awaiting: number;
     inReview: number;
+    revision: number;
+    reeval: number;
     evaluated: number;
   };
 };
+
 
 type Row = Record<string, unknown>;
 
@@ -265,14 +294,85 @@ export function useMissionReport(classId: string | null, missionId: string | nul
         if (!cur || ev.is_current || ev.version > cur.version) currentEval.set(ev.run_id, ev);
       }
 
+      /* participação real (somente leitura) para missões em grupo */
+      const runIds = runs.map((r) => r.id);
+      type TaskRow = { id: string; title: string; status: string; assignee_id: string | null; builder_run_id: string | null };
+      type CollabRow = { task_id: string; student_id: string };
+      type ContribRow = { builder_run_id: string | null; student_id: string; created_at: string };
+      let taskRows: TaskRow[] = [];
+      let collabRows: CollabRow[] = [];
+      let contribRows: ContribRow[] = [];
+      if (isGroup && runIds.length) {
+        const [tRes, cRes] = await Promise.all([
+          supabase.from("cafe_tasks").select("id, title, status, assignee_id, builder_run_id").in("builder_run_id", runIds),
+          supabase
+            .from("cafe_contributions")
+            .select("builder_run_id, student_id, created_at")
+            .in("builder_run_id", runIds),
+        ]);
+        if (tRes.error) throw tRes.error;
+        if (cRes.error) throw cRes.error;
+        taskRows = (tRes.data ?? []) as unknown as TaskRow[];
+        contribRows = (cRes.data ?? []) as unknown as ContribRow[];
+        const taskIds = taskRows.map((t) => t.id);
+        if (taskIds.length) {
+          const colRes = await supabase.from("cafe_task_collaborators").select("task_id, student_id").in("task_id", taskIds);
+          if (colRes.error) throw colRes.error;
+          collabRows = (colRes.data ?? []) as unknown as CollabRow[];
+        }
+      }
+
       const mkTarget = (
         key: string,
         name: string,
         members: string[],
         run: (typeof runs)[number] | undefined,
+        memberIds: string[] = [],
+        leadId: string | null = null,
       ): ReportTarget => {
         const evaluation = run ? (currentEval.get(run.id) ?? null) : null;
         const runEntries = run ? entries.filter((e) => e.run_id === run.id) : [];
+        const history: ReportEvaluationVersion[] = run
+          ? evaluations
+              .filter((e) => e.run_id === run.id)
+              .sort((a, b) => b.version - a.version)
+              .map((e) => ({
+                version: e.version,
+                is_current: e.is_current,
+                created_at: e.created_at,
+                xp: e.xp ?? null,
+                feedback: e.feedback ?? "",
+                superseded_reason: e.superseded_reason ?? "",
+              }))
+          : [];
+
+        const participation: ReportParticipant[] = [];
+        if (isGroup && run) {
+          const runTasks = taskRows.filter((t) => t.builder_run_id === run.id);
+          const runContribs = contribRows.filter((c) => c.builder_run_id === run.id);
+          for (const sid of memberIds) {
+            const mine = runTasks.filter(
+              (t) => t.assignee_id === sid || collabRows.some((c) => c.task_id === t.id && c.student_id === sid),
+            );
+            const myContribs = runContribs.filter((c) => c.student_id === sid);
+            const myEntries = runEntries.filter((e) => e.author_id === sid);
+            const times = [
+              ...myContribs.map((c) => c.created_at),
+              ...myEntries.map((e) => e.created_at as string),
+            ].filter(Boolean);
+            participation.push({
+              name: nameById.get(sid) ?? "Aluno",
+              isLead: leadId === sid,
+              assignedTasks: mine.map((t) => t.title),
+              doneTasks: mine.filter((t) => t.status === "done").map((t) => t.title),
+              entries: myEntries.length,
+              contributions: myContribs.length,
+              evidences: myEntries.filter((e) => e.kind === "evidence").length,
+              lastActivity: times.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null,
+            });
+          }
+        }
+
         return {
           key,
           name,
@@ -293,8 +393,12 @@ export function useMissionReport(classId: string | null, missionId: string | nul
           indicatorFinals: evaluation?.indicator_finals ?? {},
           hasPreviousAttempts: (run?.attempt ?? 1) > 1,
           individual: [],
+          overrideNotes: evaluation?.override_notes ?? "",
+          participation,
+          evaluationHistory: history,
         };
       };
+
 
       let targets: ReportTarget[] = [];
       if (isGroup) {
@@ -308,7 +412,10 @@ export function useMissionReport(classId: string | null, missionId: string | nul
               if (lead && !members.includes(lead)) members.unshift(lead);
             }
             const run = runs.find((r) => r.group_id === g.id);
-            return mkTarget(g.id, g.name, members, run);
+            const memberIds = memberRows.filter((m) => m.group_id === g.id).map((m) => m.student_id);
+            if (g.qa_lead_id && !memberIds.includes(g.qa_lead_id)) memberIds.unshift(g.qa_lead_id);
+            return mkTarget(g.id, g.name, members, run, memberIds, g.qa_lead_id);
+
           })
           .sort((a, b) => a.name.localeCompare(b.name));
       } else {
@@ -358,7 +465,10 @@ export function useMissionReport(classId: string | null, missionId: string | nul
         inProgress: targets.filter((t) => t.run && !t.run.submitted_at).length,
         awaiting: targets.filter((t) => t.run?.eval_status === "awaiting").length,
         inReview: targets.filter((t) => t.run?.eval_status === "in_review").length,
+        revision: targets.filter((t) => t.run?.eval_status === "revision").length,
+        reeval: targets.filter((t) => t.run?.eval_status === "reeval").length,
         evaluated: targets.filter((t) => t.run?.eval_status === "evaluated").length,
+
       };
 
       return { mission, className, isGroup, indicators, targets, summary };

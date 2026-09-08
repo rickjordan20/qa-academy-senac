@@ -25,6 +25,8 @@ const items: NavItem[] = [
   { to: "/instructor/portfolios", label: "Portfólios" },
   { to: "/instructor/reports", label: "Relatórios" },
   { to: "/instructor/reports/deliveries", label: "Entregas por Missão" },
+  { to: "/instructor/reports/closure", label: "Fechamento da UC10" },
+
   { to: "/instructor/profile", label: "Perfil" },
 ];
 
@@ -63,6 +65,8 @@ const groups: NavGroup[] = [
       { to: "/instructor/portfolios", label: "Portfólios" },
       { to: "/instructor/reports", label: "Relatórios" },
       { to: "/instructor/reports/deliveries", label: "Entregas por Missão" },
+      { to: "/instructor/reports/closure", label: "Fechamento da UC10" },
+
     ],
   },
   {
