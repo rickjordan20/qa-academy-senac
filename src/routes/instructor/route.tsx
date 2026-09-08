@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { BarChart3, BookOpen, ClipboardCheck, Home, Settings, TestTube2 } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardCheck, Home, Settings, TestTube2, Trophy } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";
 
@@ -34,21 +34,19 @@ const items: NavItem[] = [
 const groups: NavGroup[] = [
   { label: "Dashboard", icon: Home, to: "/instructor/dashboard" },
   {
-    label: "Planejamento e Ensino",
+    label: "Ensino",
     icon: BookOpen,
     items: [
       { to: "/instructor/missions", label: "Missões" },
       { to: "/instructor/async", label: "Atividades Assíncronas" },
-      { to: "/instructor/qa", label: "Módulos QA" },
-      { to: "/instructor/gamification", label: "Gamificação" },
-      { to: "/instructor/badges", label: "Badges" },
+      { to: "/instructor/cafe", label: "Café Central" },
     ],
   },
   {
-    label: "Projeto Café Central",
+    label: "Projeto e QA",
     icon: TestTube2,
     items: [
-      { to: "/instructor/cafe", label: "Café Central" },
+      { to: "/instructor/qa", label: "Módulos QA" },
       { to: "/instructor/inventory", label: "Inventário" },
       { to: "/instructor/features", label: "Funcionalidades" },
     ],
@@ -65,13 +63,21 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    label: "Resultados e Relatórios",
+    label: "Resultados",
     icon: BarChart3,
     items: [
       { to: "/instructor/portfolios", label: "Portfólios" },
       { to: "/instructor/reports", label: "Relatórios" },
       { to: "/instructor/reports/deliveries", label: "Entregas por Missão" },
       { to: "/instructor/reports/closure", label: "Fechamento da UC10" },
+    ],
+  },
+  {
+    label: "Engajamento",
+    icon: Trophy,
+    items: [
+      { to: "/instructor/gamification", label: "Gamificação" },
+      { to: "/instructor/badges", label: "Badges" },
     ],
   },
   {
