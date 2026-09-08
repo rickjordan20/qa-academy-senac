@@ -239,16 +239,9 @@ function ReportsPage() {
 
           {(students ?? []).map((st) => {
             const sit = situationFor(st.id);
-            const runs = classSubmissions.filter((r) => r.student_id === st.id);
-            const awaiting = runs.filter((r) => r.eval_status === "awaiting" || (r.submitted_at && r.eval_status === "none"));
-            const reevalRuns = runs.filter((r) => r.eval_status === "reeval");
-            const na = nextAction(sit, {
-              awaiting: awaiting.length,
-              reeval: reevalRuns.length,
-              awaitingTitle: awaiting.length === 1 ? awaiting[0]?.mission?.title ?? null : null,
-              reevalTitle: reevalRuns.length === 1 ? reevalRuns[0]?.mission?.title ?? null : null,
-            });
+            const na = nextActionFor(st.id);
             const map = evFor(st.id);
+
             return (
               <details key={st.id} className="rounded-lg border border-border p-3">
                 <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
