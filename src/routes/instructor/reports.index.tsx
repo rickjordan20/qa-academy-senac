@@ -18,6 +18,7 @@ import {
 import { useClosureReport } from "@/lib/closure-report";
 import { EVAL_LABEL, fmtDateTime, useAllSubmissions, useReevaluatedRuns } from "@/lib/mission-submissions";
 import { ClassPicker } from "@/components/eval/ClassPicker";
+import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
