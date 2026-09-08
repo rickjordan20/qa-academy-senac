@@ -29,6 +29,7 @@ const groups: NavGroup[] = [
     label: "Meu Aprendizado",
     icon: BookOpen,
     items: [
+      { to: "/student/how-evaluated", label: "Como serei avaliado" },
       { to: "/student/journey", label: "Minha Jornada" },
       { to: "/student/qa", label: "Módulos QA" },
       { to: "/student/missions", label: "Minhas Missões" },

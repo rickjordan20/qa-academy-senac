@@ -1140,6 +1140,30 @@ export type Database = {
           },
         ]
       }
+      evaluation_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          content_version: string
+          created_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          content_version?: string
+          created_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          content_version?: string
+          created_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       feature_suggestions: {
         Row: {
           author_id: string

@@ -35,6 +35,7 @@ import { Route as StudentAsyncRouteImport } from './routes/student/async'
 import { Route as StudentDashboardRouteImport } from './routes/student/dashboard'
 import { Route as StudentEvaluationRouteImport } from './routes/student/evaluation'
 import { Route as StudentEvidencesRouteImport } from './routes/student/evidences'
+import { Route as StudentHowEvaluatedRouteImport } from './routes/student/how-evaluated'
 import { Route as StudentInventoryRouteImport } from './routes/student/inventory'
 import { Route as StudentJourneyRouteImport } from './routes/student/journey'
 import { Route as StudentPortfolioRouteImport } from './routes/student/portfolio'
@@ -188,6 +189,11 @@ const StudentEvaluationRoute = StudentEvaluationRouteImport.update({
 const StudentEvidencesRoute = StudentEvidencesRouteImport.update({
   id: '/evidences',
   path: '/evidences',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentHowEvaluatedRoute = StudentHowEvaluatedRouteImport.update({
+  id: '/how-evaluated',
+  path: '/how-evaluated',
   getParentRoute: () => StudentRouteRoute,
 } as any)
 const StudentInventoryRoute = StudentInventoryRouteImport.update({
@@ -345,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
+  '/student/how-evaluated': typeof StudentHowEvaluatedRoute
   '/student/inventory': typeof StudentInventoryRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/portfolio': typeof StudentPortfolioRoute
@@ -397,6 +404,7 @@ export interface FileRoutesByTo {
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
+  '/student/how-evaluated': typeof StudentHowEvaluatedRoute
   '/student/inventory': typeof StudentInventoryRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/portfolio': typeof StudentPortfolioRoute
@@ -450,6 +458,7 @@ export interface FileRoutesById {
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/evaluation': typeof StudentEvaluationRoute
   '/student/evidences': typeof StudentEvidencesRoute
+  '/student/how-evaluated': typeof StudentHowEvaluatedRoute
   '/student/inventory': typeof StudentInventoryRoute
   '/student/journey': typeof StudentJourneyRoute
   '/student/portfolio': typeof StudentPortfolioRoute
@@ -504,6 +513,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
+    | '/student/how-evaluated'
     | '/student/inventory'
     | '/student/journey'
     | '/student/portfolio'
@@ -556,6 +566,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
+    | '/student/how-evaluated'
     | '/student/inventory'
     | '/student/journey'
     | '/student/portfolio'
@@ -608,6 +619,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/student/evaluation'
     | '/student/evidences'
+    | '/student/how-evaluated'
     | '/student/inventory'
     | '/student/journey'
     | '/student/portfolio'
@@ -826,6 +838,13 @@ declare module '@tanstack/react-router' {
       path: '/evidences'
       fullPath: '/student/evidences'
       preLoaderRoute: typeof StudentEvidencesRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/how-evaluated': {
+      id: '/student/how-evaluated'
+      path: '/how-evaluated'
+      fullPath: '/student/how-evaluated'
+      preLoaderRoute: typeof StudentHowEvaluatedRouteImport
       parentRoute: typeof StudentRouteRoute
     }
     '/student/inventory': {
@@ -1064,6 +1083,7 @@ interface StudentRouteRouteChildren {
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentEvaluationRoute: typeof StudentEvaluationRoute
   StudentEvidencesRoute: typeof StudentEvidencesRoute
+  StudentHowEvaluatedRoute: typeof StudentHowEvaluatedRoute
   StudentInventoryRoute: typeof StudentInventoryRoute
   StudentJourneyRoute: typeof StudentJourneyRoute
   StudentPortfolioRoute: typeof StudentPortfolioRoute
@@ -1085,6 +1105,7 @@ const StudentRouteRouteChildren: StudentRouteRouteChildren = {
   StudentDashboardRoute: StudentDashboardRoute,
   StudentEvaluationRoute: StudentEvaluationRoute,
   StudentEvidencesRoute: StudentEvidencesRoute,
+  StudentHowEvaluatedRoute: StudentHowEvaluatedRoute,
   StudentInventoryRoute: StudentInventoryRoute,
   StudentJourneyRoute: StudentJourneyRoute,
   StudentPortfolioRoute: StudentPortfolioRoute,

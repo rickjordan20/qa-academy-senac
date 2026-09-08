@@ -2,6 +2,59 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 /* ------------------------------------------------------------------ */
+/* Ciência da avaliação ("Como você será avaliado?")                   */
+/* ------------------------------------------------------------------ */
+
+export const EVALUATION_ACK_VERSION = "uc10-avaliacao-v1";
+
+export type EvaluationAck = {
+  id: string;
+  student_id: string;
+  content_version: string;
+  acknowledged_at: string;
+};
+
+/** Ciência do próprio aluno (ou null se ainda não registrou). */
+export function useMyEvaluationAck(studentId: string | null) {
+  return useQuery({
+    queryKey: ["evaluation-ack", studentId],
+    enabled: !!studentId,
+    queryFn: async (): Promise<EvaluationAck | null> => {
+      const { data, error } = await supabase
+        .from("evaluation_acknowledgments")
+        .select("id, student_id, content_version, acknowledged_at")
+        .eq("student_id", studentId!)
+        .eq("content_version", EVALUATION_ACK_VERSION)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as EvaluationAck | null;
+    },
+  });
+}
+
+/** Ciência de um aluno específico (visão do instrutor). */
+export function useStudentEvaluationAck(studentId: string | null) {
+  return useMyEvaluationAck(studentId);
+}
+
+export function useAcknowledgeEvaluation(studentId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!studentId) throw new Error("Aluno não identificado.");
+      const { error } = await supabase.from("evaluation_acknowledgments").insert({
+        student_id: studentId,
+        content_version: EVALUATION_ACK_VERSION,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["evaluation-ack", studentId] });
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Domínio                                                             */
 /* ------------------------------------------------------------------ */
 
