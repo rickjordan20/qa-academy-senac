@@ -605,8 +605,15 @@ export function useStudentDossier(studentId: string | null) {
     enabled: !!studentId,
     queryFn: async (): Promise<StudentDossier> => {
       const sid = studentId!;
-      const [runs, teEv, teBugs, cases, bugs, qaEv, tasks, contribs, missions] = await Promise.all([
-        supabase.from("techeduca_mission_runs").select("id, mission_id, status, completed_at").eq("student_id", sid),
+      const [runs, entries, teEv, teBugs, cases, bugs, qaEv, tasks, contribs] = await Promise.all([
+        supabase
+          .from("builder_mission_runs")
+          .select("id, mission_id, status, submitted_at")
+          .eq("student_id", sid),
+        supabase
+          .from("builder_mission_entries")
+          .select("id, kind, title, mission_id, group_id, created_at, data")
+          .eq("author_id", sid),
         supabase.from("techeduca_evidences").select("id, title, description, created_at").eq("student_id", sid),
         supabase
           .from("techeduca_bug_reports")
@@ -620,23 +627,88 @@ export function useStudentDossier(studentId: string | null) {
           .from("cafe_contributions")
           .select("id, title, kind, group_id, created_at")
           .eq("student_id", sid),
-        supabase.from("techeduca_missions").select("id, code, title"),
       ]);
       const { data: retests } = await supabase
         .from("qa_retests")
         .select("id, bug_id, result, tested_at")
         .eq("tester_id", sid);
+
+      const runRows = (runs.data ?? []) as {
+        id: string;
+        mission_id: string;
+        status: string;
+        submitted_at: string | null;
+      }[];
+      const entryRows = (entries.data ?? []) as {
+        id: string;
+        kind: string;
+        title: string;
+        mission_id: string;
+        group_id: string | null;
+        created_at: string;
+        data: Record<string, unknown> | null;
+      }[];
+
+      const missionIds = [
+        ...new Set([...runRows.map((r) => r.mission_id), ...entryRows.map((e) => e.mission_id)]),
+      ];
+      let missionRows: { id: string; code: string | null; title: string; template: string }[] = [];
+      if (missionIds.length) {
+        const { data } = await supabase
+          .from("builder_missions")
+          .select("id, code, title, template")
+          .in("id", missionIds);
+        missionRows = (data ?? []) as typeof missionRows;
+      }
+      const templateOf = new Map(missionRows.map((m) => [m.id, m.template]));
+      const ctxOf = (missionId: string) => (templateOf.get(missionId) === "cafe" ? "cafe" : "techeduca");
+      const str = (v: unknown) => (typeof v === "string" ? v : "");
+
+      const entryCases: StudentDossier["cases"] = entryRows
+        .filter((e) => e.kind === "test_case" || e.kind === "execution")
+        .map((e) => ({
+          id: e.id,
+          title: e.title || str(e.data?.["titulo"]) || "Caso de teste",
+          status: e.kind === "execution" ? str(e.data?.["status"]) || "executado" : str(e.data?.["status"]) || "criado",
+          context: ctxOf(e.mission_id),
+          group_id: e.group_id,
+        }));
+      const entryBugs: StudentDossier["bugs"] = entryRows
+        .filter((e) => e.kind === "bug")
+        .map((e) => ({
+          id: e.id,
+          title: e.title || str(e.data?.["titulo"]) || "Bug",
+          status: str(e.data?.["status"]) || "registrado",
+          severity: str(e.data?.["severidade"]) || "—",
+          context: ctxOf(e.mission_id),
+          group_id: e.group_id,
+        }));
+      const entryEvidences: StudentDossier["qaEvidences"] = entryRows
+        .filter((e) => e.kind === "evidence")
+        .map((e) => ({
+          id: e.id,
+          title: e.title || str(e.data?.["titulo"]) || "Evidência",
+          kind: str(e.data?.["tipo"]) || "registro",
+          context: ctxOf(e.mission_id),
+          group_id: e.group_id,
+        }));
+
       return {
-        runs: (runs.data ?? []) as StudentDossier["runs"],
+        runs: runRows.map((r) => ({
+          id: r.id,
+          mission_id: r.mission_id,
+          status: r.status,
+          completed_at: r.submitted_at,
+        })),
         teEvidences: (teEv.data ?? []) as StudentDossier["teEvidences"],
         teBugs: (teBugs.data ?? []) as StudentDossier["teBugs"],
-        cases: (cases.data ?? []) as StudentDossier["cases"],
-        bugs: (bugs.data ?? []) as StudentDossier["bugs"],
-        qaEvidences: (qaEv.data ?? []) as StudentDossier["qaEvidences"],
+        cases: [...((cases.data ?? []) as StudentDossier["cases"]), ...entryCases],
+        bugs: [...((bugs.data ?? []) as StudentDossier["bugs"]), ...entryBugs],
+        qaEvidences: [...((qaEv.data ?? []) as StudentDossier["qaEvidences"]), ...entryEvidences],
         retests: (retests ?? []) as StudentDossier["retests"],
         tasks: (tasks.data ?? []) as StudentDossier["tasks"],
         contributions: (contribs.data ?? []) as StudentDossier["contributions"],
-        missions: (missions.data ?? []) as StudentDossier["missions"],
+        missions: missionRows.map((m) => ({ id: m.id, code: m.code ?? "", title: m.title })),
       };
     },
   });
