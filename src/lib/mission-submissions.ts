@@ -521,6 +521,10 @@ export function useEvaluateSubmission() {
       indicatorIdByCode?: Record<string, string>;
       blocks?: BlockResult[];
       members?: { id: string; name: string }[];
+      /** student_id -> { indicator_code: A|PA|NA } — diferenciação individual no grupo */
+      memberOverrides?: Record<string, Record<string, string>>;
+      /** justificativa da diferenciação individual */
+      overrideNotes?: string;
     }) => {
       const evalStatus: EvalStatus =
         input.decision === "evaluated" ? "evaluated" : input.decision === "revision" ? "revision" : "in_review";
