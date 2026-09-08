@@ -54,9 +54,12 @@ export function generateMissionReportPdf(report: MissionReport) {
     ["Em andamento", summary.inProgress],
     ["Aguardando avaliação", summary.awaiting],
     ["Em avaliação", summary.inReview],
+    ["Revisão solicitada", summary.revision],
+    ["Reavaliação necessária", summary.reeval],
     ["Avaliadas", summary.evaluated],
   ];
   for (const [k, v] of resume) text(ctx, `${k}: ${v}`, { size: 10, gap: 0 });
+
 
   /* ------------------------ alunos / grupos -------------------------- */
   for (const t of targets) {
