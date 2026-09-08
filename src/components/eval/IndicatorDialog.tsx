@@ -133,7 +133,7 @@ export function IndicatorDialog({
               onChange={(e) => setNotes(e.target.value)}
             />
             <div className="flex flex-wrap gap-2">
-              {(["A", "PA", "NA"] as Concept[]).map((c) => (
+              {concepts.map((c) => (
                 <Button key={c} onClick={() => evaluate(c)} disabled={upsert.isPending}>
                   {c} – {CONCEPT_LABELS[c]}
                 </Button>
@@ -141,6 +141,9 @@ export function IndicatorDialog({
             </div>
             <p className="text-xs text-muted-foreground">
               Cada avaliação registrada é guardada no histórico; a anterior nunca é apagada.
+              {concepts.length === 2
+                ? " No fechamento da UC o indicador recebe apenas A (atendido) ou NA (não atendido), com base no conjunto das evidências."
+                : " Durante as missões as menções são formativas: PA ou NA podem evoluir com novas evidências."}
             </p>
           </TabsContent>
 
