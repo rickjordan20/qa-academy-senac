@@ -32,6 +32,8 @@ type Props = {
   indicator: IndicatorRow;
   current: EvaluationRow | undefined;
   defaultStage?: Stage;
+  /** Menções permitidas: no fechamento da UC apenas A/NA. */
+  concepts?: Concept[];
 };
 
 export function IndicatorDialog({
@@ -42,6 +44,7 @@ export function IndicatorDialog({
   indicator,
   current,
   defaultStage = "regular",
+  concepts = ["A", "PA", "NA"],
 }: Props) {
   const { user } = useAuth();
   const [stage, setStage] = useState<Stage>(defaultStage);
