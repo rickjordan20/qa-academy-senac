@@ -6,7 +6,7 @@ import type { BuilderMission, MissionEntry, Section } from "@/lib/mission-builde
 /* Fluxo de envios / avaliação das missões (usa as tabelas existentes)   */
 /* ==================================================================== */
 
-export type EvalStatus = "none" | "awaiting" | "in_review" | "revision" | "evaluated";
+export type EvalStatus = "none" | "awaiting" | "in_review" | "revision" | "evaluated" | "reeval";
 
 export type SubmissionRun = {
   id: string;
@@ -59,6 +59,7 @@ export const EVAL_LABEL: Record<string, string> = {
   in_review: "Em avaliação",
   revision: "Revisão solicitada",
   evaluated: "Avaliada",
+  reeval: "Reavaliação necessária",
 };
 
 /** Situação amigável combinando execução + avaliação. */
@@ -67,6 +68,8 @@ export function runSituation(run: {
   eval_status: string;
   submitted_at: string | null;
 }): { key: string; label: string; tone: string } {
+  if (run.eval_status === "reeval")
+    return { key: "reeval", label: "🟠 Reavaliação necessária", tone: "bg-warning/15 text-warning" };
   if (run.eval_status === "evaluated") return { key: "evaluated", label: "🟢 Avaliada", tone: "bg-success/15 text-success" };
   if (run.eval_status === "revision")
     return { key: "revision", label: "🟣 Revisão solicitada", tone: "bg-warning/15 text-warning" };
@@ -80,6 +83,7 @@ export const SITUATION_FILTERS: { key: string; label: string }[] = [
   { key: "all", label: "Todos" },
   { key: "in_progress", label: "Em andamento" },
   { key: "awaiting", label: "Aguardando avaliação" },
+  { key: "reeval", label: "Reavaliação necessária" },
   { key: "in_review", label: "Em avaliação" },
   { key: "revision", label: "Revisão solicitada" },
   { key: "evaluated", label: "Avaliadas" },
