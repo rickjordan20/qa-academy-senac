@@ -130,11 +130,8 @@ function EvaluationsPage() {
               {(students ?? []).map((s) => {
                 const map = forStudent(s.id);
                 const result = resultMap.get(s.id);
-                const suggestion = suggestResult(
-                  inds.map((i) => map.get(i.id)?.concept ?? null),
-                  inds.length,
-                );
-                const pend = pendingIndicators(inds, map);
+                const sit = ucSituation(inds, map, result);
+                const pend = sit.pending;
                 return (
                   <tr key={s.id} className="border-t border-border align-top">
                     <td className="p-2 font-medium">{s.full_name || s.email}</td>
@@ -149,10 +146,10 @@ function EvaluationsPage() {
                       </td>
                     ))}
                     <td className="p-2 text-xs">
-                      {studentSituation(inds, map, result)}
+                      {sit.label}
                       {pend.length > 0 && (
                         <span className="block text-muted-foreground">
-                          Pendentes: {pend.map((p) => p.code).join(", ")}
+                          Indicadores NA: {pend.map((p) => p.code).join(", ")}
                         </span>
                       )}
                     </td>
@@ -164,13 +161,23 @@ function EvaluationsPage() {
                       ) : (
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-muted-foreground">
-                            Sugestão: {suggestion ?? "—"}
+                            Sugestão: {sit.suggestion ?? "—"}
                           </span>
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline" onClick={() => confirm(s.id, "D")}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={sit.suggestion !== "D"}
+                              onClick={() => confirm(s.id, "D")}
+                            >
                               D
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => confirm(s.id, "ND")}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!sit.recoveryDone}
+                              onClick={() => confirm(s.id, "ND")}
+                            >
                               ND
                             </Button>
                           </div>
@@ -180,6 +187,7 @@ function EvaluationsPage() {
                   </tr>
                 );
               })}
+
               {(students ?? []).length === 0 && (
                 <tr>
                   <td className="p-2 text-muted-foreground" colSpan={inds.length + 3}>
