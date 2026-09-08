@@ -133,11 +133,12 @@ function RecoveryPage() {
                 </div>
               );
             })}
-            {(students ?? []).every((s) => pendingIndicators(inds, evFor(s.id)).length === 0) && (
+            {(students ?? []).every((s) => recoveryFor(s.id).pend.length === 0) && (
               <p className="text-sm text-muted-foreground">
-                Nenhum aluno com indicador pendente nesta turma.
+                Nenhum aluno em Recuperação Final nesta turma.
               </p>
             )}
+
           </CardContent>
         </Card>
 
