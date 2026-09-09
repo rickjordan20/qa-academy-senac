@@ -43,7 +43,8 @@ function QaPage() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const { data: groups } = useMyGroups(userId);
-  const [scopeValue, setScopeValue] = useState("techeduca");
+  const { scope: scopeParam, backMission, backLabel } = Route.useSearch();
+  const [scopeValue, setScopeValue] = useState(scopeParam ?? "techeduca");
 
   const scope: QaScope = useMemo(
     () =>
@@ -61,6 +62,19 @@ function QaPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
+      {backMission ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3">
+          <span className="text-sm text-muted-foreground">
+            Você veio de “{backLabel ?? "Revisão e Auditoria"}”.
+          </span>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/student/activities/$missionId" params={{ missionId: backMission }} search={{}}>
+              ← Voltar para {backLabel ?? "Revisão e Auditoria"}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
       <div>
         <h1 className="mb-2 text-2xl font-bold">Módulos QA</h1>
         <p className="text-sm text-muted-foreground">
