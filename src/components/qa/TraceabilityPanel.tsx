@@ -29,6 +29,10 @@ export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: s
     ...(bugs ?? []).map((b) => b.author_id),
     ...(evidences ?? []).map((e) => e.author_id),
     ...(retests ?? []).map((r) => r.tester_id),
+    ...missionCases.flatMap((c) => [
+      c.authorId ?? "",
+      ...c.executions.map((e) => e.authorId ?? ""),
+    ]),
   ]);
 
   const missionIds = Array.from(
