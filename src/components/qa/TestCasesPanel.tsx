@@ -14,14 +14,12 @@ import {
   useDeleteTestCase,
   useProfileNames,
   useQaMissions,
-  useTestCases,
   useUpdateTestCase,
   type QaScope,
 } from "@/lib/qa";
 import {
   TEST_TYPES,
   projectLabel,
-  testTypeLabel,
   useFeatures,
   useModules,
   type AppProject,
