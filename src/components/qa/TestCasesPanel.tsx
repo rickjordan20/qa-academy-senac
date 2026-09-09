@@ -370,6 +370,13 @@ export function TestCasesPanel({
   );
 }
 
+function missionSearch(backMission?: string, backLabel?: string) {
+  const out: { backMission?: string; backLabel?: string } = {};
+  if (backMission) out.backMission = backMission;
+  if (backLabel) out.backLabel = backLabel;
+  return out;
+}
+
 /** Caso de teste (esperado) + suas execuções (obtido, status, evidências). */
 function CaseCard({
   c,
@@ -489,7 +496,7 @@ function CaseCard({
               <Link
                 to="/student/activities/$missionId"
                 params={{ missionId: c.missionId }}
-                search={backMission ? { backMission, backLabel } : {}}
+                search={missionSearch(backMission, backLabel)}
               >
                 Abrir missão de origem
               </Link>

@@ -28,13 +28,16 @@ import { useBadgeCatalog } from "@/lib/gamification";
 import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import type { MissionPickers } from "@/components/missions/MissionPlayer";
 
+/** contexto de retorno opcional (ex.: missão de Revisão e Auditoria) */
+export type MissionSearch = { backMission?: string; backLabel?: string };
+
 export const Route = createFileRoute("/student/activities/$missionId")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    backMission:
-      typeof search["backMission"] === "string" ? (search["backMission"] as string) : undefined,
-    backLabel:
-      typeof search["backLabel"] === "string" ? (search["backLabel"] as string) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): MissionSearch => {
+    const out: MissionSearch = {};
+    if (typeof search["backMission"] === "string") out.backMission = search["backMission"];
+    if (typeof search["backLabel"] === "string") out.backLabel = search["backLabel"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Executar missão | QA Academy" },
@@ -251,7 +254,6 @@ function StudentMissionPage() {
         <Link
           to="/student/activities/$missionId"
           params={{ missionId: backMission }}
-          search={{}}
           className="inline-block rounded-md border border-border px-2 py-1 font-semibold text-foreground hover:underline"
         >
           ← Voltar para {backLabel ?? "Revisão e Auditoria"}

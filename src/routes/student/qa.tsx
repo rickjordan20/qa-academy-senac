@@ -11,14 +11,16 @@ import { EvidencesPanel } from "@/components/qa/EvidencesPanel";
 import { TraceabilityPanel } from "@/components/qa/TraceabilityPanel";
 import type { QaScope } from "@/lib/qa";
 
+type QaSearch = { scope?: string; backMission?: string; backLabel?: string };
+
 export const Route = createFileRoute("/student/qa")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    scope: typeof search["scope"] === "string" ? (search["scope"] as string) : undefined,
-    backMission:
-      typeof search["backMission"] === "string" ? (search["backMission"] as string) : undefined,
-    backLabel:
-      typeof search["backLabel"] === "string" ? (search["backLabel"] as string) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): QaSearch => {
+    const out: QaSearch = {};
+    if (typeof search["scope"] === "string") out.scope = search["scope"];
+    if (typeof search["backMission"] === "string") out.backMission = search["backMission"];
+    if (typeof search["backLabel"] === "string") out.backLabel = search["backLabel"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Módulos QA | QA Academy" },
@@ -68,7 +70,7 @@ function QaPage() {
             Você veio de “{backLabel ?? "Revisão e Auditoria"}”.
           </span>
           <Button asChild size="sm" variant="outline">
-            <Link to="/student/activities/$missionId" params={{ missionId: backMission }} search={{}}>
+            <Link to="/student/activities/$missionId" params={{ missionId: backMission }}>
               ← Voltar para {backLabel ?? "Revisão e Auditoria"}
             </Link>
           </Button>
