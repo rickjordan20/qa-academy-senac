@@ -62,8 +62,8 @@ export function TestCasesPanel({
   people?: PersonOption[];
   readOnly?: boolean;
   /** contexto de retorno: missão de auditoria de onde o aluno veio */
-  backMission?: string;
-  backLabel?: string;
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
@@ -387,8 +387,8 @@ function CaseCard({
   featureLabel: string;
   project: string;
   actions?: React.ReactNode;
-  backMission?: string;
-  backLabel?: string;
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
 }) {
   const updated = caseUpdatedAt(c);
   return (
