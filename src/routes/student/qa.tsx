@@ -103,7 +103,13 @@ function QaPage() {
           <TabsTrigger value="trace">Rastreabilidade</TabsTrigger>
         </TabsList>
         <TabsContent value="cases" className="mt-4">
-          <TestCasesPanel scope={scope} userId={userId} people={people} />
+          <TestCasesPanel
+            scope={scope}
+            userId={userId}
+            people={people}
+            backMission={backMission}
+            backLabel={backLabel}
+          />
         </TabsContent>
         <TabsContent value="bugs" className="mt-4">
           <BugsPanel scope={scope} userId={userId} people={people} />
