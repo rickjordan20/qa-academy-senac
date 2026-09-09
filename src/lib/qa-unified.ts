@@ -156,7 +156,7 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
       const runIds = runs.map((r) => r.id);
 
       let entries: EntryRow[] = [];
-      let missionTitles: Record<string, string> = {};
+      const missionTitles: Record<string, string> = {};
       if (runIds.length > 0) {
         const entryRes = await supabase
           .from("builder_mission_entries")
@@ -279,16 +279,38 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
       const all = [...qaCases, ...missionCases].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
+
+      /* Execuções sem caso identificável ficam agrupadas para não sumirem da auditoria. */
+      const knownCaseIds = new Set(missionCases.map((c) => c.id));
+      const orphans = executions.filter((e) => !e.caseId || !knownCaseIds.has(e.caseId));
+      if (orphans.length > 0) {
+        all.push({
+          id: "__sem-caso__",
+          origin: "mission",
+          title: "Execuções sem caso vinculado",
+          featureId: null,
+          featureText: "",
+          precondition: "",
+          inputData: "",
+          steps: "",
+          expected: "",
+          objective: "",
+          note: "",
+          authorId: null,
+          missionId: orphans[0]!.missionId,
+          missionTitle: orphans[0]!.missionId ? (missionTitles[orphans[0]!.missionId] ?? null) : null,
+          runId: orphans[0]!.runId,
+          createdAt: orphans[0]!.executedAt ?? new Date().toISOString(),
+          updatedAt: null,
+          executions: orphans,
+          evidences: [],
+        });
+      }
       return all;
     },
   });
 }
 
-/** Execuções que não conseguimos ligar a nenhum caso — não podem sumir da auditoria. */
-export function orphanExecutions(cases: UnifiedCase[], all: UnifiedCase[]) {
-  void all;
-  return cases;
-}
 
 export function caseUpdatedAt(c: UnifiedCase) {
   const stamps = [c.updatedAt, c.createdAt, ...c.executions.map((e) => e.updatedAt ?? e.executedAt)]
