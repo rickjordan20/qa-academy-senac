@@ -255,53 +255,85 @@ export function TestCasesPanel({
         </Card>
       )}
 
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Consultar casos de teste</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Field label="Buscar" id="f-search">
+            <Input
+              id="f-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Título, funcionalidade, passos..."
+            />
+          </Field>
+          <Field label="Missão" id="f-mission">
+            <NativeSelect
+              id="f-mission"
+              value={fMission}
+              onChange={setFMission}
+              options={[{ value: "", label: "Todas" }, ...missionOptions]}
+            />
+          </Field>
+          <Field label="Funcionalidade" id="f-feature">
+            <NativeSelect
+              id="f-feature"
+              value={fFeature}
+              onChange={setFFeature}
+              options={[
+                { value: "", label: "Todas" },
+                ...(features ?? []).map((f) => ({ value: f.id, label: f.name })),
+              ]}
+            />
+          </Field>
+          <Field label="Autor" id="f-author">
+            <NativeSelect
+              id="f-author"
+              value={fAuthor}
+              onChange={setFAuthor}
+              options={[{ value: "", label: "Todos" }, ...authorOptions]}
+            />
+          </Field>
+          <Field label="Status da execução" id="f-status">
+            <NativeSelect
+              id="f-status"
+              value={fStatus}
+              onChange={setFStatus}
+              options={[
+                { value: "", label: "Todos" },
+                ...CASE_STATUSES.map((s) => ({ value: s.value, label: s.label })),
+              ]}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
       {isPending && <p className="text-sm text-muted-foreground">Carregando...</p>}
-      {!isPending && (cases ?? []).length === 0 && (
-        <p className="text-sm text-muted-foreground">Nenhum caso de teste registrado neste contexto.</p>
+      {!isPending && filtered.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Nenhum caso de teste encontrado com os filtros atuais.
+        </p>
       )}
 
       <div className="space-y-3">
-        {(cases ?? []).map((c) => (
-          <Card key={c.id}>
-            <CardHeader className="pb-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <CardTitle className="text-base">
-                  <span className="mr-2 font-mono text-xs text-muted-foreground">CT-{shortId(c.id)}</span>
-                  {c.title}
-                </CardTitle>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="rounded-md bg-secondary px-2 py-0.5">{caseStatusLabel(c.status)}</span>
-                  <span className="text-muted-foreground">
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-                <span>Projeto: {c.project || projectLabel(project)}</span>
-                <span>
-                  Módulo/Funcionalidade: {featureTrace(modules, features, c.feature_id)}
-                </span>
-
-                <span>Tipo de teste: {testTypeLabel(c.test_type)}</span>
-                <span>Missão: {missionTitle(c.mission_id) ?? "—"}</span>
-                <span>Autor: {names?.[c.author_id] ?? "—"}</span>
-                <span>Responsável: {c.assignee_id ? (names?.[c.assignee_id] ?? "—") : "—"}</span>
-                <span>Observação: {c.feature || "—"}</span>
-              </div>
-              {c.precondition && <Block title="Pré-condição" text={c.precondition} />}
-              {c.input_data && <Block title="Dados de entrada" text={c.input_data} />}
-              {c.steps && <Block title="Passos" text={c.steps} />}
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Block title="Resultado esperado" text={c.expected_result || "—"} />
-                <Block title="Resultado obtido" text={c.obtained_result || "—"} />
-              </div>
-              {!readOnly && (
+        {filtered.map((c) => (
+          <CaseCard
+            key={c.id}
+            c={c}
+            names={names ?? {}}
+            featureLabel={
+              c.featureId ? featureTrace(modules, features, c.featureId) : c.featureText || "—"
+            }
+            project={projectLabel(project)}
+            backMission={backMission}
+            backLabel={backLabel}
+            actions={
+              !readOnly && c.origin === "qa" ? (
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <NativeSelect
                     id={`st-${c.id}`}
-                    value={c.status}
+                    value={c.executions[0]?.status ?? "nao_executado"}
                     onChange={(v) =>
                       update.mutate(
                         {
@@ -331,9 +363,9 @@ export function TestCasesPanel({
                     Excluir
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ) : null
+            }
+          />
         ))}
       </div>
     </div>
