@@ -372,6 +372,142 @@ export function TestCasesPanel({
   );
 }
 
+/** Caso de teste (esperado) + suas execuções (obtido, status, evidências). */
+function CaseCard({
+  c,
+  names,
+  featureLabel,
+  project,
+  actions,
+  backMission,
+  backLabel,
+}: {
+  c: UnifiedCase;
+  names: Record<string, string>;
+  featureLabel: string;
+  project: string;
+  actions?: React.ReactNode;
+  backMission?: string;
+  backLabel?: string;
+}) {
+  const updated = caseUpdatedAt(c);
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-base">
+            <span className="mr-2 font-mono text-xs text-muted-foreground">CT-{shortId(c.id)}</span>
+            {c.title}
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full border border-border px-2 py-0.5 text-muted-foreground">
+              {c.origin === "mission" ? "Registrado em missão" : "Registrado em Módulos QA"}
+            </span>
+            <span className="text-muted-foreground">
+              Atualizado em {new Date(updated).toLocaleDateString("pt-BR")}
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+          <span>Projeto: {project}</span>
+          <span>Módulo/Funcionalidade: {featureLabel}</span>
+          <span>Missão de origem: {c.missionTitle ?? "—"}</span>
+          <span>Autor: {c.authorId ? (names[c.authorId] ?? "—") : "—"}</span>
+        </div>
+
+        {c.objective && <Block title="Objetivo" text={c.objective} />}
+        {c.precondition && <Block title="Pré-condição" text={c.precondition} />}
+        {c.inputData && <Block title="Dados de teste" text={c.inputData} />}
+        {c.steps && <Block title="Passos" text={c.steps} />}
+        <Block title="Resultado esperado" text={c.expected || "—"} />
+
+        <div className="rounded-lg border border-border p-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">
+            Execuções ({c.executions.length})
+          </p>
+          {c.executions.length === 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Nenhuma execução registrada para este caso.
+            </p>
+          ) : (
+            <div className="mt-2 space-y-3">
+              {c.executions.map((ex) => (
+                <div key={ex.id} className="border-l-2 border-border pl-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-md bg-secondary px-2 py-0.5">
+                      {caseStatusLabel(ex.status)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {ex.authorId ? (names[ex.authorId] ?? "—") : "—"}
+                      {ex.executedAt
+                        ? ` · ${new Date(ex.executedAt).toLocaleDateString("pt-BR")}`
+                        : ""}
+                      {ex.environment ? ` · ${ex.environment}` : ""}
+                    </span>
+                  </div>
+                  <Block title="Resultado obtido" text={ex.obtained || "—"} />
+                  {ex.note && <Block title="Observação" text={ex.note} />}
+                  {ex.evidences.length > 0 && (
+                    <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                      {ex.evidences.map((ev) => (
+                        <li key={ev.id}>
+                          Evidência: {ev.title}
+                          {ev.link ? (
+                            <>
+                              {" — "}
+                              <a
+                                href={ev.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:underline"
+                              >
+                                abrir
+                              </a>
+                            </>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {c.evidences.length > 0 && (
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {c.evidences.map((ev) => (
+              <li key={ev.id}>Evidência do caso: {ev.title}</li>
+            ))}
+          </ul>
+        )}
+
+        {c.origin === "mission" && c.missionId ? (
+          <div className="pt-1">
+            <Button asChild size="sm" variant="outline">
+              <Link
+                to="/student/activities/$missionId"
+                params={{ missionId: c.missionId }}
+                search={backMission ? { backMission, backLabel } : {}}
+              >
+                Abrir missão de origem
+              </Link>
+            </Button>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Este registro é corrigido dentro da missão em que foi criado.
+            </p>
+          </div>
+        ) : null}
+
+        {actions}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function Field({
   label,
   id,
