@@ -171,12 +171,23 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
                 </span>
 
               </div>
+              {e.parent_id ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Vinculado ao caso de teste{" "}
+                  {entries.find((x) => x.id === e.parent_id)?.title
+                    ? `“${entries.find((x) => x.id === e.parent_id)?.title}”`
+                    : "registrado nesta missão"}
+                  .
+                </p>
+              ) : null}
               <div className="mt-2 space-y-1">
                 {Object.entries(e.data ?? {})
                   .filter(([, v]) => (v ?? "").toString().trim())
                   .map(([k, v]) => (
                     <p key={k} className="text-xs">
-                      <span className="text-muted-foreground">{k}: </span>
+                      <span className="text-muted-foreground">
+                        {blockDef(e.kind).fields?.find((f) => f.key === k)?.label ?? k}:{" "}
+                      </span>
                       {v}
                     </p>
                   ))}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useMyGroups } from "@/lib/cafe";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +11,16 @@ import { EvidencesPanel } from "@/components/qa/EvidencesPanel";
 import { TraceabilityPanel } from "@/components/qa/TraceabilityPanel";
 import type { QaScope } from "@/lib/qa";
 
+type QaSearch = { scope?: string; backMission?: string; backLabel?: string };
+
 export const Route = createFileRoute("/student/qa")({
+  validateSearch: (search: Record<string, unknown>): QaSearch => {
+    const out: QaSearch = {};
+    if (typeof search["scope"] === "string") out.scope = search["scope"];
+    if (typeof search["backMission"] === "string") out.backMission = search["backMission"];
+    if (typeof search["backLabel"] === "string") out.backLabel = search["backLabel"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Módulos QA | QA Academy" },
@@ -35,7 +45,8 @@ function QaPage() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const { data: groups } = useMyGroups(userId);
-  const [scopeValue, setScopeValue] = useState("techeduca");
+  const { scope: scopeParam, backMission, backLabel } = Route.useSearch();
+  const [scopeValue, setScopeValue] = useState(scopeParam ?? "techeduca");
 
   const scope: QaScope = useMemo(
     () =>
@@ -53,6 +64,19 @@ function QaPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
+      {backMission ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3">
+          <span className="text-sm text-muted-foreground">
+            Você veio de “{backLabel ?? "Revisão e Auditoria"}”.
+          </span>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/student/activities/$missionId" params={{ missionId: backMission }}>
+              ← Voltar para {backLabel ?? "Revisão e Auditoria"}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
       <div>
         <h1 className="mb-2 text-2xl font-bold">Módulos QA</h1>
         <p className="text-sm text-muted-foreground">
@@ -81,7 +105,13 @@ function QaPage() {
           <TabsTrigger value="trace">Rastreabilidade</TabsTrigger>
         </TabsList>
         <TabsContent value="cases" className="mt-4">
-          <TestCasesPanel scope={scope} userId={userId} people={people} />
+          <TestCasesPanel
+            scope={scope}
+            userId={userId}
+            people={people}
+            backMission={backMission}
+            backLabel={backLabel}
+          />
         </TabsContent>
         <TabsContent value="bugs" className="mt-4">
           <BugsPanel scope={scope} userId={userId} people={people} />

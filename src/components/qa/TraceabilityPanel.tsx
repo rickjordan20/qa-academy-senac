@@ -13,6 +13,7 @@ import {
   useTestCases,
   type QaScope,
 } from "@/lib/qa";
+import { useUnifiedCases } from "@/lib/qa-unified";
 
 /** Missão → Caso → Execução → Bug → Evidência → Reteste */
 export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: string | null }) {
@@ -21,11 +22,17 @@ export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: s
   const { data: evidences } = useQaEvidences(scope, userId);
   const { data: missions } = useQaMissions();
   const { data: retests } = useRetests((bugs ?? []).map((b) => b.id));
+  const { data: unified } = useUnifiedCases(scope, userId);
+  const missionCases = (unified ?? []).filter((c) => c.origin === "mission");
   const { data: names } = useProfileNames([
     ...(cases ?? []).map((c) => c.author_id),
     ...(bugs ?? []).map((b) => b.author_id),
     ...(evidences ?? []).map((e) => e.author_id),
     ...(retests ?? []).map((r) => r.tester_id),
+    ...missionCases.flatMap((c) => [
+      c.authorId ?? "",
+      ...c.executions.map((e) => e.authorId ?? ""),
+    ]),
   ]);
 
   const missionIds = Array.from(
@@ -36,7 +43,7 @@ export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: s
     ]),
   );
 
-  if (missionIds.length === 0) {
+  if (missionIds.length === 0 && missionCases.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         Nada rastreado ainda. Crie casos de teste, bugs e evidências para ver a cadeia completa.
@@ -46,6 +53,39 @@ export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: s
 
   return (
     <div className="space-y-4">
+      {missionCases.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Registros criados dentro das missões</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {missionCases.map((c) => (
+              <div key={c.id} className="rounded-lg border border-border p-3">
+                <div className="font-medium">
+                  <span className="mr-2 font-mono text-xs text-muted-foreground">CT-{shortId(c.id)}</span>
+                  {c.title}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Missão: {c.missionTitle ?? "—"} · Autor: {(c.authorId && names?.[c.authorId]) || "—"}
+                </p>
+                <div className="mt-2 space-y-1 border-l-2 border-border pl-3">
+                  {c.executions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Sem execução registrada.</p>
+                  ) : (
+                    c.executions.map((ex) => (
+                      <p key={ex.id} className="text-xs text-muted-foreground">
+                        ↳ Execução: {caseStatusLabel(ex.status)} — {(ex.authorId && names?.[ex.authorId]) || "—"}
+                        {ex.evidences.length > 0 ? ` · ${ex.evidences.length} evidência(s)` : ""}
+                      </p>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {missionIds.map((mid) => {
         const missionCases = (cases ?? []).filter((c) => c.mission_id === mid);
         const missionBugs = (bugs ?? []).filter((b) => b.mission_id === mid);

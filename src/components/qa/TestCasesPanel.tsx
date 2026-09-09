@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,19 +14,18 @@ import {
   useDeleteTestCase,
   useProfileNames,
   useQaMissions,
-  useTestCases,
   useUpdateTestCase,
   type QaScope,
 } from "@/lib/qa";
 import {
   TEST_TYPES,
   projectLabel,
-  testTypeLabel,
   useFeatures,
   useModules,
   type AppProject,
 } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
+import { caseUpdatedAt, useUnifiedCases, type UnifiedCase } from "@/lib/qa-unified";
 
 export type PersonOption = { id: string; name: string };
 
@@ -52,17 +52,22 @@ export function TestCasesPanel({
   userId,
   people = [],
   readOnly = false,
+  backMission,
+  backLabel,
 }: {
   scope: QaScope;
   userId: string | null;
   people?: PersonOption[];
   readOnly?: boolean;
+  /** contexto de retorno: missão de auditoria de onde o aluno veio */
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
   const { data: modules } = useModules(project, scope.groupId);
 
-  const { data: cases, isPending } = useTestCases(scope, userId);
+  const { data: unified, isPending } = useUnifiedCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateTestCase(scope, userId);
   const update = useUpdateTestCase(scope, userId);
@@ -70,10 +75,57 @@ export function TestCasesPanel({
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
 
-  const ids = (cases ?? []).flatMap((c) => [c.author_id, c.assignee_id ?? ""]);
+  const [fMission, setFMission] = useState("");
+  const [fAuthor, setFAuthor] = useState("");
+  const [fStatus, setFStatus] = useState("");
+  const [fFeature, setFFeature] = useState("");
+  const [search, setSearch] = useState("");
+
+  const list = useMemo(() => unified ?? [], [unified]);
+
+  const ids = list.flatMap((c) => [
+    c.authorId ?? "",
+    ...c.executions.map((e) => e.authorId ?? ""),
+  ]);
   const { data: names } = useProfileNames(ids);
-  const missionTitle = (id: string | null) =>
-    missions?.find((m) => m.id === id)?.title ?? null;
+  const missionTitle = (id: string | null) => missions?.find((m) => m.id === id)?.title ?? null;
+
+  const missionOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of list) {
+      if (!c.missionId) continue;
+      map.set(c.missionId, c.missionTitle ?? missionTitle(c.missionId) ?? "Missão");
+    }
+    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list, missions]);
+
+  const authorOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of list) {
+      if (c.authorId) map.set(c.authorId, names?.[c.authorId] ?? "Autor");
+    }
+    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+  }, [list, names]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return list.filter((c) => {
+      if (fMission && c.missionId !== fMission) return false;
+      if (fAuthor && c.authorId !== fAuthor) return false;
+      if (fFeature && c.featureId !== fFeature) return false;
+      if (fStatus) {
+        const statuses = c.executions.map((e) => e.status);
+        const effective = statuses.length ? statuses : ["nao_executado"];
+        if (!effective.includes(fStatus)) return false;
+      }
+      if (term) {
+        const hay = `${c.title} ${c.featureText} ${c.steps} ${c.expected}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [list, fMission, fAuthor, fFeature, fStatus, search]);
 
   function set(k: keyof typeof empty, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -201,53 +253,85 @@ export function TestCasesPanel({
         </Card>
       )}
 
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Consultar casos de teste</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Field label="Buscar" id="f-search">
+            <Input
+              id="f-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Título, funcionalidade, passos..."
+            />
+          </Field>
+          <Field label="Missão" id="f-mission">
+            <NativeSelect
+              id="f-mission"
+              value={fMission}
+              onChange={setFMission}
+              options={[{ value: "", label: "Todas" }, ...missionOptions]}
+            />
+          </Field>
+          <Field label="Funcionalidade" id="f-feature">
+            <NativeSelect
+              id="f-feature"
+              value={fFeature}
+              onChange={setFFeature}
+              options={[
+                { value: "", label: "Todas" },
+                ...(features ?? []).map((f) => ({ value: f.id, label: f.name })),
+              ]}
+            />
+          </Field>
+          <Field label="Autor" id="f-author">
+            <NativeSelect
+              id="f-author"
+              value={fAuthor}
+              onChange={setFAuthor}
+              options={[{ value: "", label: "Todos" }, ...authorOptions]}
+            />
+          </Field>
+          <Field label="Status da execução" id="f-status">
+            <NativeSelect
+              id="f-status"
+              value={fStatus}
+              onChange={setFStatus}
+              options={[
+                { value: "", label: "Todos" },
+                ...CASE_STATUSES.map((s) => ({ value: s.value, label: s.label })),
+              ]}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
       {isPending && <p className="text-sm text-muted-foreground">Carregando...</p>}
-      {!isPending && (cases ?? []).length === 0 && (
-        <p className="text-sm text-muted-foreground">Nenhum caso de teste registrado neste contexto.</p>
+      {!isPending && filtered.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Nenhum caso de teste encontrado com os filtros atuais.
+        </p>
       )}
 
       <div className="space-y-3">
-        {(cases ?? []).map((c) => (
-          <Card key={c.id}>
-            <CardHeader className="pb-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <CardTitle className="text-base">
-                  <span className="mr-2 font-mono text-xs text-muted-foreground">CT-{shortId(c.id)}</span>
-                  {c.title}
-                </CardTitle>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="rounded-md bg-secondary px-2 py-0.5">{caseStatusLabel(c.status)}</span>
-                  <span className="text-muted-foreground">
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-                <span>Projeto: {c.project || projectLabel(project)}</span>
-                <span>
-                  Módulo/Funcionalidade: {featureTrace(modules, features, c.feature_id)}
-                </span>
-
-                <span>Tipo de teste: {testTypeLabel(c.test_type)}</span>
-                <span>Missão: {missionTitle(c.mission_id) ?? "—"}</span>
-                <span>Autor: {names?.[c.author_id] ?? "—"}</span>
-                <span>Responsável: {c.assignee_id ? (names?.[c.assignee_id] ?? "—") : "—"}</span>
-                <span>Observação: {c.feature || "—"}</span>
-              </div>
-              {c.precondition && <Block title="Pré-condição" text={c.precondition} />}
-              {c.input_data && <Block title="Dados de entrada" text={c.input_data} />}
-              {c.steps && <Block title="Passos" text={c.steps} />}
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Block title="Resultado esperado" text={c.expected_result || "—"} />
-                <Block title="Resultado obtido" text={c.obtained_result || "—"} />
-              </div>
-              {!readOnly && (
+        {filtered.map((c) => (
+          <CaseCard
+            key={c.id}
+            c={c}
+            names={names ?? {}}
+            featureLabel={
+              c.featureId ? featureTrace(modules, features, c.featureId) : c.featureText || "—"
+            }
+            project={projectLabel(project)}
+            backMission={backMission}
+            backLabel={backLabel}
+            actions={
+              !readOnly && c.origin === "qa" ? (
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <NativeSelect
                     id={`st-${c.id}`}
-                    value={c.status}
+                    value={c.executions[0]?.status ?? "nao_executado"}
                     onChange={(v) =>
                       update.mutate(
                         {
@@ -277,12 +361,155 @@ export function TestCasesPanel({
                     Excluir
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ) : null
+            }
+          />
         ))}
       </div>
     </div>
+  );
+}
+
+function missionSearch(backMission?: string, backLabel?: string) {
+  const out: { backMission?: string; backLabel?: string } = {};
+  if (backMission) out.backMission = backMission;
+  if (backLabel) out.backLabel = backLabel;
+  return out;
+}
+
+/** Caso de teste (esperado) + suas execuções (obtido, status, evidências). */
+function CaseCard({
+  c,
+  names,
+  featureLabel,
+  project,
+  actions,
+  backMission,
+  backLabel,
+}: {
+  c: UnifiedCase;
+  names: Record<string, string>;
+  featureLabel: string;
+  project: string;
+  actions?: React.ReactNode;
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
+}) {
+  const updated = caseUpdatedAt(c);
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-base">
+            <span className="mr-2 font-mono text-xs text-muted-foreground">CT-{shortId(c.id)}</span>
+            {c.title}
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full border border-border px-2 py-0.5 text-muted-foreground">
+              {c.origin === "mission" ? "Registrado em missão" : "Registrado em Módulos QA"}
+            </span>
+            <span className="text-muted-foreground">
+              Atualizado em {new Date(updated).toLocaleDateString("pt-BR")}
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+          <span>Projeto: {project}</span>
+          <span>Módulo/Funcionalidade: {featureLabel}</span>
+          <span>Missão de origem: {c.missionTitle ?? "—"}</span>
+          <span>Autor: {c.authorId ? (names[c.authorId] ?? "—") : "—"}</span>
+        </div>
+
+        {c.objective && <Block title="Objetivo" text={c.objective} />}
+        {c.precondition && <Block title="Pré-condição" text={c.precondition} />}
+        {c.inputData && <Block title="Dados de teste" text={c.inputData} />}
+        {c.steps && <Block title="Passos" text={c.steps} />}
+        <Block title="Resultado esperado" text={c.expected || "—"} />
+
+        <div className="rounded-lg border border-border p-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">
+            Execuções ({c.executions.length})
+          </p>
+          {c.executions.length === 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Nenhuma execução registrada para este caso.
+            </p>
+          ) : (
+            <div className="mt-2 space-y-3">
+              {c.executions.map((ex) => (
+                <div key={ex.id} className="border-l-2 border-border pl-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-md bg-secondary px-2 py-0.5">
+                      {caseStatusLabel(ex.status)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {ex.authorId ? (names[ex.authorId] ?? "—") : "—"}
+                      {ex.executedAt
+                        ? ` · ${new Date(ex.executedAt).toLocaleDateString("pt-BR")}`
+                        : ""}
+                      {ex.environment ? ` · ${ex.environment}` : ""}
+                    </span>
+                  </div>
+                  <Block title="Resultado obtido" text={ex.obtained || "—"} />
+                  {ex.note && <Block title="Observação" text={ex.note} />}
+                  {ex.evidences.length > 0 && (
+                    <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                      {ex.evidences.map((ev) => (
+                        <li key={ev.id}>
+                          Evidência: {ev.title}
+                          {ev.link ? (
+                            <>
+                              {" — "}
+                              <a
+                                href={ev.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:underline"
+                              >
+                                abrir
+                              </a>
+                            </>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {c.evidences.length > 0 && (
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {c.evidences.map((ev) => (
+              <li key={ev.id}>Evidência do caso: {ev.title}</li>
+            ))}
+          </ul>
+        )}
+
+        {c.origin === "mission" && c.missionId ? (
+          <div className="pt-1">
+            <Button asChild size="sm" variant="outline">
+              <Link
+                to="/student/activities/$missionId"
+                params={{ missionId: c.missionId }}
+                search={missionSearch(backMission, backLabel)}
+              >
+                Abrir missão de origem
+              </Link>
+            </Button>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Este registro é corrigido dentro da missão em que foi criado.
+            </p>
+          </div>
+        ) : null}
+
+        {actions}
+      </CardContent>
+    </Card>
   );
 }
 
