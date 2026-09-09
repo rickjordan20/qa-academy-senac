@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useMyGroups } from "@/lib/cafe";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +12,13 @@ import { TraceabilityPanel } from "@/components/qa/TraceabilityPanel";
 import type { QaScope } from "@/lib/qa";
 
 export const Route = createFileRoute("/student/qa")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    scope: typeof search["scope"] === "string" ? (search["scope"] as string) : undefined,
+    backMission:
+      typeof search["backMission"] === "string" ? (search["backMission"] as string) : undefined,
+    backLabel:
+      typeof search["backLabel"] === "string" ? (search["backLabel"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Módulos QA | QA Academy" },
