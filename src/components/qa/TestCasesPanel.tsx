@@ -54,17 +54,22 @@ export function TestCasesPanel({
   userId,
   people = [],
   readOnly = false,
+  backMission,
+  backLabel,
 }: {
   scope: QaScope;
   userId: string | null;
   people?: PersonOption[];
   readOnly?: boolean;
+  /** contexto de retorno: missão de auditoria de onde o aluno veio */
+  backMission?: string;
+  backLabel?: string;
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
   const { data: modules } = useModules(project, scope.groupId);
 
-  const { data: cases, isPending } = useTestCases(scope, userId);
+  const { data: unified, isPending } = useUnifiedCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateTestCase(scope, userId);
   const update = useUpdateTestCase(scope, userId);
@@ -72,10 +77,57 @@ export function TestCasesPanel({
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
 
-  const ids = (cases ?? []).flatMap((c) => [c.author_id, c.assignee_id ?? ""]);
+  const [fMission, setFMission] = useState("");
+  const [fAuthor, setFAuthor] = useState("");
+  const [fStatus, setFStatus] = useState("");
+  const [fFeature, setFFeature] = useState("");
+  const [search, setSearch] = useState("");
+
+  const list = useMemo(() => unified ?? [], [unified]);
+
+  const ids = list.flatMap((c) => [
+    c.authorId ?? "",
+    ...c.executions.map((e) => e.authorId ?? ""),
+  ]);
   const { data: names } = useProfileNames(ids);
-  const missionTitle = (id: string | null) =>
-    missions?.find((m) => m.id === id)?.title ?? null;
+  const missionTitle = (id: string | null) => missions?.find((m) => m.id === id)?.title ?? null;
+
+  const missionOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of list) {
+      if (!c.missionId) continue;
+      map.set(c.missionId, c.missionTitle ?? missionTitle(c.missionId) ?? "Missão");
+    }
+    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list, missions]);
+
+  const authorOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of list) {
+      if (c.authorId) map.set(c.authorId, names?.[c.authorId] ?? "Autor");
+    }
+    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+  }, [list, names]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return list.filter((c) => {
+      if (fMission && c.missionId !== fMission) return false;
+      if (fAuthor && c.authorId !== fAuthor) return false;
+      if (fFeature && c.featureId !== fFeature) return false;
+      if (fStatus) {
+        const statuses = c.executions.map((e) => e.status);
+        const effective = statuses.length ? statuses : ["nao_executado"];
+        if (!effective.includes(fStatus)) return false;
+      }
+      if (term) {
+        const hay = `${c.title} ${c.featureText} ${c.steps} ${c.expected}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [list, fMission, fAuthor, fFeature, fStatus, search]);
 
   function set(k: keyof typeof empty, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
