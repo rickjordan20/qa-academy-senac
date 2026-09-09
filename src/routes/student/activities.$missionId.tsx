@@ -29,6 +29,12 @@ import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/i
 import type { MissionPickers } from "@/components/missions/MissionPlayer";
 
 export const Route = createFileRoute("/student/activities/$missionId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    backMission:
+      typeof search["backMission"] === "string" ? (search["backMission"] as string) : undefined,
+    backLabel:
+      typeof search["backLabel"] === "string" ? (search["backLabel"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Executar missão | QA Academy" },
@@ -47,6 +53,7 @@ export const Route = createFileRoute("/student/activities/$missionId")({
 
 function StudentMissionPage() {
   const { missionId } = Route.useParams();
+  const { backMission, backLabel } = Route.useSearch();
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const { data: mission } = useBuilderMission(missionId);
@@ -235,12 +242,42 @@ function StudentMissionPage() {
   const situation = missionSituation(mission, (run ?? null) as never);
   const relatedBadge = (badgeCatalog ?? []).find((b) => b.code === mission.badge_code) ?? null;
 
+  const isAuditMission = /auditoria|revis/i.test(`${mission.title} ${mission.code ?? ""}`);
+  const qaScopeValue = isCafe && groupId ? `cafe:${groupId}` : "techeduca";
+
   const header = (
     <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+      {backMission && backMission !== mission.id ? (
+        <Link
+          to="/student/activities/$missionId"
+          params={{ missionId: backMission }}
+          search={{}}
+          className="inline-block rounded-md border border-border px-2 py-1 font-semibold text-foreground hover:underline"
+        >
+          ← Voltar para {backLabel ?? "Revisão e Auditoria"}
+        </Link>
+      ) : null}
       <div className="flex flex-wrap items-center gap-3">
         <Link to="/student/activities" className="hover:underline">
           ← Todas as missões
         </Link>
+        {isAuditMission ? (
+          <Link
+            to="/student/qa"
+            search={{ scope: qaScopeValue, backMission: mission.id, backLabel: mission.title }}
+            className="font-semibold text-accent hover:underline"
+          >
+            Ver todos os testes do grupo
+          </Link>
+        ) : run ? (
+          <Link
+            to="/student/missions/$runId"
+            params={{ runId: run.id }}
+            className="hover:underline"
+          >
+            Ver registros desta missão
+          </Link>
+        ) : null}
         {saving === "saving" ? (
           <span>Salvando...</span>
         ) : saving === "saved" ? (
