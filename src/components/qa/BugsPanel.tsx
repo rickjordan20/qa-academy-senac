@@ -52,26 +52,31 @@ export function BugsPanel({
   userId,
   people = [],
   readOnly = false,
+  backMission,
+  backLabel,
 }: {
   scope: QaScope;
   userId: string | null;
   people?: PersonOption[];
   readOnly?: boolean;
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
   const { data: modules } = useModules(project, scope.groupId);
 
-  const { data: bugs, isPending } = useBugs(scope, userId);
+  const { data: bugs, isPending } = useUnifiedBugs(scope, userId);
+  const { data: qaBugs } = useBugs(scope, userId);
   const { data: cases } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateBug(scope, userId);
   const update = useUpdateBug(scope, userId);
   const remove = useDeleteBug(scope, userId);
   const retest = useCreateRetest(scope, userId);
-  const { data: retests } = useRetests((bugs ?? []).map((b) => b.id));
+  const { data: retests } = useRetests((qaBugs ?? []).map((b) => b.id));
   const { data: names } = useProfileNames([
-    ...(bugs ?? []).flatMap((b) => [b.author_id, b.assignee_id ?? ""]),
+    ...(bugs ?? []).flatMap((b) => [b.authorId ?? "", b.assigneeId ?? ""]),
     ...(retests ?? []).map((r) => r.tester_id),
   ]);
   const [form, setForm] = useState({ ...empty });
