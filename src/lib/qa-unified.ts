@@ -312,6 +312,266 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
 }
 
 
+/* ------------------------------------------------------------------ */
+/* Bugs e evidências unificados                                        */
+/* ------------------------------------------------------------------ */
+
+export type LinkKind = "explicit" | "derived" | "none";
+
+export type UnifiedBug = {
+  id: string;
+  origin: RecordOrigin;
+  title: string;
+  description: string;
+  environment: string;
+  steps: string;
+  expected: string;
+  obtained: string;
+  severity: string;
+  priority: string;
+  status: string;
+  featureId: string | null;
+  featureText: string;
+  caseId: string | null;
+  caseText: string;
+  linkKind: LinkKind;
+  authorId: string | null;
+  assigneeId: string | null;
+  missionId: string | null;
+  missionTitle: string | null;
+  runId: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+export type UnifiedEvidenceRecord = {
+  id: string;
+  origin: RecordOrigin;
+  title: string;
+  kind: string;
+  description: string;
+  content: string;
+  link: string | null;
+  featureText: string;
+  parentId: string | null;
+  linkKind: LinkKind;
+  authorId: string | null;
+  missionId: string | null;
+  missionTitle: string | null;
+  runId: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+type MissionSource = {
+  entries: EntryRow[];
+  missionTitles: Record<string, string>;
+};
+
+async function fetchMissionEntries(scope: QaScope, userId: string | null): Promise<MissionSource> {
+  let runQuery = supabase.from("builder_mission_runs").select("id, mission_id");
+  runQuery =
+    scope.context === "cafe"
+      ? runQuery.eq("group_id", scope.groupId!)
+      : runQuery.eq("student_id", userId!);
+  const runRes = await runQuery;
+  if (runRes.error) throw runRes.error;
+  const runIds = ((runRes.data ?? []) as unknown as { id: string }[]).map((r) => r.id);
+  if (runIds.length === 0) return { entries: [], missionTitles: {} };
+
+  const entryRes = await supabase
+    .from("builder_mission_entries")
+    .select(
+      "id, run_id, mission_id, kind, author_id, parent_id, feature_id, title, status, data, link, created_at, updated_at",
+    )
+    .in("run_id", runIds)
+    .in("kind", RECORD_KINDS)
+    .order("created_at", { ascending: false });
+  if (entryRes.error) throw entryRes.error;
+  const entries = (entryRes.data ?? []) as unknown as EntryRow[];
+
+  const missionTitles: Record<string, string> = {};
+  const missionIds = Array.from(new Set(entries.map((e) => e.mission_id).filter(Boolean)));
+  if (missionIds.length > 0) {
+    const misRes = await supabase.from("builder_missions").select("id, title").in("id", missionIds);
+    if (misRes.error) throw misRes.error;
+    for (const m of (misRes.data ?? []) as unknown as { id: string; title: string }[]) {
+      missionTitles[m.id] = m.title;
+    }
+  }
+  return { entries, missionTitles };
+}
+
+function normalizeText(v: string) {
+  return v.trim().toLowerCase();
+}
+
+/**
+ * Vínculo inequívoco: o texto "Caso relacionado" corresponde a exatamente um
+ * caso de teste do mesmo run. Empate ou nenhuma correspondência => sem vínculo.
+ */
+function deriveCaseId(text: string, runId: string, entries: EntryRow[]) {
+  const t = normalizeText(text);
+  if (!t) return null;
+  const candidates = entries.filter((e) => {
+    if (e.kind !== "test_case" || e.run_id !== runId) return false;
+    const title = normalizeText(e.title || str(e.data, "titulo"));
+    if (!title) return false;
+    return title === t || normalizeText(e.id).startsWith(t);
+  });
+  return candidates.length === 1 ? candidates[0]!.id : null;
+}
+
+function scopeKey(scope: QaScope, userId: string | null) {
+  return scope.context === "cafe" ? `cafe:${scope.groupId}` : `techeduca:${userId}`;
+}
+
+export function useUnifiedBugs(scope: QaScope, userId: string | null) {
+  const enabled = scope.context === "cafe" ? !!scope.groupId : !!userId;
+  return useQuery({
+    queryKey: ["qa-unified", "bugs", scopeKey(scope, userId)],
+    enabled,
+    queryFn: async (): Promise<UnifiedBug[]> => {
+      let qaQuery = supabase.from("qa_bugs").select("*");
+      qaQuery =
+        scope.context === "cafe"
+          ? qaQuery.eq("context", "cafe").eq("group_id", scope.groupId!)
+          : qaQuery.eq("context", "techeduca").eq("author_id", userId!).is("group_id", null);
+      const qaRes = await qaQuery.order("created_at", { ascending: false });
+      if (qaRes.error) throw qaRes.error;
+
+      const qaBugs: UnifiedBug[] = (
+        (qaRes.data ?? []) as unknown as Record<string, string | null>[]
+      ).map((b) => ({
+        id: String(b["id"]),
+        origin: "qa",
+        title: String(b["title"] ?? ""),
+        description: String(b["description"] ?? ""),
+        environment: String(b["environment"] ?? ""),
+        steps: String(b["steps"] ?? ""),
+        expected: String(b["expected_result"] ?? ""),
+        obtained: String(b["obtained_result"] ?? ""),
+        severity: String(b["severity"] ?? ""),
+        priority: String(b["priority"] ?? ""),
+        status: String(b["status"] ?? ""),
+        featureId: (b["feature_id"] as string | null) ?? null,
+        featureText: "",
+        caseId: (b["test_case_id"] as string | null) ?? null,
+        caseText: "",
+        linkKind: b["test_case_id"] ? "explicit" : "none",
+        authorId: (b["author_id"] as string | null) ?? null,
+        assigneeId: (b["assignee_id"] as string | null) ?? null,
+        missionId: (b["mission_id"] as string | null) ?? null,
+        missionTitle: null,
+        runId: null,
+        createdAt: String(b["created_at"]),
+        updatedAt: (b["updated_at"] as string | null) ?? null,
+      }));
+
+      const { entries, missionTitles } = await fetchMissionEntries(scope, userId);
+      const missionBugs: UnifiedBug[] = entries
+        .filter((e) => e.kind === "bug")
+        .map((e) => {
+          const caseText = str(e.data, "caso");
+          const derived = e.parent_id ? null : deriveCaseId(caseText, e.run_id, entries);
+          return {
+            id: e.id,
+            origin: "mission" as const,
+            title: e.title || str(e.data, "titulo") || "(sem título)",
+            description: str(e.data, "descricao"),
+            environment: str(e.data, "ambiente"),
+            steps: str(e.data, "passos"),
+            expected: str(e.data, "esperado"),
+            obtained: str(e.data, "obtido"),
+            severity: str(e.data, "severidade"),
+            priority: str(e.data, "prioridade"),
+            status: e.status || str(e.data, "status"),
+            featureId: e.feature_id,
+            featureText: str(e.data, "funcionalidade"),
+            caseId: e.parent_id ?? derived,
+            caseText,
+            linkKind: (e.parent_id ? "explicit" : derived ? "derived" : "none") as LinkKind,
+            authorId: e.author_id,
+            assigneeId: null,
+            missionId: e.mission_id,
+            missionTitle: missionTitles[e.mission_id] ?? null,
+            runId: e.run_id,
+            createdAt: e.created_at,
+            updatedAt: e.updated_at,
+          };
+        });
+
+      return [...qaBugs, ...missionBugs].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    },
+  });
+}
+
+export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
+  const enabled = scope.context === "cafe" ? !!scope.groupId : !!userId;
+  return useQuery({
+    queryKey: ["qa-unified", "evidences", scopeKey(scope, userId)],
+    enabled,
+    queryFn: async (): Promise<UnifiedEvidenceRecord[]> => {
+      let qaQuery = supabase.from("qa_evidences").select("*");
+      qaQuery =
+        scope.context === "cafe"
+          ? qaQuery.eq("context", "cafe").eq("group_id", scope.groupId!)
+          : qaQuery.eq("context", "techeduca").eq("author_id", userId!).is("group_id", null);
+      const qaRes = await qaQuery.order("created_at", { ascending: false });
+      if (qaRes.error) throw qaRes.error;
+
+      const qaEvidences: UnifiedEvidenceRecord[] = (
+        (qaRes.data ?? []) as unknown as Record<string, string | null>[]
+      ).map((e) => ({
+        id: String(e["id"]),
+        origin: "qa",
+        title: String(e["title"] ?? ""),
+        kind: String(e["kind"] ?? "outro"),
+        description: String(e["description"] ?? ""),
+        content: String(e["content"] ?? ""),
+        link: (e["link"] as string | null) ?? null,
+        featureText: "",
+        parentId: (e["test_case_id"] as string | null) ?? (e["bug_id"] as string | null) ?? null,
+        linkKind: e["test_case_id"] || e["bug_id"] ? "explicit" : "none",
+        authorId: (e["author_id"] as string | null) ?? null,
+        missionId: (e["mission_id"] as string | null) ?? null,
+        missionTitle: null,
+        runId: null,
+        createdAt: String(e["created_at"]),
+        updatedAt: (e["updated_at"] as string | null) ?? null,
+      }));
+
+      const { entries, missionTitles } = await fetchMissionEntries(scope, userId);
+      const missionEvidences: UnifiedEvidenceRecord[] = entries
+        .filter((e) => e.kind === "evidence")
+        .map((e) => ({
+          id: e.id,
+          origin: "mission" as const,
+          title: e.title || str(e.data, "titulo") || "Evidência",
+          kind: str(e.data, "tipo") || "outro",
+          description: str(e.data, "descricao"),
+          content: str(e.data, "conteudo"),
+          link: e.link || str(e.data, "url") || null,
+          featureText: str(e.data, "funcionalidade"),
+          parentId: e.parent_id,
+          linkKind: (e.parent_id ? "explicit" : "none") as LinkKind,
+          authorId: e.author_id,
+          missionId: e.mission_id,
+          missionTitle: missionTitles[e.mission_id] ?? null,
+          runId: e.run_id,
+          createdAt: e.created_at,
+          updatedAt: e.updated_at,
+        }));
+
+      return [...qaEvidences, ...missionEvidences].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    },
+  });
+}
+
 export function caseUpdatedAt(c: UnifiedCase) {
   const stamps = [c.updatedAt, c.createdAt, ...c.executions.map((e) => e.updatedAt ?? e.executedAt)]
     .filter(Boolean)

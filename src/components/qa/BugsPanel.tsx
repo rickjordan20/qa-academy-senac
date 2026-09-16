@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/qa";
 import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
+import { useUnifiedBugs, type UnifiedBug } from "@/lib/qa-unified";
 
 const empty = {
   title: "",
@@ -50,26 +52,31 @@ export function BugsPanel({
   userId,
   people = [],
   readOnly = false,
+  backMission,
+  backLabel,
 }: {
   scope: QaScope;
   userId: string | null;
   people?: PersonOption[];
   readOnly?: boolean;
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
 }) {
   const project: AppProject = scope.context === "cafe" ? "cafe_central" : "techeduca";
   const { data: features } = useFeatures(project, scope.groupId);
   const { data: modules } = useModules(project, scope.groupId);
 
-  const { data: bugs, isPending } = useBugs(scope, userId);
+  const { data: bugs, isPending } = useUnifiedBugs(scope, userId);
+  const { data: qaBugs } = useBugs(scope, userId);
   const { data: cases } = useTestCases(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateBug(scope, userId);
   const update = useUpdateBug(scope, userId);
   const remove = useDeleteBug(scope, userId);
   const retest = useCreateRetest(scope, userId);
-  const { data: retests } = useRetests((bugs ?? []).map((b) => b.id));
+  const { data: retests } = useRetests((qaBugs ?? []).map((b) => b.id));
   const { data: names } = useProfileNames([
-    ...(bugs ?? []).flatMap((b) => [b.author_id, b.assignee_id ?? ""]),
+    ...(bugs ?? []).flatMap((b) => [b.authorId ?? "", b.assigneeId ?? ""]),
     ...(retests ?? []).map((r) => r.tester_id),
   ]);
   const [form, setForm] = useState({ ...empty });
@@ -252,9 +259,17 @@ export function BugsPanel({
       )}
 
       <div className="space-y-3">
-        {(bugs ?? []).map((b) => {
+        {(bugs ?? []).map((b: UnifiedBug) => {
           const bugRetests = (retests ?? []).filter((r) => r.bug_id === b.id);
-          const relatedCase = (cases ?? []).find((c) => c.id === b.test_case_id);
+          const relatedCase = (cases ?? []).find((c) => c.id === b.caseId);
+          const linkText =
+            b.linkKind === "explicit"
+              ? relatedCase
+                ? `CT-${shortId(relatedCase.id)} ${relatedCase.title}`
+                : `CT-${shortId(b.caseId ?? "")}`
+              : b.linkKind === "derived"
+                ? `${b.caseText} (identificado pelo registro)`
+                : "🐞 Bug não vinculado a um caso de teste";
           return (
             <Card key={b.id}>
               <CardHeader className="pb-2">
@@ -264,36 +279,62 @@ export function BugsPanel({
                     {b.title}
                   </CardTitle>
                   <div className="flex items-center gap-2 text-xs">
+                    {b.origin === "mission" && (
+                      <span className="rounded-md bg-accent/20 px-2 py-0.5">Criado na missão</span>
+                    )}
                     <span className="rounded-md bg-secondary px-2 py-0.5">{bugStatusLabel(b.status)}</span>
                     <span className="text-muted-foreground">
-                      {new Date(b.created_at).toLocaleDateString("pt-BR")}
+                      {new Date(b.createdAt).toLocaleDateString("pt-BR")}
                     </span>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-                  <span>Projeto: {b.project || projectLabel(project)}</span>
+                  <span>Projeto: {projectLabel(project)}</span>
                   <span>
-                    Módulo/Funcionalidade: {featureTrace(modules, features, b.feature_id)}
+                    Módulo/Funcionalidade:{" "}
+                    {b.featureId ? featureTrace(modules, features, b.featureId) : b.featureText || "—"}
                   </span>
 
-                  <span>Missão: {missions?.find((m) => m.id === b.mission_id)?.title ?? "—"}</span>
-                  <span>Autor: {names?.[b.author_id] ?? "—"}</span>
-                  <span>Responsável: {b.assignee_id ? (names?.[b.assignee_id] ?? "—") : "—"}</span>
-                  <span>Severidade: {labelOf(SEVERITIES, b.severity)}</span>
-                  <span>Prioridade: {labelOf(PRIORITIES, b.priority)}</span>
-                  <span>Ambiente: {b.environment || "—"}</span>
                   <span>
-                    Caso relacionado: {relatedCase ? `CT-${shortId(relatedCase.id)} ${relatedCase.title}` : "—"}
+                    Missão:{" "}
+                    {b.missionTitle ?? missions?.find((m) => m.id === b.missionId)?.title ?? "—"}
                   </span>
+                  <span>Autor: {(b.authorId && names?.[b.authorId]) || "—"}</span>
+                  <span>Responsável: {b.assigneeId ? (names?.[b.assigneeId] ?? "—") : "—"}</span>
+                  <span>Severidade: {labelOf(SEVERITIES, b.severity) || b.severity || "—"}</span>
+                  <span>Prioridade: {labelOf(PRIORITIES, b.priority) || b.priority || "—"}</span>
+                  <span>Ambiente: {b.environment || "—"}</span>
+                  <span>Caso relacionado: {linkText}</span>
                 </div>
                 {b.description && <Block title="Descrição" text={b.description} />}
                 {b.steps && <Block title="Passos para reprodução" text={b.steps} />}
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <Block title="Resultado esperado" text={b.expected_result || "—"} />
-                  <Block title="Resultado obtido" text={b.obtained_result || "—"} />
+                  <Block title="Resultado esperado" text={b.expected || "—"} />
+                  <Block title="Resultado obtido" text={b.obtained || "—"} />
                 </div>
+
+                {b.origin === "mission" && b.missionId ? (
+                  <div className="pt-1">
+                    <Button asChild size="sm" variant="outline">
+                      <Link
+                        to="/student/activities/$missionId"
+                        params={{ missionId: b.missionId }}
+                        search={{
+                          ...(backMission ? { backMission } : {}),
+                          ...(backLabel ? { backLabel } : {}),
+                        }}
+                      >
+                        Abrir missão de origem
+                      </Link>
+                    </Button>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Este registro é corrigido dentro da missão em que foi criado.
+                    </p>
+                  </div>
+                ) : null}
+
 
                 {bugRetests.length > 0 && (
                   <div className="rounded-lg border border-border p-3">
