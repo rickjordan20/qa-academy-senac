@@ -23,6 +23,7 @@ import {
   type QaScope,
 } from "@/lib/qa";
 import { EvidenceGuide } from "@/components/EvidenceGuide";
+import { useUnifiedEvidences, type UnifiedEvidenceRecord } from "@/lib/qa-unified";
 
 const empty = {
   title: "",
@@ -40,18 +41,23 @@ export function EvidencesPanel({
   scope,
   userId,
   readOnly = false,
+  backMission,
+  backLabel,
 }: {
   scope: QaScope;
   userId: string | null;
   readOnly?: boolean;
+  backMission?: string | undefined;
+  backLabel?: string | undefined;
 }) {
-  const { data: evidences, isPending } = useQaEvidences(scope, userId);
+  const { data: evidences, isPending } = useUnifiedEvidences(scope, userId);
+  const { data: qaEvidences } = useQaEvidences(scope, userId);
   const { data: cases } = useTestCases(scope, userId);
   const { data: bugs } = useBugs(scope, userId);
   const { data: missions } = useQaMissions();
   const create = useCreateQaEvidence(scope, userId);
   const remove = useDeleteQaEvidence(scope, userId);
-  const { data: names } = useProfileNames((evidences ?? []).map((e) => e.author_id));
+  const { data: names } = useProfileNames((evidences ?? []).map((e) => e.authorId ?? ""));
   const [form, setForm] = useState({ ...empty });
 
   function set(k: keyof typeof empty, v: string) {
