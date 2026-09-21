@@ -7,25 +7,38 @@ describe("Aula 9: fluxo de bugs", () => {
     expect(isBugWorkflowStatus("inexistente")).toBe(false);
   });
 
-  it("não permite transições inexistentes ou para o mesmo status", () => {
-    expect(canTransitionBug("aberto", "resolvido", "instructor")).toBe(false);
-    expect(canTransitionBug("aberto", "aberto", "instructor")).toBe(false);
-    expect(canTransitionBug("inexistente", "aberto", "instructor")).toBe(false);
+  it("rejeita transições inexistentes e identidade", () => {
+    expect(canTransitionBug("aberto", "resolvido", "developer")).toBe(false);
+    expect(canTransitionBug("aberto", "aberto", "developer")).toBe(false);
+    expect(canTransitionBug("inexistente", "aberto", "developer")).toBe(false);
   });
 
-  it("reserva confirmação e correção ao desenvolvedor ou instrutor", () => {
-    expect(canTransitionBug("em_analise", "confirmado", "tester")).toBe(false);
-    expect(canTransitionBug("em_analise", "confirmado", "developer")).toBe(true);
-    expect(canTransitionBug("confirmado", "em_correcao", "tester")).toBe(false);
-    expect(canTransitionBug("em_correcao", "pronto_reteste", "developer")).toBe(true);
-    expect(canTransitionBug("em_correcao", "pronto_reteste", "instructor")).toBe(true);
+  it("reserva análise e correção ao desenvolvedor", () => {
+    for (const [from, to] of [
+      ["aberto", "em_analise"], ["em_analise", "confirmado"],
+      ["em_analise", "descartado"], ["confirmado", "em_correcao"],
+      ["confirmado", "descartado"], ["em_correcao", "pronto_reteste"],
+      ["reaberto", "em_analise"], ["reaberto", "em_correcao"],
+    ]) {
+      expect(canTransitionBug(from, to, "developer")).toBe(true);
+      expect(canTransitionBug(from, to, "tester")).toBe(false);
+    }
   });
 
-  it("reserva validação do reteste ao tester ou instrutor", () => {
-    expect(canTransitionBug("pronto_reteste", "resolvido", "developer")).toBe(false);
-    expect(canTransitionBug("pronto_reteste", "reaberto", "developer")).toBe(false);
-    expect(canTransitionBug("pronto_reteste", "resolvido", "tester")).toBe(true);
-    expect(canTransitionBug("pronto_reteste", "reaberto", "tester")).toBe(true);
+  it("reserva reteste e reabertura ao tester", () => {
+    for (const [from, to] of [
+      ["pronto_reteste", "resolvido"], ["pronto_reteste", "reaberto"],
+      ["resolvido", "reaberto"], ["descartado", "reaberto"],
+    ]) {
+      expect(canTransitionBug(from, to, "tester")).toBe(true);
+      expect(canTransitionBug(from, to, "developer")).toBe(false);
+    }
+  });
+
+  it("não promete override do instrutor que não existe no banco", () => {
+    for (const [from, destinations] of Object.entries(BUG_WORKFLOW)) {
+      for (const to of destinations) expect(canTransitionBug(from, to, "instructor")).toBe(false);
+    }
   });
 
   it("exige autenticação, estado pronto e observações no reteste", () => {
