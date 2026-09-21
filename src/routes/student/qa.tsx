@@ -114,10 +114,21 @@ function QaPage() {
           />
         </TabsContent>
         <TabsContent value="bugs" className="mt-4">
-          <BugsPanel scope={scope} userId={userId} people={people} />
+          <BugsPanel
+            scope={scope}
+            userId={userId}
+            people={people}
+            backMission={backMission}
+            backLabel={backLabel}
+          />
         </TabsContent>
         <TabsContent value="evidences" className="mt-4">
-          <EvidencesPanel scope={scope} userId={userId} />
+          <EvidencesPanel
+            scope={scope}
+            userId={userId}
+            backMission={backMission}
+            backLabel={backLabel}
+          />
         </TabsContent>
         <TabsContent value="trace" className="mt-4">
           <TraceabilityPanel scope={scope} userId={userId} />
