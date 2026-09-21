@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,23 @@ function LoginPage() {
     if (loading || !session) return;
     navigate({ to: "/dashboard", replace: true });
   }, [loading, session, navigate]);
+
+  async function oauth(provider: "google" | "microsoft") {
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error("Não foi possível entrar agora. Tente novamente.");
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -116,6 +134,30 @@ function LoginPage() {
             <CardDescription>Entre com seu e-mail institucional.</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={busy}
+                onClick={() => void oauth("google")}
+              >
+                Entrar com Google
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={busy}
+                onClick={() => void oauth("microsoft")}
+              >
+                Entrar com Microsoft
+              </Button>
+              <div className="relative py-2 text-center text-xs text-muted-foreground">
+                <span className="bg-card px-2">ou use seu e-mail</span>
+              </div>
+            </div>
+
             <Tabs defaultValue="login">
               <TabsList className="mb-4 grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
