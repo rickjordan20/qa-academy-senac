@@ -13,7 +13,7 @@ import {
   useTestCases,
   type QaScope,
 } from "@/lib/qa";
-import { useUnifiedCases } from "@/lib/qa-unified";
+import { useUnifiedBugs, useUnifiedCases, useUnifiedEvidences } from "@/lib/qa-unified";
 
 /** Missão → Caso → Execução → Bug → Evidência → Reteste */
 export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: string | null }) {
