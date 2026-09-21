@@ -1,0 +1,32 @@
+name: Aula 9 - validação isolada
+
+on:
+  push:
+    branches:
+      - feature/aula-9-dev-tester-cafe-central
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/feature/aula-9-dev-tester-cafe-central' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.10'
+      - name: Install dependencies from lockfile
+        run: bun install --frozen-lockfile
+      - name: Unit tests for bug workflow
+        run: bunx vitest run src/lib/bug-workflow.test.ts
+      - name: Build
+        run: bun run build
