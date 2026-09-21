@@ -124,21 +124,26 @@ function EntryForm({
             return (
               <div key={f.key}>
                 <Label className="text-xs">
-                  Caso de teste relacionado<span className="text-destructive"> *</span>
+                  Caso de teste relacionado
+                  {optionalCase ? " (opcional)" : <span className="text-destructive"> *</span>}
                 </Label>
                 <SearchableSelect
                   value={values["case_id"] ?? ""}
                   disabled={disabled}
                   options={caseOptions}
-                  placeholder="Selecione um caso de teste..."
+                  placeholder={optionalCase ? "Sem vínculo" : "Selecione um caso de teste..."}
                   emptyMessage="Nenhum caso de teste disponível. Crie primeiro um caso de teste nesta missão."
                   onChange={(id) => {
                     const opt = caseOptions.find((o) => o.value === id);
                     setValues((s) => ({
                       ...s,
                       case_id: id,
-                      titulo: opt ? opt.label : "",
-                      ...(opt?.expected ? { esperado: opt.expected } : {}),
+                      ...(optionalCase
+                        ? { caso: opt ? opt.label : "" }
+                        : {
+                            titulo: opt ? opt.label : "",
+                            ...(opt?.expected ? { esperado: opt.expected } : {}),
+                          }),
                       ...(opt?.featureId ? { feature_id: opt.featureId } : {}),
                       ...(opt?.featureLabel ? { funcionalidade: opt.featureLabel } : {}),
                     }));
