@@ -17,17 +17,16 @@ export function isBugWorkflowStatus(value: string): value is BugWorkflowStatus {
   return Object.prototype.hasOwnProperty.call(BUG_WORKFLOW, value);
 }
 
-/** Apenas autorização de interface; a autorização definitiva deve ocorrer no banco. */
+/** Autorização de interface, espelhando o guard SQL; o banco decide em definitivo.
+ * Instrutores não possuem override nesta versão: exigiria RPC própria e auditada.
+ */
 export function canTransitionBug(from: string, to: string, role: BugWorkflowRole): boolean {
   if (!isBugWorkflowStatus(from) || !isBugWorkflowStatus(to) || from === to) return false;
   if (!(BUG_WORKFLOW[from] as readonly string[]).includes(to)) return false;
-  if (role === "instructor") return true;
+  if (role === "instructor") return false;
   if (from === "pronto_reteste") return role === "tester";
-  if (to === "confirmado" || to === "em_correcao" || to === "pronto_reteste") return role === "developer";
-  if (to === "em_analise" && from === "aberto") return role === "developer";
-  if (to === "descartado") return role === "developer";
   if (from === "resolvido" || from === "descartado") return role === "tester";
-  return role === "tester" || role === "developer";
+  return role === "developer";
 }
 
 export function validateRetest(input: {
