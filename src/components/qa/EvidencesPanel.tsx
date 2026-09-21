@@ -198,64 +198,89 @@ export function EvidencesPanel({
       )}
 
       <div className="space-y-3">
-        {(evidences ?? []).map((ev) => (
-          <div key={ev.id} className="rounded-lg border border-border p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="font-semibold">
-                  <span className="mr-2 rounded-md bg-secondary px-2 py-0.5 text-xs font-normal">
-                    {labelOf(EVIDENCE_KINDS, ev.kind)}
-                  </span>
-                  {ev.title}
+        {(evidences ?? []).map((ev: UnifiedEvidenceRecord) => {
+          const original = (qaEvidences ?? []).find((q) => q.id === ev.id);
+          return (
+            <div key={ev.id} className="rounded-lg border border-border p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-semibold">
+                    <span className="mr-2 rounded-md bg-secondary px-2 py-0.5 text-xs font-normal">
+                      {labelOf(EVIDENCE_KINDS, ev.kind) || ev.kind}
+                    </span>
+                    {ev.title}
+                    {ev.origin === "mission" && (
+                      <span className="ml-2 rounded-md bg-accent/20 px-2 py-0.5 text-xs font-normal">
+                        Criada na missão
+                      </span>
+                    )}
+                  </div>
+                  {ev.description && <p className="text-sm text-muted-foreground">{ev.description}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {(ev.authorId && names?.[ev.authorId]) || "—"} ·{" "}
+                    {new Date(ev.createdAt).toLocaleString("pt-BR")} ·{" "}
+                    {ev.missionTitle ??
+                      missions?.find((m) => m.id === ev.missionId)?.title ??
+                      "sem missão"}
+                    {ev.featureText ? ` · ${ev.featureText}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {ev.linkKind === "explicit" && ev.parentId
+                      ? `Vinculada a ${shortId(ev.parentId)}`
+                      : "📎 Evidência não vinculada"}
+                  </p>
                 </div>
-                {ev.description && <p className="text-sm text-muted-foreground">{ev.description}</p>}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {names?.[ev.author_id] ?? "—"} · {new Date(ev.created_at).toLocaleString("pt-BR")} ·{" "}
-                  {ev.project || "sem projeto"} ·{" "}
-                  {missions?.find((m) => m.id === ev.mission_id)?.title ?? "sem missão"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {ev.test_case_id ? `CT-${shortId(ev.test_case_id)} ` : ""}
-                  {ev.bug_id ? `BUG-${shortId(ev.bug_id)}` : ""}
-                  {!ev.test_case_id && !ev.bug_id ? "Sem atividade vinculada" : ""}
-                </p>
+                <div className="flex items-center gap-2">
+                  {ev.link && (
+                    <Button size="sm" variant="secondary" asChild>
+                      <a href={ev.link} target="_blank" rel="noopener noreferrer">
+                        🔗 Abrir evidência
+                      </a>
+                    </Button>
+                  )}
+                  {original?.file_path && (
+                    <Button size="sm" variant="secondary" onClick={() => void openQaFile(original.file_path!)}>
+                      Ver arquivo
+                    </Button>
+                  )}
+                  {ev.origin === "mission" && ev.missionId && (
+                    <Button size="sm" variant="outline" asChild>
+                      <Link
+                        to="/student/activities/$missionId"
+                        params={{ missionId: ev.missionId }}
+                        search={{
+                          ...(backMission ? { backMission } : {}),
+                          ...(backLabel ? { backLabel } : {}),
+                        }}
+                      >
+                        Abrir missão de origem
+                      </Link>
+                    </Button>
+                  )}
+                  {!readOnly && original && ev.authorId === userId && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        remove.mutate(original, {
+                          onSuccess: () => toast.success("Evidência removida."),
+                          onError: (e) => toast.error(e.message),
+                        })
+                      }
+                    >
+                      Excluir
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {ev.link && (
-                  <Button size="sm" variant="secondary" asChild>
-                    <a href={ev.link} target="_blank" rel="noopener noreferrer">
-                      🔗 Abrir evidência
-                    </a>
-                  </Button>
-                )}
-                {ev.file_path && (
-                  <Button size="sm" variant="secondary" onClick={() => void openQaFile(ev.file_path!)}>
-                    Ver arquivo
-                  </Button>
-                )}
-                {!readOnly && ev.author_id === userId && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      remove.mutate(ev, {
-                        onSuccess: () => toast.success("Evidência removida."),
-                        onError: (e) => toast.error(e.message),
-                      })
-                    }
-                  >
-                    Excluir
-                  </Button>
-                )}
-              </div>
+              {ev.content && (
+                <pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
+                  {ev.content}
+                </pre>
+              )}
             </div>
-            {ev.content && (
-              <pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
-                {ev.content}
-              </pre>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
