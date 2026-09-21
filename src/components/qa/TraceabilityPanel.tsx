@@ -23,6 +23,12 @@ export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: s
   const { data: missions } = useQaMissions();
   const { data: retests } = useRetests((bugs ?? []).map((b) => b.id));
   const { data: unified } = useUnifiedCases(scope, userId);
+  const { data: unifiedBugs } = useUnifiedBugs(scope, userId);
+  const { data: unifiedEvidences } = useUnifiedEvidences(scope, userId);
+  const looseUnifiedBugs = (unifiedBugs ?? []).filter((b) => b.origin === "mission" && b.linkKind === "none");
+  const looseUnifiedEvidences = (unifiedEvidences ?? []).filter(
+    (e) => e.origin === "mission" && e.linkKind === "none",
+  );
   const missionCases = (unified ?? []).filter((c) => c.origin === "mission");
   const { data: names } = useProfileNames([
     ...(cases ?? []).map((c) => c.author_id),
@@ -81,6 +87,28 @@ export function TraceabilityPanel({ scope, userId }: { scope: QaScope; userId: s
                   )}
                 </div>
               </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {(looseUnifiedBugs.length > 0 || looseUnifiedEvidences.length > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Sem vínculo confirmado</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-xs text-muted-foreground">
+            {looseUnifiedBugs.map((b) => (
+              <p key={b.id}>
+                🐞 Bug não vinculado a um caso de teste: {b.title} — {b.missionTitle ?? "—"} ·{" "}
+                {new Date(b.createdAt).toLocaleDateString("pt-BR")}
+              </p>
+            ))}
+            {looseUnifiedEvidences.map((e) => (
+              <p key={e.id}>
+                📎 Evidência não vinculada: {e.title} — {e.missionTitle ?? "—"} ·{" "}
+                {new Date(e.createdAt).toLocaleDateString("pt-BR")}
+              </p>
             ))}
           </CardContent>
         </Card>
