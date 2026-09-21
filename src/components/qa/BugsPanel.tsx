@@ -351,7 +351,7 @@ export function BugsPanel({
                   </div>
                 )}
 
-                {!readOnly && (
+                {!readOnly && b.origin === "qa" && (
                   <div className="space-y-2 pt-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <NativeSelect

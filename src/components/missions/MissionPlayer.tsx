@@ -74,10 +74,27 @@ function EntryForm({
   return (
     <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
       {section.kind === "evidence" ? <EvidenceGuide /> : null}
+      {section.kind === "evidence" && pickers ? (
+        <div>
+          <Label className="text-xs">Caso ou execução relacionada (opcional)</Label>
+          <SearchableSelect
+            value={values["case_id"] ?? ""}
+            disabled={disabled}
+            options={caseOptions}
+            placeholder="Sem vínculo"
+            emptyMessage="Nenhum caso de teste disponível nesta missão."
+            onChange={(id) => setValues((s) => ({ ...s, case_id: id }))}
+          />
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map((f) => {
           const isFeaturePicker = section.kind === "test_case" && f.key === "funcionalidade" && !!pickers;
-          const isCasePicker = section.kind === "execution" && f.key === "titulo" && !!pickers;
+          const isCasePicker =
+            ((section.kind === "execution" && f.key === "titulo") ||
+              (section.kind === "bug" && f.key === "caso")) &&
+            !!pickers;
+          const optionalCase = section.kind === "bug";
 
           if (isFeaturePicker)
             return (
@@ -107,21 +124,26 @@ function EntryForm({
             return (
               <div key={f.key}>
                 <Label className="text-xs">
-                  Caso de teste relacionado<span className="text-destructive"> *</span>
+                  Caso de teste relacionado
+                  {optionalCase ? " (opcional)" : <span className="text-destructive"> *</span>}
                 </Label>
                 <SearchableSelect
                   value={values["case_id"] ?? ""}
                   disabled={disabled}
                   options={caseOptions}
-                  placeholder="Selecione um caso de teste..."
+                  placeholder={optionalCase ? "Sem vínculo" : "Selecione um caso de teste..."}
                   emptyMessage="Nenhum caso de teste disponível. Crie primeiro um caso de teste nesta missão."
                   onChange={(id) => {
                     const opt = caseOptions.find((o) => o.value === id);
                     setValues((s) => ({
                       ...s,
                       case_id: id,
-                      titulo: opt ? opt.label : "",
-                      ...(opt?.expected ? { esperado: opt.expected } : {}),
+                      ...(optionalCase
+                        ? { caso: opt ? opt.label : "" }
+                        : {
+                            titulo: opt ? opt.label : "",
+                            ...(opt?.expected ? { esperado: opt.expected } : {}),
+                          }),
                       ...(opt?.featureId ? { feature_id: opt.featureId } : {}),
                       ...(opt?.featureLabel ? { funcionalidade: opt.featureLabel } : {}),
                     }));
