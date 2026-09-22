@@ -36,9 +36,10 @@ for select to authenticated using (
 
 -- A SECURITY DEFINER helper reads only pairing IDs and never returns underlying data.
 -- It prevents RLS recursion when referenced by qa_bugs and builder_mission_entries.
+-- The caller cannot impersonate another user via the p_user_id parameter.
 create or replace function public.qa_cross_can_read_group(p_group_id uuid, p_user_id uuid)
 returns boolean language sql stable security definer set search_path = '' as $$
-  select p_group_id is not null and p_user_id is not null and exists (
+  select p_group_id is not null and p_user_id = auth.uid() and exists (
     select 1 from public.qa_cross_test_pairs pair
     where (pair.developer_group_id = p_group_id and public.is_group_member(pair.tester_group_id, p_user_id))
        or (pair.tester_group_id = p_group_id and public.is_group_member(pair.developer_group_id, p_user_id))
