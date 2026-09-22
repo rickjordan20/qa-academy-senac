@@ -41,7 +41,11 @@ begin
   end if;
   if new.assignee_id = v_actor then
    raise exception 'Tester e desenvolvedor devem ser pessoas diferentes.' using errcode='22023';
-  end if;
+ end if;
+ if new.assignee_id is not null
+  and (new.group_id is null or not public.is_group_member(new.group_id,new.assignee_id)) then
+  raise exception 'O desenvolvedor deve pertencer ao grupo do bug.' using errcode='42501';
+ end if;
   return new;
  end if;
  if new.author_id is distinct from old.author_id
