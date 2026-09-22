@@ -26,7 +26,7 @@ jobs:
           bun-version: '1.3.10'
       - name: Install dependencies from lockfile
         run: bun install --frozen-lockfile
-      - name: Unit tests for bug workflow
-        run: bunx vitest run src/lib/bug-workflow.test.ts
+      - name: Unit tests for bug workflow and cross-test references
+        run: bunx vitest run src/lib/bug-workflow.test.ts src/lib/cross-test-links.test.ts
       - name: Build
         run: bun run build
