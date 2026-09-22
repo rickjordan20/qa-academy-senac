@@ -69,10 +69,10 @@ begin
       and public.is_group_member(pair.tester_group_id, v_actor)
       and public.is_group_member(pair.developer_group_id, new.assignee_id)
    )
-  ) then
-   raise exception 'Assignee fora da equipe desenvolvedora vinculada ao tester.' using errcode='42501';
-  end if;
-  return new;
+ ) then
+  raise exception 'Assignee fora da equipe desenvolvedora vinculada ao tester.' using errcode='42501';
+ end if;
+ return new;
  end if;
  if new.author_id is distinct from old.author_id
   or new.group_id is distinct from old.group_id
