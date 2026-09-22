@@ -58,7 +58,7 @@ begin
  v_tester := v_actor = old.author_id and old.assignee_id is not null and old.assignee_id <> v_actor;
  v_developer := v_actor = old.assignee_id and old.author_id <> v_actor;
  v_allowed := case
-  when old.status='aberto' and new.status='em_analise' then v_developer
+  when old.status='aberto' and new.status in ('em_analise','descartado') then v_developer
   when old.status='em_analise' and new.status in ('confirmado','descartado') then v_developer
   when old.status='confirmado' and new.status in ('em_correcao','descartado') then v_developer
   when old.status='em_correcao' and new.status='pronto_reteste' then v_developer
