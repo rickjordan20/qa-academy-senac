@@ -90,7 +90,7 @@ begin
   when old.status='em_correcao' and new.status='pronto_reteste' then v_developer
   when old.status='reaberto' and new.status in ('em_analise','em_correcao') then v_developer
   when old.status='pronto_reteste' and new.status in ('resolvido','reaberto') then
-   v_tester and pg_catalog.current_setting('qa.retest_bug_id',true)=old.id::text
+   v_tester and coalesce(pg_catalog.current_setting('qa.retest_bug_id',true)=old.id::text,false)
   when old.status in ('resolvido','descartado') and new.status='reaberto' then v_tester
   else false
  end;

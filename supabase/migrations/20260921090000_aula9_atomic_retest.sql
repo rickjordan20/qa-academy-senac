@@ -59,5 +59,12 @@ grant execute on function public.qa_register_retest(uuid,text,text) to authentic
 revoke insert, update, delete on public.qa_retests from authenticated;
 drop policy if exists "qa_retests_insert" on public.qa_retests;
 drop policy if exists "qa_retests_delete" on public.qa_retests;
+drop policy if exists qa_retests_insert_via_atomic_rpc on public.qa_retests;
+create policy qa_retests_insert_via_atomic_rpc on public.qa_retests
+for insert to authenticated
+with check (
+ tester_id = auth.uid()
+ and pg_catalog.current_setting('qa.retest_bug_id',true) = bug_id::text
+);
 -- Gate: do not deploy before testing permissions, direct update bypasses,
 -- and existing records in an isolated database. Do not duplicate mission bugs.

@@ -106,9 +106,9 @@ using (tester_id = auth.uid());
 create policy qa_retests_select on public.qa_retests for select to authenticated
 using (tester_id = auth.uid() or exists (select 1 from public.qa_bugs b where b.id = bug_id and (b.author_id = auth.uid() or b.assignee_id = auth.uid())));
 
-\i /home/runner/work/qa-academy-senac/qa-academy-senac/supabase/migrations/20260922020000_aula9_cross_team_read.sql
-\i /home/runner/work/qa-academy-senac/qa-academy-senac/supabase/migrations/20260921090000_aula9_atomic_retest.sql
-\i /home/runner/work/qa-academy-senac/qa-academy-senac/supabase/migrations/20260921091000_aula9_status_guard.sql
+\ir ../migrations/20260922020000_aula9_cross_team_read.sql
+\ir ../migrations/20260921090000_aula9_atomic_retest.sql
+\ir ../migrations/20260921091000_aula9_status_guard.sql
 
 create or replace function public.assert_raises(_sql text)
 returns void language plpgsql as $$
@@ -116,6 +116,9 @@ begin
   execute _sql;
   raise exception 'Expected statement to fail: %', _sql;
 exception when others then
+  if sqlerrm like 'Expected statement to fail:%' then
+    raise;
+  end if;
   return;
 end $$;
 
@@ -178,12 +181,26 @@ $sql$);
 reset request.jwt.claim.sub;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b1';
 update public.qa_bugs set status='descartado' where id='20000000-0000-0000-0000-000000000002';
+select public.assert_true(
+  (select status='descartado' from public.qa_bugs where id='20000000-0000-0000-0000-000000000002'),
+  'linked developer should be able to discard from aberto'
+);
 
 reset request.jwt.claim.sub;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b2';
 select public.assert_raises($sql$
-  update public.qa_bugs set status='em_analise' where id='20000000-0000-0000-0000-000000000002'
+do $$
+begin
+  update public.qa_bugs set status='em_analise' where id='20000000-0000-0000-0000-000000000002';
+  if not found then
+    raise exception 'blocked by policy';
+  end if;
+end $$;
 $sql$);
+select public.assert_true(
+  (select status='descartado' from public.qa_bugs where id='20000000-0000-0000-0000-000000000002'),
+  'unlinked developer must not change bug status'
+);
 
 -- separate bug for pronto_reteste flow
 reset request.jwt.claim.sub;
@@ -197,6 +214,10 @@ update public.qa_bugs set status='em_analise' where id='20000000-0000-0000-0000-
 update public.qa_bugs set status='confirmado' where id='20000000-0000-0000-0000-000000000003';
 update public.qa_bugs set status='em_correcao' where id='20000000-0000-0000-0000-000000000003';
 update public.qa_bugs set status='pronto_reteste' where id='20000000-0000-0000-0000-000000000003';
+select public.assert_true(
+  (select status='pronto_reteste' from public.qa_bugs where id='20000000-0000-0000-0000-000000000003'),
+  'linked developer should move bug to pronto_reteste'
+);
 
 reset request.jwt.claim.sub;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a1';
