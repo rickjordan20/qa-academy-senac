@@ -2380,6 +2380,10 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      is_student_instructor: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
       qa_can_edit: {
         Args: { _author: string; _group_id: string; _viewer: string }
         Returns: boolean
@@ -2393,6 +2397,10 @@ export type Database = {
         Returns: boolean
       }
       shares_class: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
+      shares_group: {
         Args: { _target: string; _viewer: string }
         Returns: boolean
       }
