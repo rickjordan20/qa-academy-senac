@@ -8,7 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { FieldInput, SearchableSelect, type PickerOption } from "@/components/missions/DynamicFields";
+import { CrossTestReferences } from "@/components/missions/CrossTestReferences";
 import { RichText } from "@/components/missions/RichText";
+import { readCrossTestReferences } from "@/lib/cross-test-links";
 import {
   blockDef,
   type BuilderMission,
@@ -50,16 +52,19 @@ function EntryForm({
   fields,
   disabled,
   pickers,
+  availableEntries,
   onSubmit,
 }: {
   section: Section;
   fields: FieldDef[];
   disabled: boolean;
   pickers?: MissionPickers | undefined;
-  onSubmit: (values: Record<string, string>) => void;
+  availableEntries: MissionEntry[];
+  onSubmit: (values: Record<string, string>) => Promise<void> | void;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const featureOptions = pickers?.features ?? [];
   const caseOptions = pickers?.cases ?? [];
@@ -70,6 +75,49 @@ function EntryForm({
         + Adicionar {blockDef(section.kind).label.toLowerCase()}
       </Button>
     );
+
+  async function save() {
+    if (disabled || saving) return;
+    const url = (values["url"] ?? "").trim();
+    const isHttps = (() => {
+      try {
+        return new URL(url).protocol === "https:";
+      } catch {
+        return false;
+      }
+    })();
+    if (section.kind === "evidence") {
+      if (!(values["descricao"] ?? "").trim()) {
+        toast.error("Explique o que esta evidência demonstra.");
+        return;
+      }
+      if (!isHttps && !(values["conteudo"] ?? "").trim()) {
+        toast.error("Informe um link válido para a evidência.");
+        return;
+      }
+      if (url && !isHttps) {
+        toast.error("Informe um link válido para a evidência.");
+        return;
+      }
+    }
+    if (section.kind === "cross_test") {
+      const references = readCrossTestReferences(values);
+      if (references.some((reference) => reference.origin !== "mission" || !availableEntries.some((entry) => entry.id === reference.id && ({ test_case: "case", bug: "bug", evidence: "evidence", retest: "retest" } as Record<string, string>)[entry.kind] === reference.kind))) {
+        toast.error("Um dos registros vinculados não está mais disponível. Revise os vínculos.");
+        return;
+      }
+    }
+    setSaving(true);
+    try {
+      await onSubmit(values);
+      setValues({});
+      setOpen(false);
+    } catch {
+      toast.error("Não foi possível salvar o registro. Seus dados foram mantidos para tentar novamente.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
@@ -87,7 +135,7 @@ function EntryForm({
                 </Label>
                 <SearchableSelect
                   value={values["feature_id"] ?? ""}
-                  disabled={disabled}
+                  disabled={disabled || saving}
                   options={featureOptions}
                   placeholder="Selecione uma funcionalidade..."
                   emptyMessage="Nenhuma funcionalidade disponível para esta missão. Verifique o Inventário da Aplicação."
@@ -111,7 +159,7 @@ function EntryForm({
                 </Label>
                 <SearchableSelect
                   value={values["case_id"] ?? ""}
-                  disabled={disabled}
+                  disabled={disabled || saving}
                   options={caseOptions}
                   placeholder="Selecione um caso de teste..."
                   emptyMessage="Nenhum caso de teste disponível. Crie primeiro um caso de teste nesta missão."
@@ -140,47 +188,21 @@ function EntryForm({
               <FieldInput
                 field={f}
                 value={values[f.key] ?? ""}
+                disabled={disabled || saving}
                 onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}
               />
             </div>
           );
         })}
-
       </div>
+      {section.kind === "cross_test" ? (
+        <CrossTestReferences data={values} availableEntries={availableEntries} disabled={disabled || saving} onChange={setValues} />
+      ) : null}
       <div className="flex gap-2">
-        <Button
-          size="sm"
-          onClick={() => {
-            const url = (values["url"] ?? "").trim();
-            const isHttps = (() => {
-              try {
-                return new URL(url).protocol === "https:";
-              } catch {
-                return false;
-              }
-            })();
-            if (section.kind === "evidence") {
-              if (!(values["descricao"] ?? "").trim()) {
-                toast.error("Explique o que esta evidência demonstra.");
-                return;
-              }
-              if (!isHttps && !(values["conteudo"] ?? "").trim()) {
-                toast.error("Informe um link válido para a evidência.");
-                return;
-              }
-              if (url && !isHttps) {
-                toast.error("Informe um link válido para a evidência.");
-                return;
-              }
-            }
-            onSubmit(values);
-            setValues({});
-            setOpen(false);
-          }}
-        >
-          Salvar registro
+        <Button size="sm" disabled={disabled || saving} onClick={() => void save()}>
+          {saving ? "Salvando..." : "Salvar registro"}
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>
+        <Button size="sm" variant="secondary" disabled={saving} onClick={() => setOpen(false)}>
           Cancelar
         </Button>
       </div>
@@ -216,7 +238,11 @@ function SectionCard({
   const entries = state.entries.filter(
     (e) => e.section_id === section.id && (entryFilter ? entryFilter(section, e) : true),
   );
-
+  const referenceEntries = state.entries.filter((entry) =>
+    entry.mission_id === mission.id &&
+    ["test_case", "bug", "evidence", "retest"].includes(entry.kind) &&
+    (!entryFilter || entryFilter(section, entry)),
+  );
 
   return (
     <Card>
@@ -324,7 +350,7 @@ function SectionCard({
                     </div>
                     <dl className="mt-2 grid gap-1 sm:grid-cols-2">
                       {Object.entries(e.data ?? {})
-                        .filter(([, v]) => (v ?? "").toString().trim())
+                        .filter(([k, v]) => k !== "linked_records_v1" && (v ?? "").toString().trim())
                         .map(([k, v]) => (
                           <div key={k}>
                             <dt className="text-xs uppercase text-muted-foreground">{k}</dt>
@@ -332,6 +358,11 @@ function SectionCard({
                           </div>
                         ))}
                     </dl>
+                    {e.kind === "cross_test" ? (
+                      <div className="mt-3">
+                        <CrossTestReferences data={e.data ?? {}} availableEntries={referenceEntries} disabled onChange={() => {}} />
+                      </div>
+                    ) : null}
                     {e.link ? (
                       <a
                         href={e.link}
@@ -354,6 +385,7 @@ function SectionCard({
                 section={section}
                 fields={def.fields ?? []}
                 pickers={pickers}
+                availableEntries={referenceEntries}
                 disabled={readOnly}
                 onSubmit={(values) => handlers.onAddEntry(section, values)}
               />
@@ -397,7 +429,6 @@ export function MissionPlayer({
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
     <div className="w-full space-y-5">
-
       <div className="rounded-xl border border-border bg-surface p-6">
         <span className="text-xs font-semibold uppercase tracking-widest text-accent">
           {mission.lesson_number ? `Aula ${mission.lesson_number} · ` : ""}
@@ -428,7 +459,6 @@ export function MissionPlayer({
           sectionExtra={sectionExtra}
           entryFilter={entryFilter}
           pickers={pickers}
-
         />
       ))}
 
