@@ -15,7 +15,6 @@ import {
   shortId,
   useBugs,
   useCreateBug,
-  useCreateRetest,
   useDeleteBug,
   useProfileNames,
   useQaMissions,
@@ -24,6 +23,7 @@ import {
   useUpdateBug,
   type QaScope,
 } from "@/lib/qa";
+import { useRegisterRetestAtomic } from "@/lib/qa-retest-atomic";
 import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import { useUnifiedBugs, type UnifiedBug } from "@/lib/qa-unified";
@@ -73,7 +73,7 @@ export function BugsPanel({
   const create = useCreateBug(scope, userId);
   const update = useUpdateBug(scope, userId);
   const remove = useDeleteBug(scope, userId);
-  const retest = useCreateRetest(scope, userId);
+  const retest = useRegisterRetestAtomic(scope, userId);
   const { data: retests } = useRetests((qaBugs ?? []).map((b) => b.id));
   const { data: names } = useProfileNames([
     ...(bugs ?? []).flatMap((b) => [b.authorId ?? "", b.assigneeId ?? ""]),

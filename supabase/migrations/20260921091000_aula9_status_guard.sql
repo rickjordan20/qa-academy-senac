@@ -18,8 +18,26 @@ using (exists (select 1 from public.qa_bugs b where b.id = bug_id and public.qa_
 -- Assignment is limited to the assigned developer within the original group.
 drop policy if exists qa_bugs_assigned_developer_update on public.qa_bugs;
 create policy qa_bugs_assigned_developer_update on public.qa_bugs for update to authenticated
-using (assignee_id = auth.uid() and group_id is not null and public.is_group_member(group_id,auth.uid()))
-with check (assignee_id = auth.uid() and group_id is not null and public.is_group_member(group_id,auth.uid()));
+using (
+ assignee_id = auth.uid()
+ and group_id is not null
+ and exists (
+  select 1
+  from public.qa_cross_test_pairs pair
+  where pair.tester_group_id = qa_bugs.group_id
+    and public.is_group_member(pair.developer_group_id, auth.uid())
+ )
+)
+with check (
+ assignee_id = auth.uid()
+ and group_id is not null
+ and exists (
+  select 1
+  from public.qa_cross_test_pairs pair
+  where pair.tester_group_id = qa_bugs.group_id
+    and public.is_group_member(pair.developer_group_id, auth.uid())
+ )
+);
 
 create or replace function public.qa_guard_bug_status() returns trigger
 language plpgsql security definer set search_path = '' as $$
@@ -42,6 +60,18 @@ begin
   if new.assignee_id = v_actor then
    raise exception 'Tester e desenvolvedor devem ser pessoas diferentes.' using errcode='22023';
   end if;
+  if new.assignee_id is not null and (
+   new.group_id is null
+   or not exists (
+    select 1
+    from public.qa_cross_test_pairs pair
+    where pair.tester_group_id = new.group_id
+      and public.is_group_member(pair.tester_group_id, v_actor)
+      and public.is_group_member(pair.developer_group_id, new.assignee_id)
+   )
+  ) then
+   raise exception 'Assignee fora da equipe desenvolvedora vinculada ao tester.' using errcode='42501';
+  end if;
   return new;
  end if;
  if new.author_id is distinct from old.author_id
@@ -54,7 +84,7 @@ begin
  v_tester := v_actor = old.author_id and old.assignee_id is not null and old.assignee_id <> v_actor;
  v_developer := v_actor = old.assignee_id and old.author_id <> v_actor;
  v_allowed := case
-  when old.status='aberto' and new.status='em_analise' then v_developer
+  when old.status='aberto' and new.status in ('em_analise','descartado') then v_developer
   when old.status='em_analise' and new.status in ('confirmado','descartado') then v_developer
   when old.status='confirmado' and new.status in ('em_correcao','descartado') then v_developer
   when old.status='em_correcao' and new.status='pronto_reteste' then v_developer

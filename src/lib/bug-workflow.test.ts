@@ -15,7 +15,7 @@ describe("Aula 9: fluxo de bugs", () => {
 
   it("reserva análise e correção ao desenvolvedor", () => {
     for (const [from, to] of [
-      ["aberto", "em_analise"], ["em_analise", "confirmado"],
+      ["aberto", "em_analise"], ["aberto", "descartado"], ["em_analise", "confirmado"],
       ["em_analise", "descartado"], ["confirmado", "em_correcao"],
       ["confirmado", "descartado"], ["em_correcao", "pronto_reteste"],
       ["reaberto", "em_analise"], ["reaberto", "em_correcao"],

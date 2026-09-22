@@ -11,7 +11,7 @@ export type AtomicRetestInput = {
 };
 
 /** Aula 9: nunca grave qa_retests e qa_bugs em duas requisições independentes. */
-export function useAtomicRetest(scope: QaScope, userId: string | null) {
+export function useRegisterRetestAtomic(scope: QaScope, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: AtomicRetestInput): Promise<QaRetest> => {
