@@ -157,7 +157,7 @@ function BugDetails({
           <ul className="list-disc pl-4">
             {retests.map((r) => (
               <li key={r.id}>
-                {r.result === "aprovado" ? "Aprovado" : "Reprovado"} por {memberName(r.tester_id)} em{" "}
+                {r.result === "resolvido" ? "Aprovado" : "Reprovado"} por {memberName(r.tester_id)} em{" "}
                 {new Date(r.tested_at).toLocaleString("pt-BR")}
                 {r.notes ? ` — ${r.notes}` : ""}
               </li>
@@ -396,12 +396,12 @@ function TesterArea({
   );
 }
 
-function RetestForm({ onSubmit }: { onSubmit: (result: "aprovado" | "reprovado", notes: string) => void }) {
-  const [result, setResult] = useState<"aprovado" | "reprovado">("aprovado");
+function RetestForm({ onSubmit }: { onSubmit: (result: "resolvido" | "reaberto", notes: string) => void }) {
+  const [result, setResult] = useState<"resolvido" | "reaberto">("resolvido");
   const [notes, setNotes] = useState("");
   return (
     <div className="mt-2 grid gap-2 rounded-md border border-border bg-secondary/30 p-2 sm:grid-cols-[160px_1fr_auto]">
-      <NativeSelect value={result} onChange={(v) => setResult(v as "aprovado" | "reprovado")}>
+      <NativeSelect value={result} onChange={(v) => setResult(v as "resolvido" | "reaberto")}>
         <option value="aprovado">Reteste aprovado</option>
         <option value="reprovado">Reteste reprovado</option>
       </NativeSelect>

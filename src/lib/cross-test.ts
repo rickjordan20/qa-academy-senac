@@ -319,7 +319,7 @@ export function useCrossTransition() {
 export function useCrossRetest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ bugId, result, notes }: { bugId: string; result: "aprovado" | "reprovado"; notes: string }) => {
+    mutationFn: async ({ bugId, result, notes }: { bugId: string; result: "resolvido" | "reaberto"; notes: string }) => {
       const { error } = await rpc("cross_test_retest", { _bug_id: bugId, _result: result, _notes: notes });
       if (error) throw new Error(error.message);
     },
