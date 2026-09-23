@@ -11,6 +11,7 @@ import {
   useContributions,
   useCreateContribution,
   useDeleteContribution,
+  useUpdateContribution,
   useDeleteTask,
   useEnsureGroupRun,
   useEvidenceRequests,
@@ -588,20 +589,106 @@ function ContributionForm({
 function MyContributions({ runId, userId }: { runId: string | null; userId: string | null }) {
   const { data } = useContributions(runId);
   const remove = useDeleteContribution(runId);
+  const update = useUpdateContribution(runId);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState({ title: "", description: "", link: "" });
   const mine = (data ?? []).filter((c) => c.student_id === userId);
   if (mine.length === 0)
     return <p className="text-sm text-muted-foreground">Você ainda não registrou contribuições.</p>;
+
+  async function save(c: (typeof mine)[number]) {
+    if (!form.title.trim()) {
+      toast.error("Informe o título.");
+      return;
+    }
+    if (form.link.trim() && !/^https:\/\//i.test(form.link.trim())) {
+      toast.error("A evidência deve ser um link https válido.");
+      return;
+    }
+    try {
+      await update.mutateAsync({
+        id: c.id,
+        kind: c.kind,
+        task_id: c.task_id,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        link: form.link.trim() || null,
+      });
+      setEditing(null);
+      toast.success("Registro atualizado com sucesso.");
+    } catch (err) {
+      console.error("[café] falha ao atualizar contribuição:", err);
+      toast.error("Não foi possível salvar as alterações.");
+    }
+  }
+
   return (
     <>
       {mine.map((c) => (
-        <div key={c.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
-          <div>
-            <p className="font-medium">{c.title}</p>
-            <p className="text-xs text-muted-foreground">{contributionKindLabel(c.kind)}</p>
+        <div key={c.id} className="rounded-md border border-border p-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-medium">{c.title}</p>
+              <p className="text-xs text-muted-foreground">{contributionKindLabel(c.kind)}</p>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (editing === c.id) {
+                    setEditing(null);
+                    return;
+                  }
+                  setEditing(c.id);
+                  setForm({
+                    title: c.title,
+                    description: c.description ?? "",
+                    link: c.link ?? "",
+                  });
+                }}
+              >
+                {editing === c.id ? "Cancelar" : "Editar"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-danger"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Tem certeza de que deseja excluir este registro? Esta ação não poderá ser desfeita.",
+                    )
+                  )
+                    remove.mutate(c.id);
+                }}
+              >
+                Excluir
+              </Button>
+            </div>
           </div>
-          <Button variant="ghost" size="sm" className="text-danger" onClick={() => remove.mutate(c.id)}>
-            Excluir
-          </Button>
+          {editing === c.id ? (
+            <div className="mt-3 space-y-2">
+              <Input
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="Título"
+              />
+              <Textarea
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder="Descrição"
+              />
+              <Input
+                value={form.link}
+                onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))}
+                placeholder="https://"
+              />
+              <Button size="sm" onClick={() => void save(c)} disabled={update.isPending}>
+                Salvar alterações
+              </Button>
+            </div>
+          ) : null}
         </div>
       ))}
     </>

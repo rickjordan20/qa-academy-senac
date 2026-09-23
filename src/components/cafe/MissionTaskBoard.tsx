@@ -17,6 +17,7 @@ import {
   useCreateMissionContribution,
   useCreateMissionTask,
   useDeleteMissionContribution,
+  useUpdateMissionContribution,
   useDeleteMissionTask,
   useMissionContributions,
   useMissionTaskCollaborators,
@@ -587,7 +588,10 @@ function ContributionsPanel({
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
+  const update = useUpdateMissionContribution(runId);
   const [form, setForm] = useState(emptyContribution);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyContribution);
 
   const mine = contributions.filter((c) => c.student_id === userId);
   const taskById = (id: string | null) => myTasks.find((t) => t.id === id) ?? null;
@@ -622,6 +626,33 @@ function ContributionsPanel({
     } catch (err) {
       console.error("[café] falha ao registrar contribuição:", err);
       toast.error("Não foi possível registrar a contribuição.");
+    }
+  }
+
+  async function saveEdit(id: string) {
+    if (!editForm.title.trim() || !editForm.description.trim()) {
+      toast.error("Informe o título e descreva o que você fez.");
+      return;
+    }
+    if (editForm.link.trim() && !/^https:\/\//i.test(editForm.link.trim())) {
+      toast.error("A evidência deve ser um link https válido.");
+      return;
+    }
+    try {
+      await update.mutateAsync({
+        id,
+        task_id: editForm.task_id || null,
+        kind: editForm.kind,
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+        link: editForm.link.trim() || null,
+        reflection: editForm.reflection.trim(),
+      });
+      setEditing(null);
+      toast.success("Registro atualizado com sucesso.");
+    } catch (err) {
+      console.error("[café] falha ao atualizar contribuição:", err);
+      toast.error("Não foi possível salvar as alterações.");
     }
   }
 
@@ -763,11 +794,75 @@ function ContributionsPanel({
                     🔗 Abrir evidência
                   </a>
                 ) : null}
-                <div className="mt-2">
-                  <Button size="sm" variant="ghost" onClick={() => remove.mutate(c.id)}>
+                <div className="mt-2 flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (editing === c.id) {
+                        setEditing(null);
+                        return;
+                      }
+                      setEditing(c.id);
+                      setEditForm({
+                        ...emptyContribution,
+                        task_id: c.task_id ?? "",
+                        kind: c.kind,
+                        title: c.title,
+                        description: c.description ?? "",
+                        link: c.link ?? "",
+                        reflection: c.reflection ?? "",
+                        section_id: c.section_id ?? "",
+                      });
+                    }}
+                  >
+                    {editing === c.id ? "Cancelar" : "Editar"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-danger"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Tem certeza de que deseja excluir este registro? Esta ação não poderá ser desfeita.",
+                        )
+                      )
+                        remove.mutate(c.id);
+                    }}
+                  >
                     Excluir
                   </Button>
                 </div>
+                {editing === c.id ? (
+                  <div className="mt-3 space-y-2 rounded-lg border border-border p-3">
+                    <Input
+                      value={editForm.title}
+                      onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="Título"
+                    />
+                    <Textarea
+                      rows={3}
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                      placeholder="O que você fez"
+                    />
+                    <Input
+                      value={editForm.link}
+                      onChange={(e) => setEditForm((f) => ({ ...f, link: e.target.value }))}
+                      placeholder="https://"
+                    />
+                    <Textarea
+                      rows={2}
+                      value={editForm.reflection}
+                      onChange={(e) => setEditForm((f) => ({ ...f, reflection: e.target.value }))}
+                      placeholder="Reflexão"
+                    />
+                    <Button size="sm" onClick={() => void saveEdit(c.id)} disabled={update.isPending}>
+                      Salvar alterações
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             );
           })
