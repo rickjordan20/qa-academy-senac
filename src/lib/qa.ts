@@ -265,7 +265,10 @@ export function useCreateTestCase(scope: QaScope, userId: string | null) {
       if (error) throw error;
       return data as unknown as QaTestCase;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 
@@ -276,7 +279,10 @@ export function useUpdateTestCase(scope: QaScope, userId: string | null) {
       const { error } = await supabase.from("qa_test_cases").update(patch as never).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 
@@ -287,7 +293,10 @@ export function useDeleteTestCase(scope: QaScope, userId: string | null) {
       const { error } = await supabase.from("qa_test_cases").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 
@@ -338,7 +347,10 @@ export function useCreateBug(scope: QaScope, userId: string | null) {
       if (error) throw error;
       return data as unknown as QaBug;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "bugs", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "bugs", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 
@@ -349,7 +361,10 @@ export function useUpdateBug(scope: QaScope, userId: string | null) {
       const { error } = await supabase.from("qa_bugs").update(patch as never).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "bugs", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "bugs", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 
@@ -456,7 +471,24 @@ export function useCreateQaEvidence(scope: QaScope, userId: string | null) {
       } as never);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "evidences", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "evidences", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
+  });
+}
+
+export function useUpdateQaEvidence(scope: QaScope, userId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<QaEvidenceInput> }) => {
+      const { error } = await supabase.from("qa_evidences").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "evidences", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 
@@ -467,7 +499,10 @@ export function useDeleteQaEvidence(scope: QaScope, userId: string | null) {
       const { error } = await supabase.from("qa_evidences").delete().eq("id", ev.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa", "evidences", scopeKey(scope, userId)] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "evidences", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
   });
 }
 

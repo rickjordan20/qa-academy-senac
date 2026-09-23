@@ -17,6 +17,7 @@ import {
   computeProgress,
   useBuilderMission,
   useCreateEntry,
+  useUpdateEntry,
   useDeleteEntry,
   useMyRun,
   useRunEntries,
@@ -87,6 +88,7 @@ function StudentMissionPage() {
     userId,
   );
   const deleteEntry = useDeleteEntry(run?.id ?? "");
+  const updateEntry = useUpdateEntry(run?.id ?? "");
 
   const [answers, setAnswers] = useState<Record<string, Record<string, string>>>({});
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
@@ -245,6 +247,38 @@ function StudentMissionPage() {
     );
   }
 
+  async function editEntry(
+    section: Section,
+    entry: { id: string; author_id: string; group_id: string | null },
+    values: Record<string, string>,
+  ) {
+    const def = blockDef(section.kind);
+    const titleKey = def.fields?.[0]?.key ?? "titulo";
+    const data = { ...values };
+    delete data["feature_id"];
+    delete data["case_id"];
+    try {
+      await updateEntry.mutateAsync({
+        id: entry.id,
+        title: values[titleKey] ?? "",
+        status: values["status"] ?? "",
+        data,
+        featureId: values["feature_id"] || null,
+        parentId: values["case_id"] || null,
+        link: values["url"] ?? values["link"] ?? null,
+      });
+      toast.success("Registro atualizado com sucesso.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível salvar as alterações.");
+    }
+  }
+
+  /** Autor, integrante do grupo da entrega ou (no banco) instrutor. */
+  function canEditEntry(entry: { author_id: string; group_id: string | null }) {
+    if (entry.author_id === userId) return true;
+    return !!entry.group_id && myGroupIds.includes(entry.group_id);
+  }
+
   const situation = missionSituation(mission, (run ?? null) as never);
   const relatedBadge = (badgeCatalog ?? []).find((b) => b.code === mission.badge_code) ?? null;
 
@@ -396,7 +430,13 @@ function StudentMissionPage() {
             });
           },
           onAddEntry: addEntry,
-          onDeleteEntry: (id) => deleteEntry.mutate(id),
+          onUpdateEntry: editEntry,
+          canEditEntry,
+          onDeleteEntry: (id) =>
+            deleteEntry.mutate(id, {
+              onSuccess: () => toast.success("Registro excluído."),
+              onError: (e) => toast.error(e.message),
+            }),
         }}
       />
 

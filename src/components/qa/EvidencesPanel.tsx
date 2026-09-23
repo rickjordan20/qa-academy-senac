@@ -14,6 +14,7 @@ import {
   useBugs,
   useCreateQaEvidence,
   useDeleteQaEvidence,
+  useUpdateQaEvidence,
   useProfileNames,
   useQaEvidences,
   useQaMissions,
@@ -57,6 +58,9 @@ export function EvidencesPanel({
   const { data: missions } = useQaMissions();
   const create = useCreateQaEvidence(scope, userId);
   const remove = useDeleteQaEvidence(scope, userId);
+  const update = useUpdateQaEvidence(scope, userId);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ ...empty });
   const { data: names } = useProfileNames((evidences ?? []).map((e) => e.authorId ?? ""));
   const [form, setForm] = useState({ ...empty });
 
@@ -257,16 +261,44 @@ export function EvidencesPanel({
                       </Link>
                     </Button>
                   )}
-                  {!readOnly && original && ev.authorId === userId && (
+                  {!readOnly && original && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() =>
+                      onClick={() => {
+                        setEditing(editing === ev.id ? null : ev.id);
+                        setEditForm({
+                          title: original.title ?? "",
+                          kind: original.kind ?? "imagem",
+                          description: original.description ?? "",
+                          content: original.content ?? "",
+                          link: original.link ?? "",
+                          project: original.project ?? "",
+                          mission_id: original.mission_id ?? "",
+                          test_case_id: original.test_case_id ?? "",
+                          bug_id: original.bug_id ?? "",
+                        });
+                      }}
+                    >
+                      {editing === ev.id ? "Cancelar" : "Editar"}
+                    </Button>
+                  )}
+                  {!readOnly && original && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "Tem certeza de que deseja excluir este registro? Esta ação não poderá ser desfeita.",
+                          )
+                        )
+                          return;
                         remove.mutate(original, {
                           onSuccess: () => toast.success("Evidência removida."),
                           onError: (e) => toast.error(e.message),
-                        })
-                      }
+                        });
+                      }}
                     >
                       Excluir
                     </Button>
@@ -277,6 +309,89 @@ export function EvidencesPanel({
                 <pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
                   {ev.content}
                 </pre>
+              )}
+              {editing === ev.id && original && (
+                <div className="mt-3 grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
+                  <Field label="Título" id={`ed-title-${ev.id}`}>
+                    <Input
+                      id={`ed-title-${ev.id}`}
+                      value={editForm.title}
+                      onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                    />
+                  </Field>
+                  <Field label="Tipo" id={`ed-kind-${ev.id}`}>
+                    <NativeSelect
+                      id={`ed-kind-${ev.id}`}
+                      value={editForm.kind}
+                      onChange={(v) => setEditForm((f) => ({ ...f, kind: v }))}
+                      options={EVIDENCE_KINDS.map((k) => ({ value: k.value, label: k.label }))}
+                    />
+                  </Field>
+                  <Field label="URL da evidência (https://...)" id={`ed-link-${ev.id}`} full>
+                    <Input
+                      id={`ed-link-${ev.id}`}
+                      value={editForm.link}
+                      onChange={(e) => setEditForm((f) => ({ ...f, link: e.target.value }))}
+                    />
+                  </Field>
+                  <Field label="Evidência textual / log" id={`ed-content-${ev.id}`} full>
+                    <Textarea
+                      id={`ed-content-${ev.id}`}
+                      rows={3}
+                      value={editForm.content}
+                      onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))}
+                    />
+                  </Field>
+                  <Field label="Descrição" id={`ed-desc-${ev.id}`} full>
+                    <Textarea
+                      id={`ed-desc-${ev.id}`}
+                      rows={2}
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                    />
+                  </Field>
+                  <div className="sm:col-span-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={update.isPending}
+                      onClick={async () => {
+                        if (!editForm.title.trim()) {
+                          toast.error("Informe o título da evidência.");
+                          return;
+                        }
+                        if (!editForm.description.trim()) {
+                          toast.error("Explique o que esta evidência demonstra.");
+                          return;
+                        }
+                        if (editForm.link.trim() && !isValidEvidenceUrl(editForm.link)) {
+                          toast.error("Informe um link válido para a evidência.");
+                          return;
+                        }
+                        try {
+                          await update.mutateAsync({
+                            id: ev.id,
+                            patch: {
+                              title: editForm.title.trim(),
+                              kind: editForm.kind,
+                              description: editForm.description.trim(),
+                              content: editForm.content.trim() || null,
+                              link: editForm.link.trim() || null,
+                            },
+                          });
+                          setEditing(null);
+                          toast.success("Registro atualizado com sucesso.");
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
+                        }
+                      }}
+                    >
+                      {update.isPending ? "Salvando..." : "Salvar alterações"}
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEditing(null)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           );
