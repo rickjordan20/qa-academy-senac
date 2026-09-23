@@ -123,7 +123,7 @@ export function useCrossGroups(classIds: string[]) {
       const nameOf = new Map(
         ((profiles.data ?? []) as { id: string; full_name: string | null }[]).map((p) => [
           p.id,
-          (p.full_name ?? "").trim() || "Aluno",
+          (p.full_name ?? "").trim() || "Integrante sem nome cadastrado",
         ]),
       );
 
