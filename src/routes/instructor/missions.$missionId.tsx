@@ -476,6 +476,8 @@ function MissionBuilderPage() {
             section={s}
             index={i}
             total={sections.length}
+            missionId={missionId}
+            classIds={classIds}
             onChange={(p) => patchSection(s.id, p)}
             onMove={(dir) => moveSection(s.id, dir)}
             onDuplicate={() =>
