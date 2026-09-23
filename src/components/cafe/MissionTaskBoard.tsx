@@ -589,6 +589,7 @@ function ContributionsPanel({
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
   const update = useUpdateMissionContribution(runId);
+  const [form, setForm] = useState(emptyContribution);
   const [editing, setEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyContribution);
 
