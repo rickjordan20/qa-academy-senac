@@ -171,6 +171,7 @@ function MissionBuilderPage() {
           progress={0}
           state={{ answers: {}, checklist: {}, entries: [] }}
           handlers={{ onAnswer: () => {}, onToggle: () => {}, onAddEntry: () => {}, onDeleteEntry: () => {} }}
+          preview
         />
       </div>
     );
