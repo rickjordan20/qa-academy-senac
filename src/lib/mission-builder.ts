@@ -1002,6 +1002,36 @@ export function useCreateEntry(runId: string) {
   });
 }
 
+/** Edita um registro existente da missão (mesmo id, autoria e vínculos preservados). */
+export function useUpdateEntry(runId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      title: string;
+      status: string;
+      data: Record<string, string>;
+      link?: string | null;
+      featureId?: string | null;
+      parentId?: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("builder_mission_entries")
+        .update({
+          title: input.title,
+          status: input.status,
+          data: input.data as never,
+          feature_id: input.featureId ?? null,
+          parent_id: input.parentId ?? null,
+          link: input.link ?? null,
+        } as never)
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["builder-entries", runId] }),
+  });
+}
+
 export function useDeleteEntry(runId: string) {
   const qc = useQueryClient();
   return useMutation({

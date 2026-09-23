@@ -460,6 +460,20 @@ export function useCreateQaEvidence(scope: QaScope, userId: string | null) {
   });
 }
 
+export function useUpdateQaEvidence(scope: QaScope, userId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<QaEvidenceInput> }) => {
+      const { error } = await supabase.from("qa_evidences").update(patch as never).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa", "evidences", scopeKey(scope, userId)] });
+      qc.invalidateQueries({ queryKey: ["qa-unified"] });
+    },
+  });
+}
+
 export function useDeleteQaEvidence(scope: QaScope, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
