@@ -1012,6 +1012,71 @@ export type Database = {
         }
         Relationships: []
       }
+      cross_test_pairings: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string | null
+          developer_group_id: string
+          id: string
+          mission_id: string
+          section_id: string
+          tester_group_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          developer_group_id: string
+          id?: string
+          mission_id: string
+          section_id: string
+          tester_group_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          developer_group_id?: string
+          id?: string
+          mission_id?: string
+          section_id?: string
+          tester_group_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cross_test_pairings_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cross_test_pairings_developer_group_id_fkey"
+            columns: ["developer_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cross_test_pairings_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cross_test_pairings_tester_group_id_fkey"
+            columns: ["tester_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           class_id: string
@@ -1647,6 +1712,7 @@ export type Database = {
           context: string
           created_at: string
           description: string
+          developer_group_id: string | null
           environment: string
           expected_result: string
           feature_id: string | null
@@ -1654,8 +1720,10 @@ export type Database = {
           id: string
           mission_id: string | null
           obtained_result: string
+          pairing_id: string | null
           priority: string
           project: string
+          section_id: string | null
           severity: string
           status: string
           steps: string
@@ -1669,6 +1737,7 @@ export type Database = {
           context?: string
           created_at?: string
           description?: string
+          developer_group_id?: string | null
           environment?: string
           expected_result?: string
           feature_id?: string | null
@@ -1676,8 +1745,10 @@ export type Database = {
           id?: string
           mission_id?: string | null
           obtained_result?: string
+          pairing_id?: string | null
           priority?: string
           project?: string
+          section_id?: string | null
           severity?: string
           status?: string
           steps?: string
@@ -1691,6 +1762,7 @@ export type Database = {
           context?: string
           created_at?: string
           description?: string
+          developer_group_id?: string | null
           environment?: string
           expected_result?: string
           feature_id?: string | null
@@ -1698,8 +1770,10 @@ export type Database = {
           id?: string
           mission_id?: string | null
           obtained_result?: string
+          pairing_id?: string | null
           priority?: string
           project?: string
+          section_id?: string | null
           severity?: string
           status?: string
           steps?: string
@@ -1708,6 +1782,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_bugs_developer_group_id_fkey"
+            columns: ["developer_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_bugs_feature_id_fkey"
             columns: ["feature_id"]
@@ -1727,6 +1808,13 @@ export type Database = {
             columns: ["mission_id"]
             isOneToOne: false
             referencedRelation: "techeduca_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_bugs_pairing_id_fkey"
+            columns: ["pairing_id"]
+            isOneToOne: false
+            referencedRelation: "cross_test_pairings"
             referencedColumns: ["id"]
           },
           {
@@ -2324,6 +2412,40 @@ export type Database = {
       can_view_group: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
+      }
+      cross_test_claim_bug: { Args: { _bug_id: string }; Returns: string }
+      cross_test_report_bug: {
+        Args: {
+          _assignee_id?: string
+          _description: string
+          _environment?: string
+          _expected_result?: string
+          _feature_id?: string
+          _obtained_result?: string
+          _pairing_id: string
+          _priority?: string
+          _severity?: string
+          _steps?: string
+          _test_case_id?: string
+          _title: string
+        }
+        Returns: string
+      }
+      cross_test_retest: {
+        Args: { _bug_id: string; _notes?: string; _result: string }
+        Returns: string
+      }
+      cross_test_set_assignee: {
+        Args: { _assignee_id: string; _bug_id: string }
+        Returns: undefined
+      }
+      cross_test_status_allowed: {
+        Args: { _from: string; _to: string }
+        Returns: string
+      }
+      cross_test_transition: {
+        Args: { _bug_id: string; _note?: string; _status: string }
+        Returns: undefined
       }
       enroll_student_by_email: {
         Args: { _class_id: string; _email: string }
