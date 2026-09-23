@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MARKDOWN_HINT } from "@/components/missions/RichText";
 import { NativeSelect } from "@/components/missions/DynamicFields";
+import { CrossTestPairingEditor } from "@/components/missions/CrossTestPairingEditor";
 import {
   blockDef,
   uid,
@@ -40,6 +41,8 @@ export function SectionEditor({
   onMove,
   onDuplicate,
   onRemove,
+  missionId,
+  classIds,
 }: {
   section: Section;
   index: number;
@@ -48,6 +51,8 @@ export function SectionEditor({
   onMove: (dir: -1 | 1) => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  missionId?: string | undefined;
+  classIds?: string[] | undefined;
 }) {
   const def = blockDef(section.kind);
   const items = section.items ?? [];
@@ -268,6 +273,14 @@ export function SectionEditor({
               + Pergunta / campo
             </Button>
           </div>
+        ) : null}
+
+        {section.kind === "cross_test" && missionId ? (
+          <CrossTestPairingEditor
+            missionId={missionId}
+            sectionId={section.id}
+            classIds={classIds ?? []}
+          />
         ) : null}
 
         {def.family === "entries" ? (
