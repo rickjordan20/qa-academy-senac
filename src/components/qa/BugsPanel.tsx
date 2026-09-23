@@ -27,6 +27,7 @@ import {
 import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import { useUnifiedBugs, type UnifiedBug } from "@/lib/qa-unified";
+import { useCrossRetest } from "@/lib/cross-test";
 
 const empty = {
   title: "",
@@ -74,6 +75,7 @@ export function BugsPanel({
   const update = useUpdateBug(scope, userId);
   const remove = useDeleteBug(scope, userId);
   const retest = useCreateRetest(scope, userId);
+  const crossRetest = useCrossRetest();
   const { data: retests } = useRetests((qaBugs ?? []).map((b) => b.id));
   const { data: names } = useProfileNames([
     ...(bugs ?? []).flatMap((b) => [b.authorId ?? "", b.assigneeId ?? ""]),
@@ -118,17 +120,22 @@ export function BugsPanel({
     }
   }
 
-  function doRetest(bugId: string, result: "resolvido" | "reaberto") {
-    retest.mutate(
-      { bug_id: bugId, result, notes: retestNotes[bugId] ?? "" },
-      {
-        onSuccess: () => {
-          setRetestNotes((n) => ({ ...n, [bugId]: "" }));
-          toast.success(result === "resolvido" ? "Reteste registrado: resolvido." : "Reteste registrado: reaberto.");
-        },
-        onError: (e) => toast.error(e.message),
+  function doRetest(bug: UnifiedBug, result: "resolvido" | "reaberto") {
+    const bugId = bug.id;
+    const notes = retestNotes[bugId] ?? "";
+    const done = {
+      onSuccess: () => {
+        setRetestNotes((n) => ({ ...n, [bugId]: "" }));
+        toast.success(result === "resolvido" ? "Reteste registrado: resolvido." : "Reteste registrado: reaberto.");
       },
-    );
+      onError: (e: Error) => toast.error(e.message),
+    };
+    // Bugs do teste cruzado usam a RPC transacional (reteste + status na mesma transação).
+    if (bug.pairingId) {
+      crossRetest.mutate({ bugId, result, notes }, done);
+      return;
+    }
+    retest.mutate({ bug_id: bugId, result, notes }, done);
   }
 
   return (
