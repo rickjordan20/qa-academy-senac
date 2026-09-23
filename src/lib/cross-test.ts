@@ -327,6 +327,7 @@ export function useReportCrossBug() {
         _severity: input.severity,
         _priority: input.priority,
         _test_case_id: input.testCaseId,
+        _test_case_source: input.testCaseId ? (input.testCaseSource ?? "qa") : null,
         _feature_id: input.featureId,
         _assignee_id: input.assigneeId,
       });
