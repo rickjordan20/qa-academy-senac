@@ -513,6 +513,33 @@ export function useCreateContribution(
   });
 }
 
+export function useUpdateContribution(runId: string | null) {
+  const invalidate = useRunInvalidator(runId);
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      kind: string;
+      title: string;
+      description: string;
+      link: string | null;
+      task_id: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("cafe_contributions")
+        .update({
+          kind: input.kind,
+          title: input.title,
+          description: input.description,
+          link: input.link,
+          task_id: input.task_id,
+        })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(["contributions"]),
+  });
+}
+
 export function useDeleteContribution(runId: string | null) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
@@ -827,6 +854,35 @@ export function useCreateMissionContribution(
         section_id: input.section_id ?? null,
         scope: input.scope ?? "individual",
       } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate("mission-contributions"),
+  });
+}
+
+export function useUpdateMissionContribution(builderRunId: string | null) {
+  const invalidate = useMissionInvalidator(builderRunId);
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      task_id: string | null;
+      kind: string;
+      title: string;
+      description: string;
+      link: string | null;
+      reflection: string;
+    }) => {
+      const { error } = await supabase
+        .from("cafe_contributions")
+        .update({
+          task_id: input.task_id,
+          kind: input.kind,
+          title: input.title,
+          description: input.description,
+          link: input.link,
+          reflection: input.reflection,
+        } as never)
+        .eq("id", input.id);
       if (error) throw error;
     },
     onSuccess: () => invalidate("mission-contributions"),
