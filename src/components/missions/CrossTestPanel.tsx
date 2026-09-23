@@ -75,6 +75,7 @@ export function CrossTestPanel({
         <TesterArea
           key={p.id}
           pairingId={p.id}
+          missionId={missionId}
           testerGroupId={p.tester_group_id}
           testerName={groupName(p.tester_group_id)}
           devName={groupName(p.developer_group_id)}
@@ -130,7 +131,11 @@ function BugDetails({
         Reportado por {memberName(bug.author_id)} em {new Date(bug.created_at).toLocaleString("pt-BR")}
       </p>
       <p>Desenvolvedor responsável: {memberName(bug.assignee_id)}</p>
-      {bug.test_case_id ? <p>Caso de teste vinculado ✔</p> : <p>Sem caso de teste vinculado</p>}
+      {bug.test_case_id || bug.test_case_entry_id ? (
+        <p>Caso de teste vinculado ✔</p>
+      ) : (
+        <p>Sem caso de teste vinculado</p>
+      )}
       {evidences.length ? (
         <div>
           <p className="font-semibold text-foreground">Evidências</p>
@@ -175,6 +180,7 @@ function BugDetails({
 
 function TesterArea({
   pairingId,
+  missionId,
   testerGroupId,
   testerName,
   devName,
@@ -185,6 +191,7 @@ function TesterArea({
   memberName,
 }: {
   pairingId: string;
+  missionId: string;
   testerGroupId: string;
   testerName: string;
   devName: string;
@@ -197,7 +204,7 @@ function TesterArea({
   const report = useReportCrossBug();
   const retest = useCrossRetest();
   const addEvidence = useAddCrossEvidence();
-  const { data: cases } = useLinkableCases(testerGroupId, userId);
+  const { data: cases } = useLinkableCases(missionId, testerGroupId, userId);
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -279,7 +286,7 @@ function TesterArea({
                 <option value="">Sem vínculo</option>
                 {(cases ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.title}
+                    {c.label}
                   </option>
                 ))}
               </NativeSelect>
@@ -316,6 +323,7 @@ function TesterArea({
                     severity: form.severity,
                     priority: form.priority,
                     testCaseId: form.caseId || null,
+                    testCaseSource: (cases ?? []).find((c) => c.id === form.caseId)?.source ?? null,
                     featureId: (cases ?? []).find((c) => c.id === form.caseId)?.feature_id ?? null,
                     assigneeId: form.assignee || null,
                   });

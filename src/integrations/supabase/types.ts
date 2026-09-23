@@ -1727,7 +1727,9 @@ export type Database = {
           severity: string
           status: string
           steps: string
+          test_case_entry_id: string | null
           test_case_id: string | null
+          test_case_source: string | null
           title: string
           updated_at: string
         }
@@ -1752,7 +1754,9 @@ export type Database = {
           severity?: string
           status?: string
           steps?: string
+          test_case_entry_id?: string | null
           test_case_id?: string | null
+          test_case_source?: string | null
           title: string
           updated_at?: string
         }
@@ -1777,7 +1781,9 @@ export type Database = {
           severity?: string
           status?: string
           steps?: string
+          test_case_entry_id?: string | null
           test_case_id?: string | null
+          test_case_source?: string | null
           title?: string
           updated_at?: string
         }
@@ -1815,6 +1821,13 @@ export type Database = {
             columns: ["pairing_id"]
             isOneToOne: false
             referencedRelation: "cross_test_pairings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_bugs_test_case_entry_id_fkey"
+            columns: ["test_case_entry_id"]
+            isOneToOne: false
+            referencedRelation: "builder_mission_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2423,23 +2436,42 @@ export type Database = {
         Returns: boolean
       }
       cross_test_claim_bug: { Args: { _bug_id: string }; Returns: string }
-      cross_test_report_bug: {
-        Args: {
-          _assignee_id?: string
-          _description: string
-          _environment?: string
-          _expected_result?: string
-          _feature_id?: string
-          _obtained_result?: string
-          _pairing_id: string
-          _priority?: string
-          _severity?: string
-          _steps?: string
-          _test_case_id?: string
-          _title: string
-        }
-        Returns: string
-      }
+      cross_test_report_bug:
+        | {
+            Args: {
+              _assignee_id?: string
+              _description: string
+              _environment?: string
+              _expected_result?: string
+              _feature_id?: string
+              _obtained_result?: string
+              _pairing_id: string
+              _priority?: string
+              _severity?: string
+              _steps?: string
+              _test_case_id?: string
+              _title: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _assignee_id?: string
+              _description: string
+              _environment?: string
+              _expected_result?: string
+              _feature_id?: string
+              _obtained_result?: string
+              _pairing_id: string
+              _priority?: string
+              _severity?: string
+              _steps?: string
+              _test_case_id?: string
+              _test_case_source?: string
+              _title: string
+            }
+            Returns: string
+          }
       cross_test_retest: {
         Args: { _bug_id: string; _notes?: string; _result: string }
         Returns: string
@@ -2528,6 +2560,10 @@ export type Database = {
         Returns: boolean
       }
       shares_class: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
+      shares_cross_test_pairing: {
         Args: { _target: string; _viewer: string }
         Returns: boolean
       }
