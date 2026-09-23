@@ -2,13 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
 import { blockDef, type ChecklistItemDef, type Section } from "@/lib/mission-builder";
 import {
   eventText,
   answerSummary,
   fmtDateTime,
   runSituation,
+  useRunEvaluations,
   useSubmission,
+  type BlockResult,
 } from "@/lib/mission-submissions";
 
 export const Route = createFileRoute("/student/missions/$runId")({
@@ -27,16 +30,56 @@ export const Route = createFileRoute("/student/missions/$runId")({
 
 export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: React.ReactNode }) {
   const { data, isPending } = useSubmission(runId);
+  const { data: evaluations, isPending: evaluationsPending } = useRunEvaluations(runId);
 
-  if (isPending) return <p className="text-sm text-muted-foreground">Carregando envio...</p>;
+  if (isPending || evaluationsPending) return <p className="text-sm text-muted-foreground">Carregando envio...</p>;
   if (!data) return <p className="text-sm text-muted-foreground">Envio não encontrado.</p>;
 
   const { run, entries, events, members, names } = data;
   const sections = (run.mission?.sections ?? []) as Section[];
   const sit = runSituation(run);
   const answers = answerSummary(sections, run.answers);
+  const answersBySection = new Map(answers.map((answer) => [answer.section.id, answer.pairs]));
+  const entriesBySection = new Map(
+    sections.map((section) => [section.id, entries.filter((entry) => entry.section_id === section.id)]),
+  );
+  const currentEvaluation = evaluations?.find((evaluation) => evaluation.is_current) ?? null;
+  const resultsBySection = new Map(
+    (currentEvaluation?.block_results ?? []).map((result) => [result.section_id, result]),
+  );
 
-  const checklistBlocks = sections.filter((s) => s.kind === "checklist");
+  function BlockEvaluation({ result }: { result: BlockResult | undefined }) {
+    const concepts = Object.entries(result?.indicators ?? {}).filter(([, concept]) => concept);
+    if (!result || concepts.length === 0) return null;
+    const needsAttention = concepts.some(([, concept]) => concept === "PA" || concept === "NA");
+
+    return (
+      <div
+        className={`mb-4 border-l-4 p-3 ${
+          needsAttention ? "border-warning bg-warning/10" : "border-success bg-success/10"
+        }`}
+      >
+        <p className="text-xs font-semibold text-muted-foreground">Resultado do bloco</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {concepts.map(([code, concept]) => (
+            <span key={code} className="inline-flex items-center gap-1.5 text-xs">
+              <span className="font-semibold">{code}</span>
+              <ConceptBadge concept={concept as Concept} full />
+            </span>
+          ))}
+        </div>
+        {result.comment.trim() ? (
+          <div className={`mt-3 border-t pt-3 ${needsAttention ? "border-warning/30" : "border-success/30"}`}>
+            <p className="text-xs font-semibold">Feedback do instrutor</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm">{result.comment}</p>
+            {needsAttention ? (
+              <p className="mt-2 text-xs font-medium text-warning">Revise este bloco seguindo as orientações acima.</p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl space-y-5">
@@ -85,22 +128,6 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
             </p>
           </CardContent>
         </Card>
-      ) : run.eval_status === "evaluated" || run.feedback ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Avaliação do instrutor</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-muted-foreground">
-              Situação: {sit.label} · XP concedido: {run.xp_awarded ?? 0} · Avaliada em {fmtDateTime(run.evaluated_at)}
-            </p>
-            <p className="whitespace-pre-wrap">{run.feedback || "Sem comentários."}</p>
-            <p className="text-xs text-muted-foreground">
-              A/PA/NA são menções formativas: mostram seu desenvolvimento naquele momento e podem evoluir com novas
-              evidências. As menções aparecem em “Minha Avaliação”.
-            </p>
-          </CardContent>
-        </Card>
       ) : null}
 
       {members.length ? (
@@ -118,50 +145,39 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
         </Card>
       ) : null}
 
-      {checklistBlocks.map((s) => {
-        const items = (s.items ?? []) as ChecklistItemDef[];
+      {sections.map((section) => {
+        const result = resultsBySection.get(section.id);
+        const pairs = answersBySection.get(section.id) ?? [];
+        const sectionEntries = entriesBySection.get(section.id) ?? [];
+        const checklistItems = section.kind === "checklist" ? ((section.items ?? []) as ChecklistItemDef[]) : [];
+        const hasSubmittedContent = checklistItems.length > 0 || pairs.length > 0 || sectionEntries.length > 0;
+        if (!result && !hasSubmittedContent) return null;
+
         return (
-          <Card key={s.id}>
+          <Card key={section.id}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">✅ {s.title}</CardTitle>
+              <CardTitle className="text-base">
+                {blockDef(section.kind).icon} {section.title}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              {items.map((i) => (
-                <p key={i.id} className={run.checklist_state?.[i.id] ? "" : "text-muted-foreground"}>
-                  {run.checklist_state?.[i.id] ? "☑" : "☐"} {i.label}
+            <CardContent className="space-y-3 text-sm">
+              <BlockEvaluation result={result} />
+
+              {checklistItems.map((item) => (
+                <p key={item.id} className={run.checklist_state?.[item.id] ? "" : "text-muted-foreground"}>
+                  {run.checklist_state?.[item.id] ? "☑" : "☐"} {item.label}
                 </p>
               ))}
-            </CardContent>
-          </Card>
-        );
-      })}
 
-      {answers.map(({ section, pairs }) => (
-        <Card key={section.id}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {blockDef(section.kind).icon} {section.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            {pairs.map((p) => (
-              <div key={p.label}>
-                <p className="text-xs font-semibold text-muted-foreground">{p.label}</p>
-                <p className="whitespace-pre-wrap">{p.value}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
+              {pairs.map((pair) => (
+                <div key={pair.label}>
+                  <p className="text-xs font-semibold text-muted-foreground">{pair.label}</p>
+                  <p className="whitespace-pre-wrap">{pair.value}</p>
+                </div>
+              ))}
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Registros e evidências ({entries.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          {entries.length === 0 ? <p className="text-muted-foreground">Nenhum registro enviado.</p> : null}
-          {entries.map((e) => (
-            <div key={e.id} className="rounded-md border border-border p-3">
+              {sectionEntries.map((e) => (
+                <div key={e.id} className="rounded-md border border-border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
                   {blockDef(e.kind).icon} {e.title || blockDef(e.kind).label}
@@ -199,10 +215,39 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
                   </a>
                 </Button>
               ) : null}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+                </div>
+              ))}
+
+              {!hasSubmittedContent ? (
+                <p className="text-muted-foreground">Nenhum conteúdo registrado neste bloco.</p>
+              ) : null}
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {run.eval_status === "evaluated" || run.feedback ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Resultado geral da missão</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="text-muted-foreground">
+              Situação: {sit.label} · XP concedido: {run.xp_awarded ?? 0} · Avaliada em {fmtDateTime(run.evaluated_at)}
+            </p>
+            {run.feedback ? (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground">Feedback geral do instrutor</p>
+                <p className="mt-1 whitespace-pre-wrap">{run.feedback}</p>
+              </div>
+            ) : null}
+            <p className="text-xs text-muted-foreground">
+              A/PA/NA são menções formativas: mostram seu desenvolvimento naquele momento e podem evoluir com novas
+              evidências. As menções aparecem em “Minha Avaliação”.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="pb-2">
