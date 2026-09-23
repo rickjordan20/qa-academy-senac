@@ -71,6 +71,8 @@ function StudentMissionPage() {
   }, [isCafe, groupId, groups]);
 
   const group = (groups ?? []).find((g) => g.id === groupId) ?? null;
+  const myGroupIds = (groups ?? []).map((g) => g.id as string);
+  const myClassIds = Array.from(new Set((groups ?? []).map((g) => g.class_id as string)));
 
   const { data: run } = useMyRun(mission ?? null, userId, groupId);
   const start = useStartRun(mission!, userId!, groupId);
