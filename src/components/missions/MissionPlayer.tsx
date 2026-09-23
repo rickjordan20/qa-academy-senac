@@ -221,6 +221,7 @@ function SectionCard({
   sectionExtra,
   entryFilter,
   pickers,
+  preview = false,
 }: {
   section: Section;
   index: number;
@@ -232,8 +233,10 @@ function SectionCard({
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
   entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
   pickers?: MissionPickers | undefined;
+  preview?: boolean;
 }) {
   const def = blockDef(section.kind);
+  const isCross = section.kind === "cross_test";
   const answers = state.answers[section.id] ?? {};
   const entries = state.entries.filter(
     (e) => e.section_id === section.id && (entryFilter ? entryFilter(section, e) : true),
@@ -319,12 +322,22 @@ function SectionCard({
           </div>
         ) : null}
 
+        {isCross && preview ? (
+          <div className="rounded-lg border border-border bg-secondary/30 p-3 text-sm text-muted-foreground">
+            🔀 Fluxo Dev × Tester. Na pré-visualização não há aluno nem grupo real: as equipes, os bugs recebidos, a
+            atribuição de responsável e o reteste aparecem apenas para um aluno que pertença a um grupo com
+            pareamento configurado neste bloco.
+          </div>
+        ) : null}
+
         {def.family === "entries" ? (
           <div className="space-y-3">
             {entries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum registro ainda. Mínimo esperado: {section.minItems ?? 1}.
-              </p>
+              isCross ? null : (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum registro ainda. Mínimo esperado: {section.minItems ?? 1}.
+                </p>
+              )
             ) : (
               <ul className="space-y-2">
                 {entries.map((e) => (
@@ -371,7 +384,7 @@ function SectionCard({
                 ))}
               </ul>
             )}
-            {!readOnly ? (
+            {!readOnly && !isCross ? (
               <EntryForm
                 section={section}
                 fields={def.fields ?? []}
@@ -404,6 +417,7 @@ export function MissionPlayer({
   sectionExtra,
   entryFilter,
   pickers,
+  preview = false,
 }: {
   mission: BuilderMission;
   state: PlayerState;
@@ -415,6 +429,8 @@ export function MissionPlayer({
   sectionExtra?: ((section: Section) => React.ReactNode) | undefined;
   entryFilter?: ((section: Section, entry: MissionEntry) => boolean) | undefined;
   pickers?: MissionPickers | undefined;
+  /** Pré-visualização do instrutor: não há aluno/grupo real. */
+  preview?: boolean;
 }) {
   const sections = (mission.sections ?? []).filter((s) => s.visible);
   return (
@@ -450,6 +466,7 @@ export function MissionPlayer({
           sectionExtra={sectionExtra}
           entryFilter={entryFilter}
           pickers={pickers}
+          preview={preview}
 
         />
       ))}
