@@ -75,6 +75,7 @@ export function CrossTestPanel({
         <TesterArea
           key={p.id}
           pairingId={p.id}
+          missionId={missionId}
           testerGroupId={p.tester_group_id}
           testerName={groupName(p.tester_group_id)}
           devName={groupName(p.developer_group_id)}
