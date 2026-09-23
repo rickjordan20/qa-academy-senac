@@ -2392,6 +2392,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      builder_entry_can_edit: {
+        Args: {
+          _author: string
+          _group_id: string
+          _run_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       builder_mission_open: { Args: { _mission_id: string }; Returns: boolean }
       builder_mission_visible: {
         Args: { _mission_id: string; _user_id: string }
