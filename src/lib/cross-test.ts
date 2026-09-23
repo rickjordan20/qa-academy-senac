@@ -39,6 +39,8 @@ export type CrossBug = {
   developer_group_id: string | null;
   pairing_id: string | null;
   test_case_id: string | null;
+  test_case_entry_id: string | null;
+  test_case_source: string | null;
   section_id: string | null;
   created_at: string;
 };

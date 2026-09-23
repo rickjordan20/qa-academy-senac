@@ -131,7 +131,11 @@ function BugDetails({
         Reportado por {memberName(bug.author_id)} em {new Date(bug.created_at).toLocaleString("pt-BR")}
       </p>
       <p>Desenvolvedor responsável: {memberName(bug.assignee_id)}</p>
-      {bug.test_case_id ? <p>Caso de teste vinculado ✔</p> : <p>Sem caso de teste vinculado</p>}
+      {bug.test_case_id || bug.test_case_entry_id ? (
+        <p>Caso de teste vinculado ✔</p>
+      ) : (
+        <p>Sem caso de teste vinculado</p>
+      )}
       {evidences.length ? (
         <div>
           <p className="font-semibold text-foreground">Evidências</p>
