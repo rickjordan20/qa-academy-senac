@@ -42,7 +42,10 @@ export type PlayerHandlers = {
   onAnswer: (sectionId: string, key: string, value: string) => void;
   onToggle: (itemId: string, value: boolean) => void;
   onAddEntry: (section: Section, values: Record<string, string>) => Promise<void> | void;
+  onUpdateEntry?: (section: Section, entry: MissionEntry, values: Record<string, string>) => Promise<void> | void;
   onDeleteEntry: (id: string) => void;
+  /** Autorização de edição/exclusão do registro (autor ou integrante do grupo). */
+  canEditEntry?: (entry: MissionEntry) => boolean;
 };
 
 function EntryForm({
@@ -51,20 +54,26 @@ function EntryForm({
   disabled,
   pickers,
   onSubmit,
+  initial,
+  onCancel,
 }: {
   section: Section;
   fields: FieldDef[];
   disabled: boolean;
   pickers?: MissionPickers | undefined;
   onSubmit: (values: Record<string, string>) => void;
+  /** Modo edição: valores atuais do registro. */
+  initial?: Record<string, string> | undefined;
+  onCancel?: (() => void) | undefined;
 }) {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [open, setOpen] = useState(false);
+  const editMode = !!initial;
+  const [values, setValues] = useState<Record<string, string>>(initial ?? {});
+  const [open, setOpen] = useState(editMode);
 
   const featureOptions = pickers?.features ?? [];
   const caseOptions = pickers?.cases ?? [];
 
-  if (!open)
+  if (!open && !editMode)
     return (
       <Button size="sm" disabled={disabled} onClick={() => setOpen(true)}>
         + Adicionar {blockDef(section.kind).label.toLowerCase()}
@@ -196,13 +205,22 @@ function EntryForm({
               }
             }
             onSubmit(values);
-            setValues({});
-            setOpen(false);
+            if (!editMode) {
+              setValues({});
+              setOpen(false);
+            }
           }}
         >
-          Salvar registro
+          {editMode ? "Salvar alterações" : "Salvar registro"}
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            setOpen(false);
+            onCancel?.();
+          }}
+        >
           Cancelar
         </Button>
       </div>
@@ -351,10 +369,33 @@ function SectionCard({
                           {e.status ? ` · ${e.status}` : ""}
                         </p>
                       </div>
-                      {!readOnly ? (
-                        <Button size="sm" variant="ghost" onClick={() => handlers.onDeleteEntry(e.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      {!readOnly && (handlers.canEditEntry?.(e) ?? true) ? (
+                        <div className="flex items-center gap-1">
+                          {handlers.onUpdateEntry ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingEntry(editingEntry === e.id ? null : e.id)}
+                            >
+                              {editingEntry === e.id ? "Cancelar" : "Editar"}
+                            </Button>
+                          ) : null}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  "Tem certeza de que deseja excluir este registro? Esta ação não poderá ser desfeita.",
+                                )
+                              )
+                                return;
+                              handlers.onDeleteEntry(e.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       ) : null}
                     </div>
                     <dl className="mt-2 grid gap-1 sm:grid-cols-2">
@@ -379,6 +420,26 @@ function SectionCard({
                     ) : null}
                     {e.file_path ? (
                       <p className="mt-1 text-xs text-muted-foreground">Arquivo anexado (registro antigo)</p>
+                    ) : null}
+                    {editingEntry === e.id && handlers.onUpdateEntry && !readOnly ? (
+                      <div className="mt-3">
+                        <EntryForm
+                          section={section}
+                          fields={def.fields ?? []}
+                          pickers={pickers}
+                          disabled={readOnly}
+                          initial={{
+                            ...(e.data ?? {}),
+                            ...(e.feature_id ? { feature_id: e.feature_id } : {}),
+                            ...(e.parent_id ? { case_id: e.parent_id } : {}),
+                          }}
+                          onCancel={() => setEditingEntry(null)}
+                          onSubmit={async (values) => {
+                            await handlers.onUpdateEntry?.(section, e, values);
+                            setEditingEntry(null);
+                          }}
+                        />
+                      </div>
                     ) : null}
                   </li>
                 ))}
