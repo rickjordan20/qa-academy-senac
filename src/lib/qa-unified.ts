@@ -340,6 +340,8 @@ export type UnifiedBug = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  /** Bug pertencente ao fluxo de teste cruzado (reteste só via RPC transacional). */
+  pairingId: string | null;
   createdAt: string;
   updatedAt: string | null;
 };
@@ -464,6 +466,7 @@ export function useUnifiedBugs(scope: QaScope, userId: string | null) {
         missionId: (b["mission_id"] as string | null) ?? null,
         missionTitle: null,
         runId: null,
+        pairingId: (b["pairing_id"] as string | null) ?? null,
         createdAt: String(b["created_at"]),
         updatedAt: (b["updated_at"] as string | null) ?? null,
       }));
@@ -496,6 +499,7 @@ export function useUnifiedBugs(scope: QaScope, userId: string | null) {
             missionId: e.mission_id,
             missionTitle: missionTitles[e.mission_id] ?? null,
             runId: e.run_id,
+            pairingId: null,
             createdAt: e.created_at,
             updatedAt: e.updated_at,
           };
