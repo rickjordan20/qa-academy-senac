@@ -187,6 +187,7 @@ function TesterArea({
   memberName,
 }: {
   pairingId: string;
+  missionId: string;
   testerGroupId: string;
   testerName: string;
   devName: string;
@@ -199,7 +200,7 @@ function TesterArea({
   const report = useReportCrossBug();
   const retest = useCrossRetest();
   const addEvidence = useAddCrossEvidence();
-  const { data: cases } = useLinkableCases(testerGroupId, userId);
+  const { data: cases } = useLinkableCases(missionId, testerGroupId, userId);
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
