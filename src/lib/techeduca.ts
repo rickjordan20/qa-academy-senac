@@ -286,6 +286,27 @@ export function useCreateEvidence(userId: string | null) {
   });
 }
 
+export function useUpdateEvidence(userId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      title: string;
+      description: string | null;
+      link: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("techeduca_evidences")
+        .update({ title: input.title, description: input.description, link: input.link })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["techeduca", "evidences", userId] });
+    },
+  });
+}
+
 export function useDeleteEvidence(userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
