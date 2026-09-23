@@ -134,7 +134,10 @@ export function useCrossGroups(classIds: string[]) {
           id: r.id,
           name: r.name,
           class_id: r.class_id,
-          members: ids2.map((sid) => ({ student_id: sid, name: nameOf.get(sid) ?? "Aluno" })),
+          members: ids2.map((sid) => ({
+            student_id: sid,
+            name: nameOf.get(sid) ?? "Nome indisponível (perfil não acessível)",
+          })),
         };
       });
     },
