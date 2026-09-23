@@ -312,6 +312,7 @@ export function useReportCrossBug() {
       severity: string;
       priority: string;
       testCaseId: string | null;
+      testCaseSource: "qa" | "mission" | null;
       featureId: string | null;
       assigneeId: string | null;
     }) => {
