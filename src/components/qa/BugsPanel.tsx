@@ -393,15 +393,25 @@ export function BugsPanel({
                           value={retestNotes[b.id] ?? ""}
                           onChange={(e) => setRetestNotes((n) => ({ ...n, [b.id]: e.target.value }))}
                         />
+                        {b.pairingId ? (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Bug de teste cruzado: o reteste é registrado junto com a mudança de situação, em uma única
+                            operação protegida.
+                          </p>
+                        ) : null}
                         <div className="mt-2 flex gap-2">
-                          <Button size="sm" disabled={retest.isPending} onClick={() => doRetest(b.id, "resolvido")}>
+                          <Button
+                            size="sm"
+                            disabled={retest.isPending || crossRetest.isPending}
+                            onClick={() => doRetest(b, "resolvido")}
+                          >
                             Resolvido
                           </Button>
                           <Button
                             size="sm"
                             variant="secondary"
-                            disabled={retest.isPending}
-                            onClick={() => doRetest(b.id, "reaberto")}
+                            disabled={retest.isPending || crossRetest.isPending}
+                            onClick={() => doRetest(b, "reaberto")}
                           >
                             Reabrir
                           </Button>
