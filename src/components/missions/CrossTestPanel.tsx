@@ -282,7 +282,7 @@ function TesterArea({
                 <option value="">Sem vínculo</option>
                 {(cases ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.title}
+                    {c.label}
                   </option>
                 ))}
               </NativeSelect>
@@ -319,6 +319,7 @@ function TesterArea({
                     severity: form.severity,
                     priority: form.priority,
                     testCaseId: form.caseId || null,
+                    testCaseSource: (cases ?? []).find((c) => c.id === form.caseId)?.source ?? null,
                     featureId: (cases ?? []).find((c) => c.id === form.caseId)?.feature_id ?? null,
                     assigneeId: form.assignee || null,
                   });
