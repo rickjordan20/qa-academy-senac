@@ -1,29 +1,29 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { BarChart3, BookOpen, ClipboardCheck, Home, Settings, TestTube2, Trophy } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardCheck, FlaskConical, Home, Users } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";
 
 /** Todas as rotas do instrutor (mantidas exatamente como já existiam). */
 const items: NavItem[] = [
-  { to: "/instructor/dashboard", label: "Dashboard" },
+  { to: "/instructor/dashboard", label: "Início" },
   { to: "/instructor/classes", label: "Turmas" },
   { to: "/instructor/students", label: "Alunos" },
-  { to: "/instructor/groups", label: "Grupos" },
-  { to: "/instructor/cafe", label: "Café Central" },
-  { to: "/instructor/missions", label: "Missões" },
+  { to: "/instructor/groups", label: "Grupos & Equipes" },
+  { to: "/instructor/cafe", label: "Painel do Café Central" },
+  { to: "/instructor/missions", label: "Gestão de Missões" },
   { to: "/instructor/async", label: "Atividades Assíncronas" },
-  { to: "/instructor/submissions", label: "Central de Avaliação" },
-  { to: "/instructor/features", label: "Funcionalidades" },
-  { to: "/instructor/inventory", label: "Inventário" },
-  { to: "/instructor/qa", label: "Módulos QA" },
-  { to: "/instructor/gamification", label: "Gamificação" },
-  { to: "/instructor/badges", label: "Badges" },
-  { to: "/instructor/evaluations", label: "Matriz de Avaliação" },
+  { to: "/instructor/submissions", label: "Entregas dos Alunos" },
+  { to: "/instructor/features", label: "Funcionalidades do Sistema" },
+  { to: "/instructor/inventory", label: "Inventário da Aplicação" },
+  { to: "/instructor/qa", label: "Central de QA" },
+  { to: "/instructor/gamification", label: "Gamificação & XP" },
+  { to: "/instructor/badges", label: "Catálogo de Badges" },
+  { to: "/instructor/evaluations", label: "Matriz de Indicadores" },
   { to: "/instructor/dossier", label: "Dossiê do Aluno" },
   { to: "/instructor/final", label: "Avaliação Final" },
   { to: "/instructor/recovery", label: "Recuperação" },
-  { to: "/instructor/portfolios", label: "Portfólios" },
-  { to: "/instructor/reports", label: "Relatórios" },
+  { to: "/instructor/portfolios", label: "Portfólios da Turma" },
+  { to: "/instructor/reports", label: "Relatórios Pedagógicos" },
   { to: "/instructor/reports/deliveries", label: "Entregas por Missão" },
   { to: "/instructor/reports/closure", label: "Fechamento da UC10" },
 
@@ -32,64 +32,58 @@ const items: NavItem[] = [
 
 /** Agrupamento apenas visual do menu — as rotas continuam as mesmas. */
 const groups: NavGroup[] = [
-  { label: "Dashboard", icon: Home, to: "/instructor/dashboard" },
+  { label: "Início", icon: Home, to: "/instructor/dashboard" },
   {
-    label: "Ensino",
+    label: "Gestão da Turma",
+    icon: Users,
+    items: [
+      { to: "/instructor/classes", label: "Turmas" },
+      { to: "/instructor/students", label: "Alunos" },
+      { to: "/instructor/groups", label: "Grupos & Equipes" },
+    ],
+  },
+  {
+    label: "Aulas & Missões",
     icon: BookOpen,
     items: [
-      { to: "/instructor/missions", label: "Missões" },
+      { to: "/instructor/missions", label: "Gestão de Missões" },
       { to: "/instructor/async", label: "Atividades Assíncronas" },
-      { to: "/instructor/cafe", label: "Café Central" },
     ],
   },
   {
-    label: "Projeto e QA",
-    icon: TestTube2,
+    label: "Prática de QA & Café Central",
+    icon: FlaskConical,
     items: [
-      { to: "/instructor/qa", label: "Módulos QA" },
-      { to: "/instructor/inventory", label: "Inventário" },
-      { to: "/instructor/features", label: "Funcionalidades" },
+      { to: "/instructor/qa", label: "Central de QA" },
+      { to: "/instructor/inventory", label: "Inventário da Aplicação" },
+      { to: "/instructor/features", label: "Funcionalidades do Sistema" },
+      { to: "/instructor/cafe", label: "Painel do Café Central" },
     ],
   },
   {
-    label: "Avaliação",
+    label: "Avaliação & Fechamento",
     icon: ClipboardCheck,
     items: [
-      { to: "/instructor/submissions", label: "Central de Avaliação" },
-      { to: "/instructor/evaluations", label: "Matriz de Avaliação" },
+      { to: "/instructor/submissions", label: "Entregas dos Alunos" },
+      { to: "/instructor/evaluations", label: "Matriz de Indicadores" },
       { to: "/instructor/dossier", label: "Dossiê do Aluno" },
       { to: "/instructor/final", label: "Avaliação Final" },
       { to: "/instructor/recovery", label: "Recuperação" },
-    ],
-  },
-  {
-    label: "Resultados",
-    icon: BarChart3,
-    items: [
-      { to: "/instructor/portfolios", label: "Portfólios" },
-      { to: "/instructor/reports", label: "Relatórios" },
-      { to: "/instructor/reports/deliveries", label: "Entregas por Missão" },
       { to: "/instructor/reports/closure", label: "Fechamento da UC10" },
     ],
   },
   {
-    label: "Engajamento",
-    icon: Trophy,
+    label: "Relatórios & Engajamento",
+    icon: BarChart3,
     items: [
-      { to: "/instructor/gamification", label: "Gamificação" },
-      { to: "/instructor/badges", label: "Badges" },
-    ],
-  },
-  {
-    label: "Gestão",
-    icon: Settings,
-    items: [
-      { to: "/instructor/classes", label: "Turmas" },
-      { to: "/instructor/students", label: "Alunos" },
-      { to: "/instructor/groups", label: "Grupos" },
+      { to: "/instructor/reports", label: "Relatórios Pedagógicos" },
+      { to: "/instructor/portfolios", label: "Portfólios da Turma" },
+      { to: "/instructor/gamification", label: "Gamificação & XP" },
+      { to: "/instructor/badges", label: "Catálogo de Badges" },
     ],
   },
 ];
+
 
 export const Route = createFileRoute("/instructor")({
   ssr: false,
