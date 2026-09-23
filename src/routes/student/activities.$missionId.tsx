@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/missions/DynamicFields";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
 import { MissionTaskBoard, SectionAssign } from "@/components/cafe/MissionTaskBoard";
+import { CrossTestPanel } from "@/components/missions/CrossTestPanel";
 import { useAuth } from "@/lib/auth";
 import { useCreateMissionContribution, useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
@@ -346,19 +347,28 @@ function StudentMissionPage() {
         readOnly={readOnly}
         header={header}
         authorName={(id) => names.data?.[id] ?? "aluno"}
-        sectionExtra={
-          isCafe && run && group
-            ? (section) => (
-                <SectionAssign
-                  section={section}
-                  runId={run.id}
-                  missionId={mission.id}
-                  group={group}
-                  userId={userId}
-                />
-              )
-            : undefined
-        }
+        sectionExtra={(section) => (
+          <>
+            {isCafe && run && group ? (
+              <SectionAssign
+                section={section}
+                runId={run.id}
+                missionId={mission.id}
+                group={group}
+                userId={userId}
+              />
+            ) : null}
+            {section.kind === "cross_test" ? (
+              <CrossTestPanel
+                missionId={mission.id}
+                sectionId={section.id}
+                userId={userId}
+                classIds={myClassIds}
+                myGroupIds={myGroupIds}
+              />
+            ) : null}
+          </>
+        )}
         entryFilter={
           isCafe
             ? (section, entry) =>
