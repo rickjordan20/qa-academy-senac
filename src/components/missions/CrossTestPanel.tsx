@@ -176,6 +176,7 @@ function BugDetails({
 
 function TesterArea({
   pairingId,
+  missionId,
   testerGroupId,
   testerName,
   devName,
