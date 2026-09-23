@@ -254,6 +254,7 @@ function SectionCard({
   preview?: boolean;
 }) {
   const def = blockDef(section.kind);
+  const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const isCross = section.kind === "cross_test";
   const answers = state.answers[section.id] ?? {};
   const entries = state.entries.filter(
