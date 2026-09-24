@@ -48,6 +48,12 @@ export type MissionPickers = {
   evidences?: PickerOption[] | undefined;
   /** Bugs já registrados nesta missão. */
   bugs?: PickerOption[] | undefined;
+  /** Casos de teste de missões anteriores visíveis ao usuário. */
+  priorCases?: PickerOption[] | undefined;
+  /** Evidências de missões anteriores visíveis ao usuário. */
+  priorEvidences?: PickerOption[] | undefined;
+  /** Bugs de missões anteriores visíveis ao usuário. */
+  priorBugs?: PickerOption[] | undefined;
 };
 
 export type PlayerHandlers = {
