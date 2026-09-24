@@ -629,30 +629,18 @@ function SectionCard({
                               {editingEntry === e.id ? "Cancelar" : "Editar"}
                             </Button>
                           ) : null}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (
-                                !window.confirm(
-                                  "Tem certeza de que deseja excluir este registro? Esta ação não poderá ser desfeita.",
-                                )
-                              )
-                                return;
-                              handlers.onDeleteEntry(e.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <DeleteEntryButton onConfirm={() => handlers.onDeleteEntry(e.id)} />
                         </div>
                       ) : null}
                     </div>
                     <dl className="mt-2 grid gap-1 sm:grid-cols-2">
                       {Object.entries(e.data ?? {})
-                        .filter(([, v]) => (v ?? "").toString().trim())
+                        .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
                         .map(([k, v]) => (
                           <div key={k}>
-                            <dt className="text-xs uppercase text-muted-foreground">{k}</dt>
+                            <dt className="text-xs uppercase text-muted-foreground">
+                              {entryFieldLabel(section.kind, k)}
+                            </dt>
                             <dd><RichText text={String(v)} className="space-y-1 text-sm leading-relaxed text-foreground" /></dd>
                           </div>
                         ))}
