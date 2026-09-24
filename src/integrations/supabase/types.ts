@@ -1500,6 +1500,130 @@ export type Database = {
           },
         ]
       }
+      google_classroom_class_links: {
+        Row: {
+          class_id: string
+          classroom_course_id: string
+          classroom_course_name: string
+          classroom_section: string | null
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          linked_by: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          classroom_course_id: string
+          classroom_course_name?: string
+          classroom_section?: string | null
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          linked_by: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          classroom_course_id?: string
+          classroom_course_name?: string
+          classroom_section?: string | null
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          linked_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_classroom_class_links_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: true
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_classroom_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          google_email: string
+          google_user_id: string | null
+          id: string
+          instructor_id: string
+          token_expires_at: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          google_email: string
+          google_user_id?: string | null
+          id?: string
+          instructor_id: string
+          token_expires_at: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          google_email?: string
+          google_user_id?: string | null
+          id?: string
+          instructor_id?: string
+          token_expires_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      google_classroom_student_links: {
+        Row: {
+          class_id: string
+          classroom_email: string
+          classroom_name: string
+          classroom_user_id: string
+          created_at: string
+          id: string
+          linked_by: string
+          match_type: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          classroom_email?: string
+          classroom_name?: string
+          classroom_user_id: string
+          created_at?: string
+          id?: string
+          linked_by: string
+          match_type: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          classroom_email?: string
+          classroom_name?: string
+          classroom_user_id?: string
+          created_at?: string
+          id?: string
+          linked_by?: string
+          match_type?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_classroom_student_links_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           created_at: string
