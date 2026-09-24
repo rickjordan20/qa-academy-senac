@@ -16,7 +16,20 @@ import {
 } from "@/components/missions/DynamicFields";
 import { RichText } from "@/components/missions/RichText";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   blockDef,
+  entryFieldLabel,
+  HIDDEN_ENTRY_KEYS,
   type BuilderMission,
   type ChecklistItemDef,
   type FieldDef,
