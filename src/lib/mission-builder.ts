@@ -184,6 +184,23 @@ const BUG_STATUS = [
 ];
 const CASE_STATUS = ["Não executado", "Aprovado", "Reprovado", "Bloqueado"];
 
+/** Critérios de acessibilidade usados no bloco ♿ Acessibilidade. */
+export const A11Y_CRITERIA = [
+  "Contraste de cores",
+  "Tamanho e legibilidade do texto",
+  "Texto alternativo em imagens",
+  "Rótulos de campos de formulário",
+  "Mensagens de erro compreensíveis",
+  "Navegação por teclado",
+  "Foco visível",
+  "Ordem de leitura e hierarquia de títulos",
+  "Links e botões com descrição clara",
+  "Responsividade e zoom",
+  "Uso de cor como único indicador",
+  "Tempo suficiente para interação",
+  "Outro",
+];
+
 export const BLOCK_CATALOG: BlockDef[] = [
   { kind: "content", icon: "📖", label: "Conteúdo", family: "content", group: "Conteúdo", defaultTitle: "Conteúdo" },
   { kind: "objective", icon: "🎯", label: "Objetivo", family: "content", group: "Conteúdo", defaultTitle: "Objetivo" },
