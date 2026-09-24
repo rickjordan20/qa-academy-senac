@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fmtMissionDateTime, missionSituation } from "@/lib/mission-schedule";
+import { fmtMissionDateTime, isMissionLocked, missionSituation } from "@/lib/mission-schedule";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,9 @@ function StudentMissionPage() {
   /** Entrega aguardando avaliação ou já avaliada bloqueia edição; revisão reabre. */
   const lockedByDelivery =
     !!run && (run.eval_status === "evaluated" || (!!run.submitted_at && run.eval_status !== "revision"));
-  const readOnly = mission?.status !== "published" || !run || lockedByDelivery;
+  /** Antes da abertura configurada: nada pode ser aberto, gravado ou entregue. */
+  const beforeOpening = !!mission && isMissionLocked(mission) && run?.eval_status !== "revision";
+  const readOnly = mission?.status !== "published" || !run || lockedByDelivery || beforeOpening;
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
