@@ -34,6 +34,20 @@ export const Route = createFileRoute("/instructor/classes/$classId")({
 function ClassDetail() {
   const { classId } = Route.useParams();
   const queryClient = useQueryClient();
+  const [classroomOpen, setClassroomOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get("gclassroom");
+    if (!flag) return;
+    if (flag === "connected") toast.success("Conta Google conectada.");
+    else if (flag === "denied") toast.error("Autorização do Google cancelada.");
+    else toast.error("Não foi possível concluir a conexão com o Google.");
+    setClassroomOpen(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
 
   const { data: turma } = useQuery({
     queryKey: ["class", classId],
