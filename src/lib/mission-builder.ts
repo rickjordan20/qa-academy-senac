@@ -442,7 +442,7 @@ export const BLOCK_CATALOG: BlockDef[] = [
         key: "status",
         label: "Resultado",
         type: "select",
-        options: ["Atende", "Parcialmente atende", "Não atende", "Não se aplica", "Conforme", "Parcial", "Não conforme"],
+        options: ["Atende", "Parcialmente atende", "Não atende", "Não se aplica"],
       },
       { key: "problema", label: "Problema", type: "textarea", placeholder: "Ex.: Descreva a barreira encontrada." },
       {
