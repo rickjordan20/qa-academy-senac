@@ -139,6 +139,7 @@ function StudentMissionPage() {
           (e.data?.["funcionalidade"] ?? "");
         return {
           value: e.id,
+          group: "Missão atual",
           label: `CT-${String(i + 1).padStart(3, "0")} — ${e.title || "(sem título)"}`,
           expected: e.data?.["esperado"] ?? "",
           featureId: e.feature_id,
