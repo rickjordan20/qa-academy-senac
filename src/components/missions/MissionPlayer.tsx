@@ -116,29 +116,40 @@ function EntryForm({
             !!pickers;
           const optionalCase = section.kind === "bug";
 
-          if (isFeaturePicker)
+          if (isFeaturePicker) {
+            const allowManual = section.kind !== "test_case";
             return (
-              <div key={f.key}>
+              <div key={f.key} className="space-y-1">
                 <Label className="text-xs">
-                  Funcionalidade<span className="text-destructive"> *</span>
+                  {f.label}
+                  {f.required ? <span className="text-destructive"> *</span> : null}
                 </Label>
                 <SearchableSelect
                   value={values["feature_id"] ?? ""}
                   disabled={disabled}
                   options={featureOptions}
-                  placeholder="Selecione uma funcionalidade..."
+                  placeholder={allowManual ? "Selecionar do inventário..." : "Selecione uma funcionalidade..."}
                   emptyMessage="Nenhuma funcionalidade disponível para esta missão. Verifique o Inventário da Aplicação."
                   onChange={(id) => {
                     const opt = featureOptions.find((o) => o.value === id);
                     setValues((s) => ({
                       ...s,
                       feature_id: id,
-                      funcionalidade: opt ? opt.label : "",
+                      [f.key]: opt ? opt.label : (s[f.key] ?? ""),
                     }));
                   }}
                 />
+                {allowManual && !values["feature_id"] ? (
+                  <Input
+                    value={values[f.key] ?? ""}
+                    disabled={disabled}
+                    placeholder="Ou digite a tela/funcionalidade analisada"
+                    onChange={(e) => setValues((s) => ({ ...s, [f.key]: e.target.value }))}
+                  />
+                ) : null}
               </div>
             );
+          }
 
           if (isCasePicker)
             return (
