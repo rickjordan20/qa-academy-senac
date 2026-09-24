@@ -22,6 +22,7 @@ export function SearchableSelect({
   placeholder,
   emptyMessage,
   disabled,
+  trailingOption,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -29,6 +30,8 @@ export function SearchableSelect({
   placeholder: string;
   emptyMessage: string;
   disabled?: boolean | undefined;
+  /** opção fixa exibida sempre por último (ex.: "+ Informar outra funcionalidade") */
+  trailingOption?: PickerOption | undefined;
 }) {
   const [term, setTerm] = useState("");
   const filtered = useMemo(() => {
