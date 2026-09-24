@@ -116,6 +116,32 @@ function A11yGuide() {
 
 const MANUAL_FEATURE = "__manual__";
 
+/** Exclusão de registro com confirmação padrão (não remove artefatos vinculados). */
+function DeleteEntryButton({ onConfirm }: { onConfirm: () => void }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="ghost" aria-label="Excluir registro">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir este registro?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Somente este registro será excluído. Casos de teste, evidências e bugs vinculados continuam salvos.
+            Esta ação não poderá ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Excluir</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 /** Vínculos opcionais (caso de teste, evidência e bug) — seção recolhível. */
 function OptionalLinks({
   values,
