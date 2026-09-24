@@ -60,6 +60,41 @@ export type PlayerHandlers = {
   canEditEntry?: (entry: MissionEntry) => boolean;
 };
 
+/** Apoio didático do bloco de acessibilidade (recolhível, não substitui a análise humana). */
+function A11yGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+      <button
+        type="button"
+        className="font-semibold text-foreground hover:underline"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "▾" : "▸"} Como verificar acessibilidade
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2 text-muted-foreground">
+          <div>
+            <p className="font-semibold text-foreground">Lighthouse (Chrome)</p>
+            <p>
+              Abra a página, pressione F12, vá até a aba Lighthouse, marque “Accessibility” e gere o relatório. O
+              resultado é apenas apoio: cada apontamento precisa ser conferido por você.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Navegação por teclado</p>
+            <p>
+              Use Tab para avançar, Shift+Tab para voltar, Enter e Espaço para acionar. Verifique se o foco está sempre
+              visível e se a ordem faz sentido.
+            </p>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+
 function EntryForm({
   section,
   fields,
