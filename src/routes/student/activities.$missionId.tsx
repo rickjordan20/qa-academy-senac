@@ -118,6 +118,8 @@ function StudentMissionPage() {
   const project: AppProject = isCafe ? "cafe_central" : "techeduca";
   const { data: invFeatures } = useFeatures(project, isCafe ? groupId : null);
   const { data: invModules } = useModules(project, isCafe ? groupId : null);
+  /** Artefatos de missões anteriores (a RLS já limita o que volta). */
+  const { data: prior } = usePriorArtifacts(run?.id ?? null, !!run);
 
   const pickers: MissionPickers = useMemo(() => {
     const allowed = mission?.feature_ids ?? [];
