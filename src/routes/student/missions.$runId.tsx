@@ -198,12 +198,10 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
               ) : null}
               <div className="mt-2 space-y-1">
                 {Object.entries(e.data ?? {})
-                  .filter(([, v]) => (v ?? "").toString().trim())
+                  .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
                   .map(([k, v]) => (
                     <p key={k} className="text-xs">
-                      <span className="text-muted-foreground">
-                        {blockDef(e.kind).fields?.find((f) => f.key === k)?.label ?? k}:{" "}
-                      </span>
+                      <span className="text-muted-foreground">{entryFieldLabel(e.kind, k)}: </span>
                       {v}
                     </p>
                   ))}
