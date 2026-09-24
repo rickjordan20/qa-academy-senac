@@ -11,9 +11,12 @@ import { useAuth } from "@/lib/auth";
 import { useCreateMissionContribution, useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
 import {
+  artifactLabel,
   awardGroupMissionXp,
   awardMissionXp,
   blockDef,
+  usePriorArtifacts,
+  type LinkableArtifact,
   computeProgress,
   useBuilderMission,
   useCreateEntry,
