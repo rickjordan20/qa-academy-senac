@@ -143,8 +143,27 @@ function StudentMissionPage() {
         };
       });
 
-    return { features: [...features, ...orphans], cases };
-  }, [invFeatures, invModules, mission, entries, isCafe, userId]);
+    const visible = (e: { section_id: string; author_id: string }) => {
+      if (!isCafe) return e.author_id === userId;
+      const sec = caseSections.get(e.section_id);
+      return sec?.scope === "individual" ? e.author_id === userId : true;
+    };
+
+    const evidences = (entries ?? [])
+      .filter((e) => e.kind === "evidence" && visible(e))
+      .map((e) => ({ value: e.id, label: e.title || "(evidência sem título)" }));
+
+    const bugs = (entries ?? [])
+      .filter((e) => e.kind === "bug" && visible(e))
+      .map((e) => ({ value: e.id, label: e.title || "(bug sem título)" }));
+
+    const members = (group?.members ?? []).map((m) => ({
+      value: m.student_id,
+      label: m.full_name?.trim() || m.email || "Integrante sem nome cadastrado",
+    }));
+
+    return { features: [...features, ...orphans], cases, members, evidences, bugs };
+  }, [invFeatures, invModules, mission, entries, isCafe, userId, group]);
   const progress = useMemo(
     () =>
       mission
