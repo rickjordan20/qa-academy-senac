@@ -48,6 +48,8 @@ export type Section = {
   /** itens de material de apoio, perguntas, checklist, campos personalizados, métricas */
   items?: (ChecklistItemDef | QuestionDef | MaterialItem)[] | undefined;
   required: boolean;
+  /** bloco de usabilidade: solicitar identificação do participante do teste */
+  askParticipant?: boolean | undefined;
   scope: "individual" | "group";
   minItems?: number | undefined;
   maxItems?: number | undefined;
@@ -429,7 +431,7 @@ export const BLOCK_CATALOG: BlockDef[] = [
         key: "elemento",
         label: "Elemento",
         type: "text",
-        placeholder: "Ex.: Botão Entrar, campo E-mail, imagem do produto...",
+        placeholder: "Ex.: botão Entrar ou campo E-mail",
       },
       {
         key: "metodo",
