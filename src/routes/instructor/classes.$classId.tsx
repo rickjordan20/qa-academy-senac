@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClassroomSyncDialog } from "@/components/classroom/ClassroomSyncDialog";
 import {
   Select,
   SelectContent,
@@ -351,6 +352,8 @@ function ClassDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <ClassroomSyncDialog classId={classId} open={classroomOpen} onOpenChange={setClassroomOpen} />
     </div>
   );
 }
