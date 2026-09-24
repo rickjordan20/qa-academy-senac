@@ -2415,6 +2415,10 @@ export type Database = {
         Returns: boolean
       }
       builder_mission_open: { Args: { _mission_id: string }; Returns: boolean }
+      builder_mission_published: {
+        Args: { _mission_id: string }
+        Returns: boolean
+      }
       builder_mission_visible: {
         Args: { _mission_id: string; _user_id: string }
         Returns: boolean
