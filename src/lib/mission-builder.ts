@@ -103,6 +103,8 @@ export type MissionRun = {
   answers: Record<string, unknown>;
   checklist_state: Record<string, boolean>;
   submitted_at: string | null;
+  /** awaiting | in_review | evaluated | revision (reabre a edição para o aluno) */
+  eval_status?: string | null;
   created_at: string;
 };
 
