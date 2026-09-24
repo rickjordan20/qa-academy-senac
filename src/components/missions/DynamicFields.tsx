@@ -82,6 +82,9 @@ export function SearchableSelect({
             ))
           ),
         )}
+        {trailingOption ? (
+          <option value={trailingOption.value}>{trailingOption.label}</option>
+        ) : null}
       </NativeSelect>
     </div>
   );
