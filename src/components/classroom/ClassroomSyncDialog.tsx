@@ -103,9 +103,6 @@ export function ClassroomSyncDialog({
     queryClient.invalidateQueries({ queryKey: ["classroom-courses", classId] });
   };
 
-  const run = <T,>(fn: (input: T) => Promise<unknown>, success: string) =>
-    useMutationFactory(fn, success, refresh);
-
   const connectMutation = useMutation({
     mutationFn: async () => startAuth({ data: { classId } }),
     onSuccess: (result) => {
@@ -454,19 +451,4 @@ export function ClassroomSyncDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function useMutationFactory<T>(
-  fn: (input: T) => Promise<unknown>,
-  success: string,
-  refresh: () => void,
-) {
-  return useMutation({
-    mutationFn: fn,
-    onSuccess: () => {
-      toast.success(success);
-      refresh();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 }
