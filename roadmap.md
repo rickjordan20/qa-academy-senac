@@ -5,3 +5,4 @@
 - [x] Exibir resultado e feedback específico da avaliação em cada bloco da entrega do aluno
 - [x] Teste cruzado: listar casos de teste da missão e nomes reais dos desenvolvedores pareados no formulário de bug
 - [x] UX dos blocos Usabilidade e Acessibilidade: placeholders didáticos, tempo mm:ss, participante do teste, guia recolhível de acessibilidade, método/critério padronizados, vínculo opcional com funcionalidade, evidência e bug
+- [x] Data de abertura das missões como bloqueio real: antes do horário o aluno vê a missão agendada, mas não abre, preenche, grava nem entrega (bloqueio também no banco); prazo continua sinalizando atraso e a revisão do instrutor permanece liberada
