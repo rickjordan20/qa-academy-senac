@@ -102,9 +102,14 @@ function EntryForm({
           />
         </div>
       ) : null}
+      {section.kind === "accessibility" ? <A11yGuide /> : null}
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map((f) => {
-          const isFeaturePicker = section.kind === "test_case" && f.key === "funcionalidade" && !!pickers;
+          const isFeaturePicker =
+            ((section.kind === "test_case" && f.key === "funcionalidade") ||
+              (section.kind === "usability" && f.key === "tela") ||
+              (section.kind === "accessibility" && f.key === "titulo")) &&
+            !!pickers;
           const isCasePicker =
             ((section.kind === "execution" && f.key === "titulo") ||
               (section.kind === "bug" && f.key === "caso")) &&
