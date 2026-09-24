@@ -524,7 +524,7 @@ function StudentMissionPage() {
             beforeOpening
               ? undefined
               : deleteEntry.mutate(id, {
-              onSuccess: () => toast.success("Registro excluído."),
+                  onSuccess: () => toast.success("Registro excluído."),
                   onError: (e) => toast.error(e.message),
                 }),
         }}

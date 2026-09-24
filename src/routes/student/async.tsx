@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth";
 import { asyncActivityState, useStudentMissions } from "@/lib/mission-builder";
 import { useMySubmissions } from "@/lib/mission-submissions";
-import { fmtMissionDateTime } from "@/lib/mission-schedule";
+import { fmtMissionDateTime, fmtMissionDateTimeShort } from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/student/async")({
   head: () => ({
@@ -112,7 +112,7 @@ function StudentAsyncPage() {
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" disabled={locked} asChild={!locked}>
                   {locked ? (
-                    <span>Bloqueada</span>
+                    <span>Disponível em {fmtMissionDateTimeShort(mission.opens_at, "opens")}</span>
                   ) : (
                     <Link to="/student/activities/$missionId" params={{ missionId: mission.id }}>
                       {run?.submitted_at ? "Consultar atividade" : run ? "Continuar atividade" : "Abrir atividade"}

@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, TEMPLATE_LABEL, useStudentMissions } from "@/lib/mission-builder";
 import { useAuth } from "@/lib/auth";
 import { useMySubmissions } from "@/lib/mission-submissions";
-import { fmtMissionDateTime, missionSituation } from "@/lib/mission-schedule";
+import {
+  fmtMissionDateTime,
+  fmtMissionDateTimeShort,
+  isMissionLocked,
+  missionSituation,
+} from "@/lib/mission-schedule";
 
 export const Route = createFileRoute("/student/activities/")({
   head: () => ({
@@ -61,11 +66,17 @@ function StudentActivitiesPage() {
               </div>
               <div className="flex flex-col items-end gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.tone}`}>{sit.label}</span>
-                <Button size="sm" asChild>
-                  <Link to="/student/activities/$missionId" params={{ missionId: m.id }}>
-                    {m.status === "closed" ? "Consultar" : "Abrir missão"}
-                  </Link>
-                </Button>
+                {isMissionLocked(m) ? (
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Disponível em {fmtMissionDateTimeShort(m.opens_at, "opens")}
+                  </span>
+                ) : (
+                  <Button size="sm" asChild>
+                    <Link to="/student/activities/$missionId" params={{ missionId: m.id }}>
+                      {m.status === "closed" ? "Consultar" : "Abrir missão"}
+                    </Link>
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
