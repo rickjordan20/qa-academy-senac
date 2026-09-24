@@ -438,7 +438,12 @@ export const BLOCK_CATALOG: BlockDef[] = [
         options: ["Lighthouse", "Navegação por teclado", "Inspeção manual", "DevTools", "Outro"],
       },
       { key: "criterio", label: "Critério analisado", type: "select", options: A11Y_CRITERIA },
-      { key: "status", label: "Resultado", type: "select", options: ["Conforme", "Parcial", "Não conforme"] },
+      {
+        key: "status",
+        label: "Resultado",
+        type: "select",
+        options: ["Atende", "Parcialmente atende", "Não atende", "Não se aplica", "Conforme", "Parcial", "Não conforme"],
+      },
       { key: "problema", label: "Problema", type: "textarea", placeholder: "Ex.: Descreva a barreira encontrada." },
       {
         key: "impacto",
