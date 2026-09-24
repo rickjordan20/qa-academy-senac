@@ -104,7 +104,10 @@ function StudentMissionPage() {
     }
   }, [run]);
 
-  const readOnly = mission?.status !== "published" || !run;
+  /** Entrega aguardando avaliação ou já avaliada bloqueia edição; revisão reabre. */
+  const lockedByDelivery =
+    !!run && (run.eval_status === "evaluated" || (!!run.submitted_at && run.eval_status !== "revision"));
+  const readOnly = mission?.status !== "published" || !run || lockedByDelivery;
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
