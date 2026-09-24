@@ -36,6 +36,12 @@ export type CaseOption = PickerOption & {
 export type MissionPickers = {
   features: PickerOption[];
   cases: CaseOption[];
+  /** Integrantes do grupo da entrega (Café Central). */
+  members?: PickerOption[] | undefined;
+  /** Evidências já registradas nesta missão. */
+  evidences?: PickerOption[] | undefined;
+  /** Bugs já registrados nesta missão. */
+  bugs?: PickerOption[] | undefined;
 };
 
 export type PlayerHandlers = {
