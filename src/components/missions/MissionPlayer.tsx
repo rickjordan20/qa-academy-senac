@@ -7,7 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { FieldInput, SearchableSelect, type PickerOption } from "@/components/missions/DynamicFields";
+import { Input } from "@/components/ui/input";
+import {
+  FieldInput,
+  NativeSelect,
+  SearchableSelect,
+  type PickerOption,
+} from "@/components/missions/DynamicFields";
 import { RichText } from "@/components/missions/RichText";
 import {
   blockDef,
@@ -36,6 +42,12 @@ export type CaseOption = PickerOption & {
 export type MissionPickers = {
   features: PickerOption[];
   cases: CaseOption[];
+  /** Integrantes do grupo da entrega (Café Central). */
+  members?: PickerOption[] | undefined;
+  /** Evidências já registradas nesta missão. */
+  evidences?: PickerOption[] | undefined;
+  /** Bugs já registrados nesta missão. */
+  bugs?: PickerOption[] | undefined;
 };
 
 export type PlayerHandlers = {
@@ -47,6 +59,41 @@ export type PlayerHandlers = {
   /** Autorização de edição/exclusão do registro (autor ou integrante do grupo). */
   canEditEntry?: (entry: MissionEntry) => boolean;
 };
+
+/** Apoio didático do bloco de acessibilidade (recolhível, não substitui a análise humana). */
+function A11yGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+      <button
+        type="button"
+        className="font-semibold text-foreground hover:underline"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "▾" : "▸"} Como verificar acessibilidade
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2 text-muted-foreground">
+          <div>
+            <p className="font-semibold text-foreground">Lighthouse (Chrome)</p>
+            <p>
+              Abra a página, pressione F12, vá até a aba Lighthouse, marque “Accessibility” e gere o relatório. O
+              resultado é apenas apoio: cada apontamento precisa ser conferido por você.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Navegação por teclado</p>
+            <p>
+              Use Tab para avançar, Shift+Tab para voltar, Enter e Espaço para acionar. Verifique se o foco está sempre
+              visível e se a ordem faz sentido.
+            </p>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 
 function EntryForm({
   section,
@@ -96,38 +143,54 @@ function EntryForm({
           />
         </div>
       ) : null}
+      {section.kind === "accessibility" ? <A11yGuide /> : null}
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map((f) => {
-          const isFeaturePicker = section.kind === "test_case" && f.key === "funcionalidade" && !!pickers;
+          const isFeaturePicker =
+            ((section.kind === "test_case" && f.key === "funcionalidade") ||
+              (section.kind === "usability" && f.key === "tela") ||
+              (section.kind === "accessibility" && f.key === "titulo")) &&
+            !!pickers;
           const isCasePicker =
             ((section.kind === "execution" && f.key === "titulo") ||
               (section.kind === "bug" && f.key === "caso")) &&
             !!pickers;
           const optionalCase = section.kind === "bug";
 
-          if (isFeaturePicker)
+          if (isFeaturePicker) {
+            const allowManual = section.kind !== "test_case";
             return (
-              <div key={f.key}>
+              <div key={f.key} className="space-y-1">
                 <Label className="text-xs">
-                  Funcionalidade<span className="text-destructive"> *</span>
+                  {f.label}
+                  {f.required ? <span className="text-destructive"> *</span> : null}
                 </Label>
                 <SearchableSelect
                   value={values["feature_id"] ?? ""}
                   disabled={disabled}
                   options={featureOptions}
-                  placeholder="Selecione uma funcionalidade..."
+                  placeholder={allowManual ? "Selecionar do inventário..." : "Selecione uma funcionalidade..."}
                   emptyMessage="Nenhuma funcionalidade disponível para esta missão. Verifique o Inventário da Aplicação."
                   onChange={(id) => {
                     const opt = featureOptions.find((o) => o.value === id);
                     setValues((s) => ({
                       ...s,
                       feature_id: id,
-                      funcionalidade: opt ? opt.label : "",
+                      [f.key]: opt ? opt.label : (s[f.key] ?? ""),
                     }));
                   }}
                 />
+                {allowManual && !values["feature_id"] ? (
+                  <Input
+                    value={values[f.key] ?? ""}
+                    disabled={disabled}
+                    placeholder="Ou digite a tela/funcionalidade analisada"
+                    onChange={(e) => setValues((s) => ({ ...s, [f.key]: e.target.value }))}
+                  />
+                ) : null}
               </div>
             );
+          }
 
           if (isCasePicker)
             return (
@@ -177,6 +240,77 @@ function EntryForm({
           );
         })}
 
+        {section.kind === "usability" ? (
+          <div className="space-y-1">
+            <Label className="text-xs">Participante do teste (opcional)</Label>
+            <NativeSelect
+              value={values["participante_tipo"] ?? ""}
+              disabled={disabled}
+              onChange={(v) =>
+                setValues((s) => ({ ...s, participante_tipo: v, ...(v === "grupo" ? {} : { participante_id: "" }) }))
+              }
+            >
+              <option value="">Não informar</option>
+              <option value="grupo">Integrante do grupo</option>
+              <option value="externo">Outro participante</option>
+              <option value="anonimo">Não identificar (anônimo)</option>
+            </NativeSelect>
+            {values["participante_tipo"] === "grupo" ? (
+              <NativeSelect
+                value={values["participante_id"] ?? ""}
+                disabled={disabled}
+                onChange={(id) => {
+                  const opt = (pickers?.members ?? []).find((m) => m.value === id);
+                  setValues((s) => ({ ...s, participante_id: id, participante: opt?.label ?? "" }));
+                }}
+              >
+                <option value="">Selecione o integrante...</option>
+                {(pickers?.members ?? []).map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            ) : null}
+            {values["participante_tipo"] === "externo" ? (
+              <Input
+                value={values["participante"] ?? ""}
+                disabled={disabled}
+                placeholder="Nome ou papel do participante (ex.: colega de outra turma)"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setValues((s) => ({ ...s, participante: e.target.value }))
+                }
+              />
+            ) : null}
+          </div>
+        ) : null}
+
+        {(section.kind === "usability" || section.kind === "accessibility") && pickers ? (
+          <>
+            <div className="space-y-1">
+              <Label className="text-xs">Evidência desta missão (opcional)</Label>
+              <SearchableSelect
+                value={values["evidence_entry_id"] ?? ""}
+                disabled={disabled}
+                options={pickers.evidences ?? []}
+                placeholder="Sem vínculo"
+                emptyMessage="Nenhuma evidência registrada nesta missão ainda."
+                onChange={(id) => setValues((s) => ({ ...s, evidence_entry_id: id }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Bug relacionado (opcional)</Label>
+              <SearchableSelect
+                value={values["bug_entry_id"] ?? ""}
+                disabled={disabled}
+                options={pickers.bugs ?? []}
+                placeholder="Sem vínculo"
+                emptyMessage="Nenhum bug registrado nesta missão ainda."
+                onChange={(id) => setValues((s) => ({ ...s, bug_entry_id: id }))}
+              />
+            </div>
+          </>
+        ) : null}
       </div>
       <div className="flex gap-2">
         <Button

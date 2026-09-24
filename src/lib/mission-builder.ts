@@ -184,6 +184,23 @@ const BUG_STATUS = [
 ];
 const CASE_STATUS = ["Não executado", "Aprovado", "Reprovado", "Bloqueado"];
 
+/** Critérios de acessibilidade usados no bloco ♿ Acessibilidade. */
+export const A11Y_CRITERIA = [
+  "Contraste de cores",
+  "Tamanho e legibilidade do texto",
+  "Texto alternativo em imagens",
+  "Rótulos de campos de formulário",
+  "Mensagens de erro compreensíveis",
+  "Navegação por teclado",
+  "Foco visível",
+  "Ordem de leitura e hierarquia de títulos",
+  "Links e botões com descrição clara",
+  "Responsividade e zoom",
+  "Uso de cor como único indicador",
+  "Tempo suficiente para interação",
+  "Outro",
+];
+
 export const BLOCK_CATALOG: BlockDef[] = [
   { kind: "content", icon: "📖", label: "Conteúdo", family: "content", group: "Conteúdo", defaultTitle: "Conteúdo" },
   { kind: "objective", icon: "🎯", label: "Objetivo", family: "content", group: "Conteúdo", defaultTitle: "Objetivo" },
@@ -340,17 +357,63 @@ export const BLOCK_CATALOG: BlockDef[] = [
     group: "Técnico",
     defaultTitle: "Teste de usabilidade",
     fields: [
-      { key: "titulo", label: "Tarefa", type: "text", required: true },
-      { key: "objetivo", label: "Objetivo", type: "textarea" },
+      {
+        key: "titulo",
+        label: "Tarefa",
+        type: "text",
+        required: true,
+        placeholder: "Ex.: Localizar um produto e adicioná-lo ao carrinho.",
+      },
+      {
+        key: "objetivo",
+        label: "Objetivo",
+        type: "textarea",
+        placeholder: "Ex.: Verificar se o usuário consegue concluir a ação sem ajuda.",
+      },
       { key: "tela", label: "Funcionalidade / tela", type: "text" },
-      { key: "cenario", label: "Cenário", type: "textarea" },
-      { key: "esperado", label: "Resultado esperado", type: "textarea" },
-      { key: "observado", label: "Comportamento observado", type: "textarea" },
-      { key: "dificuldade", label: "Dificuldade encontrada", type: "textarea" },
-      { key: "tempo", label: "Tempo (opcional)", type: "text" },
-      { key: "problema", label: "Problema", type: "textarea" },
-      { key: "sugestao", label: "Sugestão", type: "textarea" },
-      { key: "conclusao", label: "Conclusão", type: "textarea" },
+      {
+        key: "cenario",
+        label: "Cenário",
+        type: "textarea",
+        placeholder: "Ex.: Você deseja comprar um café para retirada.",
+      },
+      {
+        key: "esperado",
+        label: "Resultado esperado",
+        type: "textarea",
+        placeholder: "Ex.: O usuário conclui a tarefa sem orientação.",
+      },
+      {
+        key: "observado",
+        label: "Comportamento observado",
+        type: "textarea",
+        placeholder: "Ex.: Descreva somente o que realmente aconteceu.",
+      },
+      {
+        key: "dificuldade",
+        label: "Dificuldade encontrada",
+        type: "textarea",
+        placeholder: "Ex.: Hesitou, não encontrou o botão, pediu ajuda...",
+      },
+      { key: "tempo", label: "Tempo (opcional)", type: "text", placeholder: "mm:ss — ex.: 02:15" },
+      {
+        key: "problema",
+        label: "Problema",
+        type: "textarea",
+        placeholder: "Ex.: Descreva o problema de usabilidade identificado.",
+      },
+      {
+        key: "sugestao",
+        label: "Sugestão",
+        type: "textarea",
+        placeholder: "Ex.: Indique uma melhoria baseada no que foi observado.",
+      },
+      {
+        key: "conclusao",
+        label: "Conclusão",
+        type: "textarea",
+        placeholder: "Ex.: Informe se a tarefa foi concluída e o principal resultado.",
+      },
     ],
   },
   {
@@ -362,12 +425,33 @@ export const BLOCK_CATALOG: BlockDef[] = [
     defaultTitle: "Acessibilidade",
     fields: [
       { key: "titulo", label: "Funcionalidade / tela", type: "text", required: true },
-      { key: "elemento", label: "Elemento", type: "text" },
-      { key: "criterio", label: "Critério analisado", type: "textarea" },
+      {
+        key: "elemento",
+        label: "Elemento",
+        type: "text",
+        placeholder: "Ex.: Botão Entrar, campo E-mail, imagem do produto...",
+      },
+      {
+        key: "metodo",
+        label: "Método de verificação",
+        type: "select",
+        options: ["Lighthouse", "Navegação por teclado", "Inspeção manual", "DevTools", "Outro"],
+      },
+      { key: "criterio", label: "Critério analisado", type: "select", options: A11Y_CRITERIA },
       { key: "status", label: "Resultado", type: "select", options: ["Conforme", "Parcial", "Não conforme"] },
-      { key: "problema", label: "Problema", type: "textarea" },
-      { key: "impacto", label: "Impacto", type: "textarea" },
-      { key: "recomendacao", label: "Recomendação", type: "textarea" },
+      { key: "problema", label: "Problema", type: "textarea", placeholder: "Ex.: Descreva a barreira encontrada." },
+      {
+        key: "impacto",
+        label: "Impacto",
+        type: "textarea",
+        placeholder: "Ex.: Explique como isso pode dificultar o uso da aplicação.",
+      },
+      {
+        key: "recomendacao",
+        label: "Recomendação",
+        type: "textarea",
+        placeholder: "Ex.: Indique como o problema poderia ser corrigido ou melhorado.",
+      },
     ],
   },
   {
