@@ -155,19 +155,51 @@ function StudentMissionPage() {
 
     const evidences = (entries ?? [])
       .filter((e) => e.kind === "evidence" && visible(e))
-      .map((e) => ({ value: e.id, label: e.title || "(evidência sem título)" }));
+      .map((e, i) => ({
+        value: e.id,
+        group: "Missão atual",
+        label: `EV-${String(i + 1).padStart(2, "0")} — ${e.title || "(sem título)"}`,
+      }));
 
     const bugs = (entries ?? [])
       .filter((e) => e.kind === "bug" && visible(e))
-      .map((e) => ({ value: e.id, label: e.title || "(bug sem título)" }));
+      .map((e, i) => ({
+        value: e.id,
+        group: "Missão atual",
+        label: `BUG-${String(i + 1).padStart(2, "0")} — ${e.title || "(sem título)"}`,
+      }));
 
     const members = (group?.members ?? []).map((m) => ({
       value: m.student_id,
       label: m.full_name?.trim() || m.email || "Integrante sem nome cadastrado",
     }));
 
-    return { features: [...features, ...orphans], cases, members, evidences, bugs };
-  }, [invFeatures, invModules, mission, entries, isCafe, userId, group]);
+    /** Missões anteriores: apenas artefatos que a RLS já libera para este usuário. */
+    const priorOf = (kind: string) =>
+      (prior ?? [])
+        .filter((a) => a.kind === kind)
+        .sort((a, b) => {
+          const feat = mission?.feature_ids ?? [];
+          const rank = (x: typeof a) => (x.featureId && feat.includes(x.featureId) ? 0 : 1);
+          return rank(a) - rank(b);
+        })
+        .map((a, i) => ({
+          value: a.id,
+          group: "Missões anteriores",
+          label: artifactLabel(a.kind, i + 1, a.title, a.lessonNumber),
+        }));
+
+    return {
+      features: [...features, ...orphans],
+      cases,
+      members,
+      evidences,
+      bugs,
+      priorCases: priorOf("test_case"),
+      priorEvidences: priorOf("evidence"),
+      priorBugs: priorOf("bug"),
+    };
+  }, [invFeatures, invModules, mission, entries, isCafe, userId, group, prior]);
   const progress = useMemo(
     () =>
       mission
