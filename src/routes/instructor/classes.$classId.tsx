@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClassroomSyncDialog } from "@/components/classroom/ClassroomSyncDialog";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,20 @@ export const Route = createFileRoute("/instructor/classes/$classId")({
 function ClassDetail() {
   const { classId } = Route.useParams();
   const queryClient = useQueryClient();
+  const [classroomOpen, setClassroomOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get("gclassroom");
+    if (!flag) return;
+    if (flag === "connected") toast.success("Conta Google conectada.");
+    else if (flag === "denied") toast.error("Autorização do Google cancelada.");
+    else toast.error("Não foi possível concluir a conexão com o Google.");
+    setClassroomOpen(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
 
   const { data: turma } = useQuery({
     queryKey: ["class", classId],
@@ -222,8 +237,11 @@ function ClassDetail() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
             <CardTitle>Integrantes ({members?.length ?? 0})</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setClassroomOpen(true)}>
+              Google Classroom
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <form className="flex gap-2" onSubmit={addStudent}>
@@ -334,6 +352,8 @@ function ClassDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <ClassroomSyncDialog classId={classId} open={classroomOpen} onOpenChange={setClassroomOpen} />
     </div>
   );
 }
