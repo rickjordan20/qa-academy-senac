@@ -221,8 +221,32 @@ function StudentMissionPage() {
 
   if (!mission) return <p className="text-sm text-muted-foreground">Carregando missão...</p>;
 
+  if (beforeOpening) {
+    return (
+      <div className="mx-auto w-full max-w-3xl space-y-4">
+        <Link to="/student/activities" className="text-xs text-muted-foreground hover:underline">
+          ← Todas as missões
+        </Link>
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+            Agendada
+          </span>
+          <h1 className="mt-2 text-xl font-bold">{mission.title}</h1>
+          <p className="mt-3 text-sm">Esta missão ainda não está disponível.</p>
+          <p className="text-sm font-semibold">
+            Abertura: {fmtMissionDateTime(mission.opens_at, "opens")}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            No horário de abertura (horário de Brasília) a missão fica disponível automaticamente. Basta atualizar
+            esta página.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   function persist(nextAnswers: typeof answers, nextChecklist: typeof checklist) {
-    if (!run || !mission) return;
+    if (!run || !mission || beforeOpening) return;
     setSaving("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => {
