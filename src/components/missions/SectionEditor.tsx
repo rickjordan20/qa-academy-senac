@@ -306,6 +306,16 @@ export function SectionEditor({
           </div>
         ) : null}
 
+        {section.kind === "usability" ? (
+          <label className="flex items-center gap-2 text-xs">
+            <Checkbox
+              checked={!!section.askParticipant}
+              onCheckedChange={(c) => onChange({ askParticipant: !!c })}
+            />
+            Solicitar participante do teste
+          </label>
+        ) : null}
+
         <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-xs">
           <label className="flex items-center gap-2">
             <Checkbox checked={section.required} onCheckedChange={(c) => onChange({ required: !!c })} />

@@ -48,6 +48,8 @@ export type Section = {
   /** itens de material de apoio, perguntas, checklist, campos personalizados, métricas */
   items?: (ChecklistItemDef | QuestionDef | MaterialItem)[] | undefined;
   required: boolean;
+  /** bloco de usabilidade: solicitar identificação do participante do teste */
+  askParticipant?: boolean | undefined;
   scope: "individual" | "group";
   minItems?: number | undefined;
   maxItems?: number | undefined;
@@ -101,6 +103,8 @@ export type MissionRun = {
   answers: Record<string, unknown>;
   checklist_state: Record<string, boolean>;
   submitted_at: string | null;
+  /** awaiting | in_review | evaluated | revision (reabre a edição para o aluno) */
+  eval_status?: string | null;
   created_at: string;
 };
 
@@ -429,7 +433,7 @@ export const BLOCK_CATALOG: BlockDef[] = [
         key: "elemento",
         label: "Elemento",
         type: "text",
-        placeholder: "Ex.: Botão Entrar, campo E-mail, imagem do produto...",
+        placeholder: "Ex.: botão Entrar ou campo E-mail",
       },
       {
         key: "metodo",
@@ -1178,4 +1182,93 @@ export async function awardGroupMissionXp(params: {
     ref_id: params.refId,
     note: params.note,
   } as never);
+}
+
+/* ------------------------------------------------------------------ */
+/* Vínculos opcionais e exibição amigável dos registros                */
+/* ------------------------------------------------------------------ */
+
+/** Chaves técnicas guardadas no JSONB que nunca devem aparecer como texto cru. */
+export const HIDDEN_ENTRY_KEYS = [
+  "feature_id",
+  "case_id",
+  "participante_id",
+  "link_case_id",
+  "link_evidence_id",
+  "link_bug_id",
+  "evidence_entry_id",
+  "bug_entry_id",
+];
+
+/** Rótulos amigáveis dos campos auxiliares que não vêm do catálogo de blocos. */
+export const EXTRA_ENTRY_LABELS: Record<string, string> = {
+  participante: "Participante do teste",
+  participante_tipo: "Tipo de participante",
+  problema_encontrado: "Foi identificado problema de usabilidade?",
+  link_case_label: "Caso de teste relacionado",
+  link_evidence_label: "Evidência relacionada",
+  link_bug_label: "Bug relacionado",
+};
+
+/** Rótulo de exibição de um campo salvo no registro (nunca mostra a chave técnica). */
+export function entryFieldLabel(kind: string, key: string): string {
+  const field = blockDef(kind).fields?.find((f) => f.key === key);
+  return field?.label ?? EXTRA_ENTRY_LABELS[key] ?? key;
+}
+
+export type LinkableArtifact = {
+  id: string;
+  kind: string;
+  title: string;
+  missionTitle: string;
+  lessonNumber: number | null;
+  featureId: string | null;
+  runId: string;
+};
+
+/**
+ * Casos de teste, evidências e bugs de OUTRAS missões que o usuário já pode ver.
+ * A consulta não amplia RLS: o banco devolve apenas o que as policies permitem.
+ */
+export function usePriorArtifacts(currentRunId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["builder-prior-artifacts", currentRunId],
+    enabled,
+    queryFn: async (): Promise<LinkableArtifact[]> => {
+      const { data, error } = await supabase
+        .from("builder_mission_entries")
+        .select("id, kind, title, run_id, feature_id, created_at, mission:builder_missions(title, lesson_number)")
+        .in("kind", ["test_case", "evidence", "bug"])
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as {
+        id: string;
+        kind: string;
+        title: string;
+        run_id: string;
+        feature_id: string | null;
+        mission: { title: string; lesson_number: number | null } | null;
+      }[];
+      return rows
+        .filter((r) => r.run_id !== currentRunId)
+        .map((r) => ({
+          id: r.id,
+          kind: r.kind,
+          title: r.title,
+          missionTitle: r.mission?.title ?? "Missão",
+          lessonNumber: r.mission?.lesson_number ?? null,
+          featureId: r.feature_id,
+          runId: r.run_id,
+        }));
+    },
+  });
+}
+
+/** Prefixo didático do artefato: "Aula 7 · CT-03 — Validar cadastro". */
+export function artifactLabel(kind: string, index: number, title: string, lessonNumber: number | null) {
+  const code =
+    kind === "test_case" ? "CT" : kind === "bug" ? "BUG" : "EV";
+  const prefix = lessonNumber ? `Aula ${lessonNumber} · ` : "";
+  return `${prefix}${code}-${String(index).padStart(2, "0")} — ${title || "(sem título)"}`;
 }

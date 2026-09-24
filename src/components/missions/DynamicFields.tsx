@@ -22,6 +22,7 @@ export function SearchableSelect({
   placeholder,
   emptyMessage,
   disabled,
+  trailingOption,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -29,6 +30,8 @@ export function SearchableSelect({
   placeholder: string;
   emptyMessage: string;
   disabled?: boolean | undefined;
+  /** opção fixa exibida sempre por último (ex.: "+ Informar outra funcionalidade") */
+  trailingOption?: PickerOption | undefined;
 }) {
   const [term, setTerm] = useState("");
   const filtered = useMemo(() => {
@@ -46,17 +49,20 @@ export function SearchableSelect({
     return [...map.entries()];
   }, [filtered]);
 
-  if (options.length === 0) return <p className="text-xs text-muted-foreground">{emptyMessage}</p>;
+  if (options.length === 0 && !trailingOption)
+    return <p className="text-xs text-muted-foreground">{emptyMessage}</p>;
 
   return (
     <div className="space-y-1">
-      <Input
-        value={term}
-        disabled={disabled}
-        placeholder="Pesquisar..."
-        onChange={(e) => setTerm(e.target.value)}
-        className="h-8 text-xs"
-      />
+      {options.length > 0 ? (
+        <Input
+          value={term}
+          disabled={disabled}
+          placeholder="Pesquisar..."
+          onChange={(e) => setTerm(e.target.value)}
+          className="h-8 text-xs"
+        />
+      ) : null}
       <NativeSelect value={value} onChange={onChange} disabled={disabled}>
         <option value="">{placeholder}</option>
         {groups.map(([g, opts]) =>
@@ -76,6 +82,9 @@ export function SearchableSelect({
             ))
           ),
         )}
+        {trailingOption ? (
+          <option value={trailingOption.value}>{trailingOption.label}</option>
+        ) : null}
       </NativeSelect>
     </div>
   );

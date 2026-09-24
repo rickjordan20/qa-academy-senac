@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useIndicators } from "@/lib/uc10";
-import { blockDef, type Section } from "@/lib/mission-builder";
+import { blockDef, entryFieldLabel, HIDDEN_ENTRY_KEYS, type Section } from "@/lib/mission-builder";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
 import { GroupParticipation } from "@/components/missions/GroupParticipation";
 
@@ -271,10 +271,10 @@ function EvaluatePage() {
                             {blockDef(e.kind).icon} {e.title || blockDef(e.kind).label}
                           </p>
                           {Object.entries(e.data ?? {})
-                            .filter(([, v]) => (v ?? "").toString().trim())
+                            .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
                             .map(([k, v]) => (
                               <p key={k}>
-                                <span className="text-muted-foreground">{k}: </span>
+                                <span className="text-muted-foreground">{entryFieldLabel(e.kind, k)}: </span>
                                 {v}
                               </p>
                             ))}

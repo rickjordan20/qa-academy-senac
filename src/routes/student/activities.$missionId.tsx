@@ -11,9 +11,12 @@ import { useAuth } from "@/lib/auth";
 import { useCreateMissionContribution, useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
 import {
+  artifactLabel,
   awardGroupMissionXp,
   awardMissionXp,
   blockDef,
+  usePriorArtifacts,
+  type LinkableArtifact,
   computeProgress,
   useBuilderMission,
   useCreateEntry,
@@ -104,7 +107,10 @@ function StudentMissionPage() {
     }
   }, [run]);
 
-  const readOnly = mission?.status !== "published" || !run;
+  /** Entrega aguardando avaliação ou já avaliada bloqueia edição; revisão reabre. */
+  const lockedByDelivery =
+    !!run && (run.eval_status === "evaluated" || (!!run.submitted_at && run.eval_status !== "revision"));
+  const readOnly = mission?.status !== "published" || !run || lockedByDelivery;
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
@@ -112,6 +118,8 @@ function StudentMissionPage() {
   const project: AppProject = isCafe ? "cafe_central" : "techeduca";
   const { data: invFeatures } = useFeatures(project, isCafe ? groupId : null);
   const { data: invModules } = useModules(project, isCafe ? groupId : null);
+  /** Artefatos de missões anteriores (a RLS já limita o que volta). */
+  const { data: prior } = usePriorArtifacts(run?.id ?? null, !!run);
 
   const pickers: MissionPickers = useMemo(() => {
     const allowed = mission?.feature_ids ?? [];
@@ -136,6 +144,7 @@ function StudentMissionPage() {
           (e.data?.["funcionalidade"] ?? "");
         return {
           value: e.id,
+          group: "Missão atual",
           label: `CT-${String(i + 1).padStart(3, "0")} — ${e.title || "(sem título)"}`,
           expected: e.data?.["esperado"] ?? "",
           featureId: e.feature_id,
@@ -151,19 +160,51 @@ function StudentMissionPage() {
 
     const evidences = (entries ?? [])
       .filter((e) => e.kind === "evidence" && visible(e))
-      .map((e) => ({ value: e.id, label: e.title || "(evidência sem título)" }));
+      .map((e, i) => ({
+        value: e.id,
+        group: "Missão atual",
+        label: `EV-${String(i + 1).padStart(2, "0")} — ${e.title || "(sem título)"}`,
+      }));
 
     const bugs = (entries ?? [])
       .filter((e) => e.kind === "bug" && visible(e))
-      .map((e) => ({ value: e.id, label: e.title || "(bug sem título)" }));
+      .map((e, i) => ({
+        value: e.id,
+        group: "Missão atual",
+        label: `BUG-${String(i + 1).padStart(2, "0")} — ${e.title || "(sem título)"}`,
+      }));
 
     const members = (group?.members ?? []).map((m) => ({
       value: m.student_id,
       label: m.full_name?.trim() || m.email || "Integrante sem nome cadastrado",
     }));
 
-    return { features: [...features, ...orphans], cases, members, evidences, bugs };
-  }, [invFeatures, invModules, mission, entries, isCafe, userId, group]);
+    /** Missões anteriores: apenas artefatos que a RLS já libera para este usuário. */
+    const priorOf = (kind: string) =>
+      (prior ?? [])
+        .filter((a) => a.kind === kind)
+        .sort((a, b) => {
+          const feat = mission?.feature_ids ?? [];
+          const rank = (x: typeof a) => (x.featureId && feat.includes(x.featureId) ? 0 : 1);
+          return rank(a) - rank(b);
+        })
+        .map((a, i) => ({
+          value: a.id,
+          group: "Missões anteriores",
+          label: artifactLabel(a.kind, i + 1, a.title, a.lessonNumber),
+        }));
+
+    return {
+      features: [...features, ...orphans],
+      cases,
+      members,
+      evidences,
+      bugs,
+      priorCases: priorOf("test_case"),
+      priorEvidences: priorOf("evidence"),
+      priorBugs: priorOf("bug"),
+    };
+  }, [invFeatures, invModules, mission, entries, isCafe, userId, group, prior]);
   const progress = useMemo(
     () =>
       mission
