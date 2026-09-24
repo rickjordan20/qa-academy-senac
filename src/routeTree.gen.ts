@@ -61,6 +61,7 @@ import { Route as StudentCafeIndexRouteImport } from './routes/student/cafe.inde
 import { Route as StudentCafeGroupIdRouteImport } from './routes/student/cafe.$groupId'
 import { Route as StudentMissionsIndexRouteImport } from './routes/student/missions.index'
 import { Route as StudentMissionsRunIdRouteImport } from './routes/student/missions.$runId'
+import { Route as ApiPublicGoogleClassroomCallbackRouteImport } from './routes/api/public/google-classroom/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -330,6 +331,12 @@ const StudentMissionsRunIdRoute = StudentMissionsRunIdRouteImport.update({
   path: '/missions/$runId',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const ApiPublicGoogleClassroomCallbackRoute =
+  ApiPublicGoogleClassroomCallbackRouteImport.update({
+    id: '/api/public/google-classroom/callback',
+    path: '/api/public/google-classroom/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/student/activities/': typeof StudentActivitiesIndexRoute
   '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
+  '/api/public/google-classroom/callback': typeof ApiPublicGoogleClassroomCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -438,6 +446,7 @@ export interface FileRoutesByTo {
   '/student/activities': typeof StudentActivitiesIndexRoute
   '/student/cafe': typeof StudentCafeIndexRoute
   '/student/missions': typeof StudentMissionsIndexRoute
+  '/api/public/google-classroom/callback': typeof ApiPublicGoogleClassroomCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -493,6 +502,7 @@ export interface FileRoutesById {
   '/student/activities/': typeof StudentActivitiesIndexRoute
   '/student/cafe/': typeof StudentCafeIndexRoute
   '/student/missions/': typeof StudentMissionsIndexRoute
+  '/api/public/google-classroom/callback': typeof ApiPublicGoogleClassroomCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/student/activities/'
     | '/student/cafe/'
     | '/student/missions/'
+    | '/api/public/google-classroom/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -603,6 +614,7 @@ export interface FileRouteTypes {
     | '/student/activities'
     | '/student/cafe'
     | '/student/missions'
+    | '/api/public/google-classroom/callback'
   id:
     | '__root__'
     | '/'
@@ -657,6 +669,7 @@ export interface FileRouteTypes {
     | '/student/activities/'
     | '/student/cafe/'
     | '/student/missions/'
+    | '/api/public/google-classroom/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -667,6 +680,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ApiPublicGoogleClassroomCallbackRoute: typeof ApiPublicGoogleClassroomCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1035,6 +1049,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentMissionsRunIdRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/api/public/google-classroom/callback': {
+      id: '/api/public/google-classroom/callback'
+      path: '/api/public/google-classroom/callback'
+      fullPath: '/api/public/google-classroom/callback'
+      preLoaderRoute: typeof ApiPublicGoogleClassroomCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1156,6 +1177,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ApiPublicGoogleClassroomCallbackRoute: ApiPublicGoogleClassroomCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
