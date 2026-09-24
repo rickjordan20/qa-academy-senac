@@ -267,7 +267,7 @@ function StudentMissionPage() {
   }
 
   async function addEntry(section: Section, values: Record<string, string>) {
-    if (!run || !userId) return;
+    if (!run || !userId || beforeOpening) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const featureId = values["feature_id"] || null;
@@ -338,6 +338,7 @@ function StudentMissionPage() {
     entry: { id: string; author_id: string; group_id: string | null },
     values: Record<string, string>,
   ) {
+    if (beforeOpening) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const data = { ...values };
@@ -444,8 +445,9 @@ function StudentMissionPage() {
 
       {!run && mission.status === "published" ? (
         <Button
-          disabled={(isCafe && !groupId) || !userId || start.isPending}
+          disabled={(isCafe && !groupId) || !userId || start.isPending || beforeOpening}
           onClick={async () => {
+            if (beforeOpening) return;
             await start.mutateAsync();
           }}
         >
@@ -519,10 +521,12 @@ function StudentMissionPage() {
           onUpdateEntry: editEntry,
           canEditEntry,
           onDeleteEntry: (id) =>
-            deleteEntry.mutate(id, {
+            beforeOpening
+              ? undefined
+              : deleteEntry.mutate(id, {
               onSuccess: () => toast.success("Registro excluído."),
-              onError: (e) => toast.error(e.message),
-            }),
+                  onError: (e) => toast.error(e.message),
+                }),
         }}
       />
 
@@ -535,8 +539,9 @@ function StudentMissionPage() {
             </p>
           ) : null}
           <Button
-            disabled={submitRun.isPending}
+            disabled={submitRun.isPending || beforeOpening}
             onClick={async () => {
+              if (beforeOpening) return;
               const attempt = await submitRun.mutateAsync({
                 run: run as unknown as SubmissionRun,
                 missionId: mission.id,
