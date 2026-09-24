@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useIndicators } from "@/lib/uc10";
-import { blockDef, type Section } from "@/lib/mission-builder";
+import { blockDef, entryFieldLabel, HIDDEN_ENTRY_KEYS, type Section } from "@/lib/mission-builder";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
 import { GroupParticipation } from "@/components/missions/GroupParticipation";
 

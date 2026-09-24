@@ -3,7 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
-import { blockDef, type ChecklistItemDef, type Section } from "@/lib/mission-builder";
+import {
+  blockDef,
+  entryFieldLabel,
+  HIDDEN_ENTRY_KEYS,
+  type ChecklistItemDef,
+  type Section,
+} from "@/lib/mission-builder";
 import {
   eventText,
   answerSummary,
