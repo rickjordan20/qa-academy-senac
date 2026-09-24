@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fmtMissionDateTime, missionSituation } from "@/lib/mission-schedule";
+import { fmtMissionDateTime, isMissionLocked, missionSituation } from "@/lib/mission-schedule";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,9 @@ function StudentMissionPage() {
   /** Entrega aguardando avaliação ou já avaliada bloqueia edição; revisão reabre. */
   const lockedByDelivery =
     !!run && (run.eval_status === "evaluated" || (!!run.submitted_at && run.eval_status !== "revision"));
-  const readOnly = mission?.status !== "published" || !run || lockedByDelivery;
+  /** Antes da abertura configurada: nada pode ser aberto, gravado ou entregue. */
+  const beforeOpening = !!mission && isMissionLocked(mission) && run?.eval_status !== "revision";
+  const readOnly = mission?.status !== "published" || !run || lockedByDelivery || beforeOpening;
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
@@ -219,8 +221,32 @@ function StudentMissionPage() {
 
   if (!mission) return <p className="text-sm text-muted-foreground">Carregando missão...</p>;
 
+  if (beforeOpening) {
+    return (
+      <div className="mx-auto w-full max-w-3xl space-y-4">
+        <Link to="/student/activities" className="text-xs text-muted-foreground hover:underline">
+          ← Todas as missões
+        </Link>
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+            Agendada
+          </span>
+          <h1 className="mt-2 text-xl font-bold">{mission.title}</h1>
+          <p className="mt-3 text-sm">Esta missão ainda não está disponível.</p>
+          <p className="text-sm font-semibold">
+            Abertura: {fmtMissionDateTime(mission.opens_at, "opens")}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            No horário de abertura (horário de Brasília) a missão fica disponível automaticamente. Basta atualizar
+            esta página.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   function persist(nextAnswers: typeof answers, nextChecklist: typeof checklist) {
-    if (!run || !mission) return;
+    if (!run || !mission || beforeOpening) return;
     setSaving("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => {
@@ -241,7 +267,7 @@ function StudentMissionPage() {
   }
 
   async function addEntry(section: Section, values: Record<string, string>) {
-    if (!run || !userId) return;
+    if (!run || !userId || beforeOpening) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const featureId = values["feature_id"] || null;
@@ -312,6 +338,7 @@ function StudentMissionPage() {
     entry: { id: string; author_id: string; group_id: string | null },
     values: Record<string, string>,
   ) {
+    if (beforeOpening) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const data = { ...values };
@@ -418,8 +445,9 @@ function StudentMissionPage() {
 
       {!run && mission.status === "published" ? (
         <Button
-          disabled={(isCafe && !groupId) || !userId || start.isPending}
+          disabled={(isCafe && !groupId) || !userId || start.isPending || beforeOpening}
           onClick={async () => {
+            if (beforeOpening) return;
             await start.mutateAsync();
           }}
         >
@@ -493,10 +521,12 @@ function StudentMissionPage() {
           onUpdateEntry: editEntry,
           canEditEntry,
           onDeleteEntry: (id) =>
-            deleteEntry.mutate(id, {
-              onSuccess: () => toast.success("Registro excluído."),
-              onError: (e) => toast.error(e.message),
-            }),
+            beforeOpening
+              ? undefined
+              : deleteEntry.mutate(id, {
+                  onSuccess: () => toast.success("Registro excluído."),
+                  onError: (e) => toast.error(e.message),
+                }),
         }}
       />
 
@@ -509,8 +539,9 @@ function StudentMissionPage() {
             </p>
           ) : null}
           <Button
-            disabled={submitRun.isPending}
+            disabled={submitRun.isPending || beforeOpening}
             onClick={async () => {
+              if (beforeOpening) return;
               const attempt = await submitRun.mutateAsync({
                 run: run as unknown as SubmissionRun,
                 missionId: mission.id,
