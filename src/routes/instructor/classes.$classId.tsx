@@ -222,8 +222,11 @@ function ClassDetail() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
             <CardTitle>Integrantes ({members?.length ?? 0})</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setClassroomOpen(true)}>
+              Google Classroom
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <form className="flex gap-2" onSubmit={addStudent}>
