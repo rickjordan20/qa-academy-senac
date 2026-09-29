@@ -22,7 +22,7 @@ export type ClassroomRosterRow = {
   classroomUserId: string;
   classroomName: string;
   classroomEmail: string;
-  status: "auto_email" | "manual" | "pending";
+  status: "auto_email" | "manual" | "pending" | "ignored";
   studentId: string | null;
   studentName: string | null;
   studentEmail: string | null;
@@ -42,6 +42,7 @@ export type ClassroomSyncResult = {
   autoMatches: number;
   manualMatches: number;
   pending: number;
+  ignored: number;
   missingInClassroom: number;
   rows: ClassroomRosterRow[];
   academy: ClassroomAcademyRow[];
