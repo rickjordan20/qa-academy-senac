@@ -12,4 +12,5 @@
 - [x] OAuth server-side com state assinado (HMAC) e callback /api/public/google-classroom/callback
 - [x] Server Functions: iniciar conexão, listar cursos, vincular/desvincular turma, sincronizar, vincular/desvincular aluno, desconectar conta
 - [x] Modal "Google Classroom" na tela da turma (integrantes)
-- [ ] Pendente do usuário: GOOGLE_CLASSROOM_CLIENT_ID / GOOGLE_CLASSROOM_CLIENT_SECRET + URIs de redirecionamento no Google Cloud Console
+- [x] Secrets GOOGLE_CLASSROOM_CLIENT_ID / GOOGLE_CLASSROOM_CLIENT_SECRET configurados
+- [x] Estado "Ignorado" para alunos do Classroom sem conta no QA Academy (ignorar / reavaliar, contador no resumo)
