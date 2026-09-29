@@ -6,8 +6,11 @@ import {
   verifyState,
 } from "@/lib/google-classroom.server";
 
-function back(origin: string, classId: string | null, status: string) {
-  const target = classId
+function back(origin: string, classId: string | null, status: string, returnPath?: string) {
+  const safe = returnPath && /^\/instructor\/[A-Za-z0-9/_-]*$/.test(returnPath) ? returnPath : null;
+  const target = safe
+    ? `${origin}${safe}?gclassroom=${status}`
+    : classId
     ? `${origin}/instructor/classes/${classId}?gclassroom=${status}`
     : `${origin}/instructor/classes?gclassroom=${status}`;
   return new Response(null, { status: 302, headers: { location: target } });
@@ -25,11 +28,11 @@ export const Route = createFileRoute("/api/public/google-classroom/callback")({
           return back(origin, null, "invalid_state");
         }
         if (url.searchParams.get("error")) {
-          return back(origin, state.c, "denied");
+          return back(origin, state.c, "denied", state.r);
         }
         const code = url.searchParams.get("code");
         if (!code) {
-          return back(origin, state.c, "denied");
+          return back(origin, state.c, "denied", state.r);
         }
 
         try {
@@ -52,10 +55,10 @@ export const Route = createFileRoute("/api/public/google-classroom/callback")({
           if (error) throw new Error(error.message);
         } catch (e) {
           console.error("[google-classroom] callback failed", e);
-          return back(origin, state.c, "error");
+          return back(origin, state.c, "error", state.r);
         }
 
-        return back(origin, state.c, "connected");
+        return back(origin, state.c, "connected", state.r);
       },
     },
   },

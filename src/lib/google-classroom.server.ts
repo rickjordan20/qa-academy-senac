@@ -5,6 +5,8 @@ export const GOOGLE_CLASSROOM_SCOPES = [
   "https://www.googleapis.com/auth/classroom.courses.readonly",
   "https://www.googleapis.com/auth/classroom.rosters.readonly",
   "https://www.googleapis.com/auth/classroom.profile.emails",
+  // Fase 2: criar/atualizar somente as atividades criadas por este app.
+  "https://www.googleapis.com/auth/classroom.coursework.me",
 ] as const;
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -60,7 +62,7 @@ async function hmac(payload: string): Promise<string> {
   return toBase64Url(new Uint8Array(sig));
 }
 
-export type OAuthState = { u: string; c: string; o: string; exp: number };
+export type OAuthState = { u: string; c: string; o: string; exp: number; r?: string };
 
 export async function signState(state: OAuthState): Promise<string> {
   const payload = toBase64Url(new TextEncoder().encode(JSON.stringify(state)));
@@ -229,4 +231,98 @@ export async function fetchCourseStudents(
 
 export function normalizeEmail(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
+}
+
+// --------------------------------------------------------- Fase 2: CourseWork
+
+export type CourseWorkInput = {
+  title: string;
+  description: string;
+  link: string;
+  dueAt: string | null;
+};
+
+export type CourseWorkResult = { id: string; alternateLink: string | null };
+
+function dueFields(dueAt: string | null) {
+  if (!dueAt) return { dueDate: null, dueTime: null };
+  const d = new Date(dueAt);
+  return {
+    dueDate: { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() },
+    dueTime: { hours: d.getUTCHours(), minutes: d.getUTCMinutes() },
+  };
+}
+
+async function classroomWrite<T>(
+  accessToken: string,
+  method: "POST" | "PATCH",
+  path: string,
+  payload: unknown,
+): Promise<T> {
+  const response = await fetch(`${CLASSROOM_API}${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.text();
+  if (!response.ok) {
+    console.error(`[google-classroom] ${method} ${path} failed [${response.status}]: ${body}`);
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        "O Google não autorizou a publicação. Reconecte sua conta Google para conceder a permissão de publicar atividades.",
+      );
+    }
+    if (response.status === 404) {
+      throw new Error("A atividade ou a turma não foi encontrada no Google Classroom.");
+    }
+    throw new Error("O Google Classroom não aceitou a atividade. Tente novamente.");
+  }
+  return JSON.parse(body) as T;
+}
+
+function fullDescription(input: CourseWorkInput) {
+  return `${input.description}\n\nAcesse a missão no QA Academy: ${input.link}`.trim();
+}
+
+export async function createCourseWork(
+  accessToken: string,
+  courseId: string,
+  input: CourseWorkInput,
+): Promise<CourseWorkResult> {
+  const due = dueFields(input.dueAt);
+  const payload: Record<string, unknown> = {
+    title: input.title,
+    description: fullDescription(input),
+    materials: [{ link: { url: input.link } }],
+    workType: "ASSIGNMENT",
+    state: "PUBLISHED",
+  };
+  if (due.dueDate) {
+    payload["dueDate"] = due.dueDate;
+    payload["dueTime"] = due.dueTime;
+  }
+  const res = await classroomWrite<{ id: string; alternateLink?: string }>(
+    accessToken,
+    "POST",
+    `/courses/${encodeURIComponent(courseId)}/courseWork`,
+    payload,
+  );
+  return { id: res.id, alternateLink: res.alternateLink ?? null };
+}
+
+export async function patchCourseWork(
+  accessToken: string,
+  courseId: string,
+  courseWorkId: string,
+  input: CourseWorkInput,
+): Promise<CourseWorkResult> {
+  const due = dueFields(input.dueAt);
+  const mask = ["title", "description", "dueDate", "dueTime"].join(",");
+  const res = await classroomWrite<{ id: string; alternateLink?: string }>(
+    accessToken,
+    "PATCH",
+    `/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}?updateMask=${mask}`,
+    { title: input.title, description: fullDescription(input), dueDate: due.dueDate, dueTime: due.dueTime },
+  );
+  return { id: res.id, alternateLink: res.alternateLink ?? null };
 }
