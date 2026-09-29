@@ -74,6 +74,8 @@ export function ClassroomSyncDialog({
   const unlinkCourse = useServerFn(unlinkClassroomCourse);
   const linkStudent = useServerFn(linkClassroomStudent);
   const unlinkStudent = useServerFn(unlinkClassroomStudent);
+  const ignoreStudent = useServerFn(ignoreClassroomStudent);
+  const unignoreStudent = useServerFn(unignoreClassroomStudent);
   const disconnect = useServerFn(disconnectGoogleClassroom);
 
   const [selectedCourse, setSelectedCourse] = useState<string>("");
