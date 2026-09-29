@@ -294,6 +294,7 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
     }> = [];
 
     for (const student of classroomStudents) {
+      if (ignoredIds.has(student.userId)) continue;
       if (linkByClassroomUser.has(student.userId)) continue;
       const candidates = (profileByEmail.get(normalizeEmail(student.email)) ?? []).filter(
         (p) => !linkedStudentIds.has(p.id),
