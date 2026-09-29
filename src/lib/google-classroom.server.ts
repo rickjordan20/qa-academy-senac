@@ -5,8 +5,8 @@ export const GOOGLE_CLASSROOM_SCOPES = [
   "https://www.googleapis.com/auth/classroom.courses.readonly",
   "https://www.googleapis.com/auth/classroom.rosters.readonly",
   "https://www.googleapis.com/auth/classroom.profile.emails",
-  // Fase 2: criar/atualizar somente as atividades criadas por este app.
-  "https://www.googleapis.com/auth/classroom.coursework.me",
+  // Fase 2: criar/atualizar as atividades criadas por este app na turma.
+  "https://www.googleapis.com/auth/classroom.coursework.students",
 ] as const;
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
