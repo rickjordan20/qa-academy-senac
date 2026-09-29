@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/missions/DynamicFields";
 import { SectionEditor } from "@/components/missions/SectionEditor";
 import { MissionPlayer } from "@/components/missions/MissionPlayer";
+import { MissionClassroomPublish } from "@/components/classroom/MissionClassroomPublish";
 import { useAuth } from "@/lib/auth";
 import {
   ACTIVITY_KINDS,
@@ -197,6 +198,7 @@ function MissionBuilderPage() {
             Salvar
           </Button>
           {draft.status === "draft" ? <Button onClick={() => changeStatus("published")}>Publicar</Button> : null}
+          <MissionClassroomPublish missionId={missionId} missionPublished={draft.status === "published"} />
           {draft.status === "published" ? (
             <Button variant="secondary" onClick={() => changeStatus("closed")}>
               Encerrar
