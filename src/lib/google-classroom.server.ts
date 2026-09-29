@@ -247,6 +247,8 @@ export type CourseWorkResult = { id: string; alternateLink: string | null };
 function dueFields(dueAt: string | null) {
   if (!dueAt) return { dueDate: null, dueTime: null };
   const d = new Date(dueAt);
+  // Prazo vencido: o Google recusa "Due date must be in the future" — publica sem prazo.
+  if (d.getTime() <= Date.now()) return { dueDate: null, dueTime: null };
   return {
     dueDate: { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() },
     dueTime: { hours: d.getUTCHours(), minutes: d.getUTCMinutes() },
@@ -375,11 +377,18 @@ export async function patchCourseWork(
 ): Promise<CourseWorkResult> {
   const due = dueFields(input.dueAt);
   const mask = ["title", "description", "dueDate", "dueTime"].join(",");
+  const body: Record<string, unknown> = { title: input.title, description: fullDescription(input) };
+  if (due.dueDate) {
+    body["dueDate"] = due.dueDate;
+    body["dueTime"] = due.dueTime;
+  }
+  // Sem prazo (vencido ou removido): dueDate/dueTime permanecem no updateMask mas fora
+  // do corpo — o Google limpa o prazo antigo do CourseWork em vez de rejeitar a chamada.
   const res = await classroomWrite<{ id: string; alternateLink?: string }>(
     accessToken,
     "PATCH",
     `/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}?updateMask=${mask}`,
-    { title: input.title, description: fullDescription(input), dueDate: due.dueDate, dueTime: due.dueTime },
+    body,
   );
   return { id: res.id, alternateLink: res.alternateLink ?? null };
 }

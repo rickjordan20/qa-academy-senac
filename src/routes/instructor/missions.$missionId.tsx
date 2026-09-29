@@ -198,7 +198,7 @@ function MissionBuilderPage() {
             Salvar
           </Button>
           {draft.status === "draft" ? <Button onClick={() => changeStatus("published")}>Publicar</Button> : null}
-          <MissionClassroomPublish missionId={missionId} missionPublished={draft.status === "published"} />
+          <MissionClassroomPublish missionId={missionId} missionPublished={draft.status === "published"} dueAt={draft.due_at} />
           {draft.status === "published" ? (
             <Button variant="secondary" onClick={() => changeStatus("closed")}>
               Encerrar
