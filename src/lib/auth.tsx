@@ -138,3 +138,29 @@ export function useAuth() {
 export function homeForRole(role: AppRole | null) {
   return role === "instructor" ? "/instructor/dashboard" : "/student/dashboard";
 }
+
+const RETURN_KEY = "qa_return_to";
+
+/** Aceita somente caminhos internos da área do papel (evita open redirect). */
+export function safeReturnTo(path: string | null | undefined, role: AppRole | null): string | null {
+  if (!path || !role) return null;
+  const prefix = role === "instructor" ? "/instructor/" : "/student/";
+  if (!path.startsWith(prefix)) return null;
+  if (!/^\/[A-Za-z0-9/_-]*$/.test(path) || path.includes("//")) return null;
+  return path;
+}
+
+export function rememberReturnTo(path: string) {
+  if (!/^\/(student|instructor)\/[A-Za-z0-9/_-]*$/.test(path) || path.includes("//")) return;
+  try { sessionStorage.setItem(RETURN_KEY, path); } catch { /* ignore */ }
+}
+
+export function consumeReturnTo(role: AppRole | null): string | null {
+  try {
+    const v = sessionStorage.getItem(RETURN_KEY);
+    sessionStorage.removeItem(RETURN_KEY);
+    return safeReturnTo(v, role);
+  } catch {
+    return null;
+  }
+}

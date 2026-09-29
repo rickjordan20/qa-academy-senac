@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useAuth, homeForRole, type AppRole } from "@/lib/auth";
+import { useAuth, homeForRole, rememberReturnTo, type AppRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +23,7 @@ export function RoleGate({ allow, children }: { allow: AppRole; children: React.
   useEffect(() => {
     if (loading) return;
     if (!session) {
+      rememberReturnTo(window.location.pathname);
       navigate({ to: "/login", replace: true });
       return;
     }

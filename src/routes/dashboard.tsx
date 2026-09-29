@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useAuth, homeForRole } from "@/lib/auth";
+import { useAuth, homeForRole, consumeReturnTo } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,7 +31,7 @@ function RoleRedirect() {
     }
     if (role) {
       console.info("[auth] redirecionando para", homeForRole(role));
-      navigate({ to: homeForRole(role), replace: true });
+      navigate({ to: consumeReturnTo(role) ?? homeForRole(role), replace: true } as never);
     }
   }, [loading, session, role, navigate]);
 
