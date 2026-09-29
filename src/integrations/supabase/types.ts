@@ -1577,6 +1577,60 @@ export type Database = {
         }
         Relationships: []
       }
+      google_classroom_coursework: {
+        Row: {
+          alternate_link: string | null
+          class_id: string
+          classroom_course_id: string
+          coursework_id: string
+          created_at: string
+          id: string
+          last_published_at: string
+          mission_id: string
+          published_by: string
+          updated_at: string
+        }
+        Insert: {
+          alternate_link?: string | null
+          class_id: string
+          classroom_course_id: string
+          coursework_id: string
+          created_at?: string
+          id?: string
+          last_published_at?: string
+          mission_id: string
+          published_by: string
+          updated_at?: string
+        }
+        Update: {
+          alternate_link?: string | null
+          class_id?: string
+          classroom_course_id?: string
+          coursework_id?: string
+          created_at?: string
+          id?: string
+          last_published_at?: string
+          mission_id?: string
+          published_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_classroom_coursework_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_classroom_coursework_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "builder_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_classroom_ignored_students: {
         Row: {
           class_id: string
