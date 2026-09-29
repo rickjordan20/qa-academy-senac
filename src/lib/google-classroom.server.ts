@@ -253,6 +253,12 @@ function dueFields(dueAt: string | null) {
   };
 }
 
+export class CourseWorkNotFoundError extends Error {
+  constructor() {
+    super("COURSEWORK_NOT_FOUND");
+  }
+}
+
 async function classroomWrite<T>(
   accessToken: string,
   method: "POST" | "PATCH",
@@ -273,6 +279,7 @@ async function classroomWrite<T>(
       );
     }
     if (response.status === 404) {
+      if (method === "PATCH") throw new CourseWorkNotFoundError();
       throw new Error("A atividade ou a turma não foi encontrada no Google Classroom.");
     }
     throw new Error("O Google Classroom não aceitou a atividade. Tente novamente.");
