@@ -367,6 +367,7 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
       autoMatches: rows.filter((r) => r.status === "auto_email").length,
       manualMatches: rows.filter((r) => r.status === "manual").length,
       pending: rows.filter((r) => r.status === "pending").length,
+      ignored: rows.filter((r) => r.status === "ignored").length,
       missingInClassroom: academy.filter((a) => !a.linked).length,
       rows,
       academy,
