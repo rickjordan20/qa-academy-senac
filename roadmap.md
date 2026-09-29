@@ -14,3 +14,6 @@
 - [x] Modal "Google Classroom" na tela da turma (integrantes)
 - [x] Secrets GOOGLE_CLASSROOM_CLIENT_ID / GOOGLE_CLASSROOM_CLIENT_SECRET configurados
 - [x] Estado "Ignorado" para alunos do Classroom sem conta no QA Academy (ignorar / reavaliar, contador no resumo)
+
+## Google Classroom — Fase 2 (publicação de missões)
+- [x] Tabela de publicações (UNIQUE missão+turma), scope coursework.me, publicar/atualizar, modal com turma de destino, returnTo seguro no login

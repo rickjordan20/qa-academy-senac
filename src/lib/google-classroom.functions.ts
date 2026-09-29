@@ -79,16 +79,19 @@ function requestOrigin(): string {
 
 export const startGoogleClassroomAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { classId: string }) => input)
+  .inputValidator((input: { classId: string; returnPath?: string }) => input)
   .handler(async ({ data, context }) => {
     await assertInstructorOfClass(context.supabase as never, data.classId, context.userId);
     const { buildAuthorizationUrl, signState } = await import("@/lib/google-classroom.server");
     const origin = requestOrigin();
+    const r =
+      data.returnPath && /^\/instructor\/[A-Za-z0-9/_-]*$/.test(data.returnPath) ? data.returnPath : undefined;
     const state = await signState({
       u: context.userId,
       c: data.classId,
       o: origin,
       exp: Date.now() + 10 * 60 * 1000,
+      ...(r ? { r } : {}),
     });
     return { url: buildAuthorizationUrl(origin, state) };
   });
@@ -484,6 +487,166 @@ export const unignoreClassroomStudent = createServerFn({ method: "POST" })
       .delete()
       .eq("class_id", data.classId)
       .eq("classroom_user_id", data.classroomUserId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ------------------------------------------------ Fase 2: publicar missão
+
+export type MissionClassroomTarget = {
+  classId: string;
+  className: string;
+  courseName: string;
+  publication: { courseWorkId: string; alternateLink: string | null; lastPublishedAt: string } | null;
+};
+
+async function loadMissionForPublish(supabase: any, missionId: string) {
+  const { data, error } = await supabase
+    .from("builder_missions")
+    .select("id, title, subtitle, objective, description, due_at, status")
+    .eq("id", missionId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Missão não encontrada.");
+  return data as {
+    id: string; title: string; subtitle: string; objective: string; description: string;
+    due_at: string | null; status: string;
+  };
+}
+
+/** Turmas do instrutor aplicáveis à missão que possuem vínculo com o Classroom. */
+async function applicableClassIds(supabase: any, missionId: string, userId: string) {
+  const classesRes = await supabase.from("classes").select("id, name").eq("instructor_id", userId);
+  if (classesRes.error) throw new Error(classesRes.error.message);
+  const own = (classesRes.data ?? []) as { id: string; name: string }[];
+  const assignRes = await supabase
+    .from("builder_mission_assignments")
+    .select("class_id")
+    .eq("mission_id", missionId);
+  if (assignRes.error) throw new Error(assignRes.error.message);
+  const assigned = new Set(((assignRes.data ?? []) as { class_id: string }[]).map((a) => a.class_id));
+  // Sem turmas selecionadas = missão disponível a todas as turmas.
+  return assigned.size ? own.filter((c) => assigned.has(c.id)) : own;
+}
+
+export const listMissionClassroomTargets = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { missionId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const classes = await applicableClassIds(context.supabase, data.missionId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { connection } = await loadAccessToken(supabaseAdmin, context.userId);
+    const ids = classes.map((c) => c.id);
+    if (!ids.length) return { connection, targets: [] as MissionClassroomTarget[] };
+    const links = await supabaseAdmin
+      .from("google_classroom_class_links")
+      .select("class_id, classroom_course_name")
+      .in("class_id", ids);
+    if (links.error) throw new Error(links.error.message);
+    const pubs = await supabaseAdmin
+      .from("google_classroom_coursework")
+      .select("class_id, coursework_id, alternate_link, last_published_at")
+      .eq("mission_id", data.missionId)
+      .in("class_id", ids);
+    if (pubs.error) throw new Error(pubs.error.message);
+    const targets: MissionClassroomTarget[] = [];
+    for (const c of classes) {
+      const link = (links.data ?? []).find((l) => l.class_id === c.id);
+      if (!link) continue;
+      const pub = (pubs.data ?? []).find((p) => p.class_id === c.id);
+      targets.push({
+        classId: c.id,
+        className: c.name,
+        courseName: link.classroom_course_name,
+        publication: pub
+          ? { courseWorkId: pub.coursework_id, alternateLink: pub.alternate_link, lastPublishedAt: pub.last_published_at }
+          : null,
+      });
+    }
+    return { connection, targets };
+  });
+
+async function prepareMissionPublish(
+  context: { supabase: any; userId: string },
+  missionId: string,
+  classId: string,
+) {
+  await assertInstructorOfClass(context.supabase, classId, context.userId);
+  const allowed = await applicableClassIds(context.supabase, missionId, context.userId);
+  if (!allowed.some((c) => c.id === classId)) throw new Error("Esta turma não tem acesso a esta missão.");
+  const mission = await loadMissionForPublish(context.supabase, missionId);
+  if (mission.status !== "published") throw new Error("Publique a missão no QA Academy antes de enviá-la ao Classroom.");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { token } = await loadAccessToken(supabaseAdmin, context.userId);
+  if (!token) throw new Error("Reconecte sua conta Google para publicar no Classroom.");
+  const link = await supabaseAdmin
+    .from("google_classroom_class_links")
+    .select("classroom_course_id")
+    .eq("class_id", classId)
+    .maybeSingle();
+  if (link.error) throw new Error(link.error.message);
+  if (!link.data) throw new Error("Esta turma não está vinculada a uma turma do Google Classroom.");
+  const summary = (mission.objective || mission.subtitle || mission.description || "").trim();
+  const input = {
+    title: mission.title,
+    description: summary.length > 1500 ? `${summary.slice(0, 1497)}...` : summary,
+    link: `${requestOrigin()}/student/activities/${mission.id}`,
+    dueAt: mission.due_at,
+  };
+  return { supabaseAdmin, token, courseId: link.data.classroom_course_id, input };
+}
+
+export const publishMissionToClassroom = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { missionId: string; classId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const prep = await prepareMissionPublish(context, data.missionId, data.classId);
+    const existing = await prep.supabaseAdmin
+      .from("google_classroom_coursework")
+      .select("id")
+      .eq("mission_id", data.missionId)
+      .eq("class_id", data.classId)
+      .maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (existing.data) throw new Error("Esta missão já foi publicada nesta turma. Use \"Atualizar no Google Classroom\".");
+    const { createCourseWork } = await import("@/lib/google-classroom.server");
+    const created = await createCourseWork(prep.token, prep.courseId, prep.input);
+    const { error } = await prep.supabaseAdmin.from("google_classroom_coursework").insert({
+      mission_id: data.missionId,
+      class_id: data.classId,
+      classroom_course_id: prep.courseId,
+      coursework_id: created.id,
+      alternate_link: created.alternateLink,
+      published_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateMissionInClassroom = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { missionId: string; classId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const prep = await prepareMissionPublish(context, data.missionId, data.classId);
+    const existing = await prep.supabaseAdmin
+      .from("google_classroom_coursework")
+      .select("id, classroom_course_id, coursework_id")
+      .eq("mission_id", data.missionId)
+      .eq("class_id", data.classId)
+      .maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (!existing.data) throw new Error("Esta missão ainda não foi publicada nesta turma.");
+    const { patchCourseWork } = await import("@/lib/google-classroom.server");
+    const updated = await patchCourseWork(
+      prep.token,
+      existing.data.classroom_course_id,
+      existing.data.coursework_id,
+      prep.input,
+    );
+    const { error } = await prep.supabaseAdmin
+      .from("google_classroom_coursework")
+      .update({ alternate_link: updated.alternateLink, last_published_at: new Date().toISOString() })
+      .eq("id", existing.data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
