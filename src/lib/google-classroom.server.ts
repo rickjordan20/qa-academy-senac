@@ -342,6 +342,17 @@ async function classroomWrite<T>(
       if (method === "PATCH") throw new CourseWorkNotFoundError();
       throw new Error("A atividade ou a turma não foi encontrada no Google Classroom.");
     }
+
+    // 400 FAILED_PRECONDITION no PATCH: pode ser atividade excluída (soft-delete) ou outra
+    // causa. Quem chama confirma consultando o estado real antes de decidir.
+    if (response.status === 400 && status === "FAILED_PRECONDITION" && method === "PATCH") {
+      throw new PreconditionFailedError(
+        message
+          ? `O Google Classroom não aceitou a atividade: ${message}`
+          : "O Google Classroom não aceitou a atividade. Tente novamente.",
+      );
+    }
+
     throw new Error(
       message
         ? `O Google Classroom não aceitou a atividade: ${message}`
