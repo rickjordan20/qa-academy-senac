@@ -1577,6 +1577,47 @@ export type Database = {
         }
         Relationships: []
       }
+      google_classroom_ignored_students: {
+        Row: {
+          class_id: string
+          classroom_email: string
+          classroom_name: string
+          classroom_user_id: string
+          created_at: string
+          id: string
+          ignored_by: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          classroom_email?: string
+          classroom_name?: string
+          classroom_user_id: string
+          created_at?: string
+          id?: string
+          ignored_by: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          classroom_email?: string
+          classroom_name?: string
+          classroom_user_id?: string
+          created_at?: string
+          id?: string
+          ignored_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_classroom_ignored_students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_classroom_student_links: {
         Row: {
           class_id: string
