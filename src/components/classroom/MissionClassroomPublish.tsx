@@ -33,9 +33,11 @@ import {
 export function MissionClassroomPublish({
   missionId,
   missionPublished,
+  dueAt,
 }: {
   missionId: string;
   missionPublished: boolean;
+  dueAt: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [classId, setClassId] = useState("");
@@ -157,6 +159,12 @@ export function MissionClassroomPublish({
               <p className="text-sm text-muted-foreground">
                 Pontuação no Classroom: 10 pontos
               </p>
+
+              {dueAt && new Date(dueAt).getTime() <= Date.now() ? (
+                <p className="rounded-md border border-accent/40 bg-accent/10 p-2 text-sm">
+                  Prazo da missão já encerrado. A atividade será publicada no Classroom sem prazo.
+                </p>
+              ) : null}
 
               {!missionPublished ? (
                 <p className="text-sm text-muted-foreground">
