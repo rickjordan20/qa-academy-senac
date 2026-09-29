@@ -22,7 +22,7 @@ export type ClassroomRosterRow = {
   classroomUserId: string;
   classroomName: string;
   classroomEmail: string;
-  status: "auto_email" | "manual" | "pending";
+  status: "auto_email" | "manual" | "pending" | "ignored";
   studentId: string | null;
   studentName: string | null;
   studentEmail: string | null;
@@ -42,6 +42,7 @@ export type ClassroomSyncResult = {
   autoMatches: number;
   manualMatches: number;
   pending: number;
+  ignored: number;
   missingInClassroom: number;
   rows: ClassroomRosterRow[];
   academy: ClassroomAcademyRow[];
@@ -238,6 +239,13 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
     if (existingRes.error) throw new Error(existingRes.error.message);
     let existing = existingRes.data ?? [];
 
+    const ignoredRes = await supabaseAdmin
+      .from("google_classroom_ignored_students")
+      .select("classroom_user_id")
+      .eq("class_id", data.classId);
+    if (ignoredRes.error) throw new Error(ignoredRes.error.message);
+    const ignoredIds = new Set((ignoredRes.data ?? []).map((r) => r.classroom_user_id));
+
     const emptyResult: ClassroomSyncResult = {
       connection,
       link,
@@ -245,6 +253,7 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
       autoMatches: 0,
       manualMatches: 0,
       pending: 0,
+      ignored: 0,
       missingInClassroom: 0,
       rows: [],
       academy: profiles.map((p) => ({
@@ -285,6 +294,7 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
     }> = [];
 
     for (const student of classroomStudents) {
+      if (ignoredIds.has(student.userId)) continue;
       if (linkByClassroomUser.has(student.userId)) continue;
       const candidates = (profileByEmail.get(normalizeEmail(student.email)) ?? []).filter(
         (p) => !linkedStudentIds.has(p.id),
@@ -320,11 +330,16 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
     const rows: ClassroomRosterRow[] = classroomStudents.map((student) => {
       const saved = finalByClassroomUser.get(student.userId);
       const profile = saved ? profileById.get(saved.student_id) : undefined;
+      const status: ClassroomRosterRow["status"] = saved
+        ? (saved.match_type as "auto_email" | "manual")
+        : ignoredIds.has(student.userId)
+          ? "ignored"
+          : "pending";
       return {
         classroomUserId: student.userId,
         classroomName: student.name,
         classroomEmail: student.email,
-        status: saved ? (saved.match_type as "auto_email" | "manual") : "pending",
+        status,
         studentId: saved?.student_id ?? null,
         studentName: profile?.full_name ?? null,
         studentEmail: profile?.email ?? null,
@@ -352,6 +367,7 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
       autoMatches: rows.filter((r) => r.status === "auto_email").length,
       manualMatches: rows.filter((r) => r.status === "manual").length,
       pending: rows.filter((r) => r.status === "pending").length,
+      ignored: rows.filter((r) => r.status === "ignored").length,
       missingInClassroom: academy.filter((a) => !a.linked).length,
       rows,
       academy,
@@ -410,6 +426,61 @@ export const unlinkClassroomStudent = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("google_classroom_student_links")
+      .delete()
+      .eq("class_id", data.classId)
+      .eq("classroom_user_id", data.classroomUserId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ------------------------------------------------- ignorar / reavaliar aluno
+
+export const ignoreClassroomStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      classId: string;
+      classroomUserId: string;
+      classroomEmail: string;
+      classroomName: string;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await assertInstructorOfClass(context.supabase as never, data.classId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Só faz sentido ignorar quem ainda não possui vínculo nesta turma.
+    const linked = await supabaseAdmin
+      .from("google_classroom_student_links")
+      .select("id")
+      .eq("class_id", data.classId)
+      .eq("classroom_user_id", data.classroomUserId)
+      .maybeSingle();
+    if (linked.error) throw new Error(linked.error.message);
+    if (linked.data) throw new Error("Este aluno já possui vínculo nesta turma.");
+
+    const { error } = await supabaseAdmin.from("google_classroom_ignored_students").insert({
+      class_id: data.classId,
+      classroom_user_id: data.classroomUserId,
+      classroom_email: data.classroomEmail,
+      classroom_name: data.classroomName,
+      ignored_by: context.userId,
+    });
+    if (error) {
+      if (error.code === "23505") return { ok: true };
+      throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const unignoreClassroomStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { classId: string; classroomUserId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await assertInstructorOfClass(context.supabase as never, data.classId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("google_classroom_ignored_students")
       .delete()
       .eq("class_id", data.classId)
       .eq("classroom_user_id", data.classroomUserId);

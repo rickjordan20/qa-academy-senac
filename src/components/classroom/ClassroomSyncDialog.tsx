@@ -34,10 +34,12 @@ import {
 
 import {
   disconnectGoogleClassroom,
+  ignoreClassroomStudent,
   linkClassroomCourse,
   linkClassroomStudent,
   listClassroomCourses,
   syncClassroomRoster,
+  unignoreClassroomStudent,
   unlinkClassroomCourse,
   unlinkClassroomStudent,
 } from "@/lib/google-classroom.functions";
@@ -72,6 +74,8 @@ export function ClassroomSyncDialog({
   const unlinkCourse = useServerFn(unlinkClassroomCourse);
   const linkStudent = useServerFn(linkClassroomStudent);
   const unlinkStudent = useServerFn(unlinkClassroomStudent);
+  const ignoreStudent = useServerFn(ignoreClassroomStudent);
+  const unignoreStudent = useServerFn(unignoreClassroomStudent);
   const disconnect = useServerFn(disconnectGoogleClassroom);
 
   const [selectedCourse, setSelectedCourse] = useState<string>("");
@@ -163,13 +167,39 @@ export function ClassroomSyncDialog({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const ignoreStudentMutation = useMutation({
+    mutationFn: async (vars: {
+      classroomUserId: string;
+      classroomEmail: string;
+      classroomName: string;
+    }) => ignoreStudent({ data: { classId, ...vars } }),
+    onSuccess: () => {
+      toast.success("Aluno marcado como ignorado. Nenhum cadastro foi alterado.");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const unignoreStudentMutation = useMutation({
+    mutationFn: async (classroomUserId: string) =>
+      unignoreStudent({ data: { classId, classroomUserId } }),
+    onSuccess: () => {
+      toast.success("Aluno voltou para as pendências.");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const availableStudents = useMemo(
     () => (status.data?.academy ?? []).filter((a) => !a.linked),
     [status.data],
   );
 
   const pendingRows = (status.data?.rows ?? []).filter((r) => r.status === "pending");
-  const matchedRows = (status.data?.rows ?? []).filter((r) => r.status !== "pending");
+  const ignoredRows = (status.data?.rows ?? []).filter((r) => r.status === "ignored");
+  const matchedRows = (status.data?.rows ?? []).filter(
+    (r) => r.status !== "pending" && r.status !== "ignored",
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -270,7 +300,7 @@ export function ClassroomSyncDialog({
                 </Button>
               </div>
               <Separator className="my-3" />
-              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
                 <div>
                   <div className="text-lg font-semibold">{status.data?.classroomStudents ?? 0}</div>
                   alunos no Classroom
@@ -286,6 +316,10 @@ export function ClassroomSyncDialog({
                 <div>
                   <div className="text-lg font-semibold">{status.data?.pending ?? 0}</div>
                   pendências
+                </div>
+                <div>
+                  <div className="text-lg font-semibold">{status.data?.ignored ?? 0}</div>
+                  ignorados
                 </div>
               </div>
             </div>
@@ -338,11 +372,53 @@ export function ClassroomSyncDialog({
                       >
                         Vincular
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={ignoreStudentMutation.isPending}
+                        onClick={() =>
+                          ignoreStudentMutation.mutate({
+                            classroomUserId: row.classroomUserId,
+                            classroomEmail: row.classroomEmail,
+                            classroomName: row.classroomName,
+                          })
+                        }
+                      >
+                        Ignorar
+                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+
+            {ignoredRows.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Ignorados ({ignoredRows.length})</p>
+                {ignoredRows.map((row) => (
+                  <div
+                    key={row.classroomUserId}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border p-2 text-sm"
+                  >
+                    <div>
+                      <div className="font-medium">{row.classroomName || "Sem nome"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {row.classroomEmail || "sem e-mail"}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={unignoreStudentMutation.isPending}
+                      onClick={() => unignoreStudentMutation.mutate(row.classroomUserId)}
+                    >
+                      Reavaliar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
 
             {matchedRows.length > 0 && (
               <div className="space-y-2">
