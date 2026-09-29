@@ -5,8 +5,8 @@ export const GOOGLE_CLASSROOM_SCOPES = [
   "https://www.googleapis.com/auth/classroom.courses.readonly",
   "https://www.googleapis.com/auth/classroom.rosters.readonly",
   "https://www.googleapis.com/auth/classroom.profile.emails",
-  // Fase 2: criar/atualizar somente as atividades criadas por este app.
-  "https://www.googleapis.com/auth/classroom.coursework.me",
+  // Fase 2: criar/atualizar as atividades criadas por este app na turma.
+  "https://www.googleapis.com/auth/classroom.coursework.students",
 ] as const;
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -259,6 +259,29 @@ export class CourseWorkNotFoundError extends Error {
   }
 }
 
+/** Extrai `reason` e `message` do corpo de erro padrão das APIs do Google. */
+function readGoogleError(body: string): { reason: string | null; message: string | null } {
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: {
+        message?: string;
+        errors?: Array<{ reason?: string }>;
+        details?: Array<{ reason?: string }>;
+      };
+    };
+    const details = parsed.error?.details ?? [];
+    const legacy = parsed.error?.errors ?? [];
+    const reason =
+      details.find((d) => d?.reason)?.reason ?? legacy.find((d) => d?.reason)?.reason ?? null;
+    return { reason, message: parsed.error?.message ?? null };
+  } catch {
+    return { reason: null, message: null };
+  }
+}
+
+const RECONNECT_MESSAGE =
+  "O Google não autorizou a publicação. Reconecte sua conta Google para conceder a permissão de publicar atividades.";
+
 async function classroomWrite<T>(
   accessToken: string,
   method: "POST" | "PATCH",
@@ -273,16 +296,42 @@ async function classroomWrite<T>(
   const body = await response.text();
   if (!response.ok) {
     console.error(`[google-classroom] ${method} ${path} failed [${response.status}]: ${body}`);
-    if (response.status === 401 || response.status === 403) {
+    const { reason, message } = readGoogleError(body);
+
+    // 401 = token inválido/expirado → reconectar é sempre a ação correta.
+    if (response.status === 401) throw new Error(RECONNECT_MESSAGE);
+
+    if (response.status === 403) {
+      // Falta de consentimento do escopo → reconectar resolve.
+      if (
+        reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT" ||
+        reason === "insufficientPermissions" ||
+        reason === "forbidden"
+      ) {
+        throw new Error(RECONNECT_MESSAGE);
+      }
+      // Demais 403 têm outra causa (ex.: não é professor da turma, turma arquivada).
+      if (reason === "PERMISSION_DENIED" || !reason) {
+        throw new Error(
+          message
+            ? `O Google Classroom recusou a operação: ${message}`
+            : "O Google Classroom recusou a operação nesta turma. Verifique se a conta conectada é professora da turma e se a turma está ativa.",
+        );
+      }
       throw new Error(
-        "O Google não autorizou a publicação. Reconecte sua conta Google para conceder a permissão de publicar atividades.",
+        `O Google Classroom recusou a operação (${reason})${message ? `: ${message}` : "."}`,
       );
     }
+
     if (response.status === 404) {
       if (method === "PATCH") throw new CourseWorkNotFoundError();
       throw new Error("A atividade ou a turma não foi encontrada no Google Classroom.");
     }
-    throw new Error("O Google Classroom não aceitou a atividade. Tente novamente.");
+    throw new Error(
+      message
+        ? `O Google Classroom não aceitou a atividade: ${message}`
+        : "O Google Classroom não aceitou a atividade. Tente novamente.",
+    );
   }
   return JSON.parse(body) as T;
 }
