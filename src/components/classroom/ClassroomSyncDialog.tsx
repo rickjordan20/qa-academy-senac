@@ -167,13 +167,39 @@ export function ClassroomSyncDialog({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const ignoreStudentMutation = useMutation({
+    mutationFn: async (vars: {
+      classroomUserId: string;
+      classroomEmail: string;
+      classroomName: string;
+    }) => ignoreStudent({ data: { classId, ...vars } }),
+    onSuccess: () => {
+      toast.success("Aluno marcado como ignorado. Nenhum cadastro foi alterado.");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const unignoreStudentMutation = useMutation({
+    mutationFn: async (classroomUserId: string) =>
+      unignoreStudent({ data: { classId, classroomUserId } }),
+    onSuccess: () => {
+      toast.success("Aluno voltou para as pendências.");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const availableStudents = useMemo(
     () => (status.data?.academy ?? []).filter((a) => !a.linked),
     [status.data],
   );
 
   const pendingRows = (status.data?.rows ?? []).filter((r) => r.status === "pending");
-  const matchedRows = (status.data?.rows ?? []).filter((r) => r.status !== "pending");
+  const ignoredRows = (status.data?.rows ?? []).filter((r) => r.status === "ignored");
+  const matchedRows = (status.data?.rows ?? []).filter(
+    (r) => r.status !== "pending" && r.status !== "ignored",
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
