@@ -393,6 +393,25 @@ export async function createCourseWork(
   return { id: res.id, alternateLink: res.alternateLink ?? null };
 }
 
+/**
+ * Confirma se o CourseWork foi realmente excluído no Classroom.
+ * O Google faz soft-delete: o GET responde 200 com state "DELETED".
+ */
+async function isCourseWorkDeleted(
+  accessToken: string,
+  courseId: string,
+  courseWorkId: string,
+): Promise<boolean> {
+  const response = await fetch(
+    `${CLASSROOM_API}/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (response.status === 404) return true;
+  if (!response.ok) return false;
+  const data = (await response.json()) as { state?: string };
+  return data.state === "DELETED";
+}
+
 export async function patchCourseWork(
   accessToken: string,
   courseId: string,
@@ -408,11 +427,24 @@ export async function patchCourseWork(
   }
   // Sem prazo (vencido ou removido): dueDate/dueTime permanecem no updateMask mas fora
   // do corpo — o Google limpa o prazo antigo do CourseWork em vez de rejeitar a chamada.
-  const res = await classroomWrite<{ id: string; alternateLink?: string }>(
-    accessToken,
-    "PATCH",
-    `/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}?updateMask=${mask}`,
-    body,
-  );
-  return { id: res.id, alternateLink: res.alternateLink ?? null };
+  try {
+    const res = await classroomWrite<{ id: string; alternateLink?: string }>(
+      accessToken,
+      "PATCH",
+      `/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}?updateMask=${mask}`,
+      body,
+    );
+    return { id: res.id, alternateLink: res.alternateLink ?? null };
+  } catch (error) {
+    if (error instanceof PreconditionFailedError) {
+      // Só tratamos como vínculo órfão quando a própria API confirma a exclusão.
+      if (await isCourseWorkDeleted(accessToken, courseId, courseWorkId)) {
+        throw new CourseWorkNotFoundError();
+      }
+      throw new Error(error.message);
+    }
+    throw error;
+  }
+}
+
 }
