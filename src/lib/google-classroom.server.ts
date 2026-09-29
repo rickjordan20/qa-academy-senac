@@ -311,7 +311,7 @@ async function classroomWrite<T>(
   const body = await response.text();
   if (!response.ok) {
     console.error(`[google-classroom] ${method} ${path} failed [${response.status}]: ${body}`);
-    const { reason, message } = readGoogleError(body);
+    const { reason, message, status } = readGoogleError(body);
 
     // 401 = token inválido/expirado → reconectar é sempre a ação correta.
     if (response.status === 401) throw new Error(RECONNECT_MESSAGE);
