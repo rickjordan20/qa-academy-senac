@@ -432,3 +432,58 @@ export const unlinkClassroomStudent = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ------------------------------------------------- ignorar / reavaliar aluno
+
+export const ignoreClassroomStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      classId: string;
+      classroomUserId: string;
+      classroomEmail: string;
+      classroomName: string;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    await assertInstructorOfClass(context.supabase as never, data.classId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Só faz sentido ignorar quem ainda não possui vínculo nesta turma.
+    const linked = await supabaseAdmin
+      .from("google_classroom_student_links")
+      .select("id")
+      .eq("class_id", data.classId)
+      .eq("classroom_user_id", data.classroomUserId)
+      .maybeSingle();
+    if (linked.error) throw new Error(linked.error.message);
+    if (linked.data) throw new Error("Este aluno já possui vínculo nesta turma.");
+
+    const { error } = await supabaseAdmin.from("google_classroom_ignored_students").insert({
+      class_id: data.classId,
+      classroom_user_id: data.classroomUserId,
+      classroom_email: data.classroomEmail,
+      classroom_name: data.classroomName,
+      ignored_by: context.userId,
+    });
+    if (error) {
+      if (error.code === "23505") return { ok: true };
+      throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const unignoreClassroomStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { classId: string; classroomUserId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await assertInstructorOfClass(context.supabase as never, data.classId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("google_classroom_ignored_students")
+      .delete()
+      .eq("class_id", data.classId)
+      .eq("classroom_user_id", data.classroomUserId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
