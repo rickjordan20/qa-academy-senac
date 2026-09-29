@@ -300,7 +300,7 @@ export function ClassroomSyncDialog({
                 </Button>
               </div>
               <Separator className="my-3" />
-              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
                 <div>
                   <div className="text-lg font-semibold">{status.data?.classroomStudents ?? 0}</div>
                   alunos no Classroom
@@ -316,6 +316,10 @@ export function ClassroomSyncDialog({
                 <div>
                   <div className="text-lg font-semibold">{status.data?.pending ?? 0}</div>
                   pendências
+                </div>
+                <div>
+                  <div className="text-lg font-semibold">{status.data?.ignored ?? 0}</div>
+                  ignorados
                 </div>
               </div>
             </div>
