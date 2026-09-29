@@ -34,10 +34,12 @@ import {
 
 import {
   disconnectGoogleClassroom,
+  ignoreClassroomStudent,
   linkClassroomCourse,
   linkClassroomStudent,
   listClassroomCourses,
   syncClassroomRoster,
+  unignoreClassroomStudent,
   unlinkClassroomCourse,
   unlinkClassroomStudent,
 } from "@/lib/google-classroom.functions";
