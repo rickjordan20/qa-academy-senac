@@ -71,7 +71,7 @@ export function MissionClassroomPublish({
   }
 
   async function reconnect() {
-    if (!classId) return toast.error("Selecione a turma de destino.");
+    if (!classId) { toast.error("Selecione a turma de destino."); return; }
     setBusy(true);
     try {
       const { url } = await startAuth({ data: { classId, returnPath: window.location.pathname } });
@@ -108,7 +108,7 @@ export function MissionClassroomPublish({
             <div className="space-y-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium">Turma de destino</label>
-                <NativeSelect value={classId} onChange={(e) => setClassId(e.target.value)}>
+                <NativeSelect value={classId} onChange={(v) => setClassId(v)}>
                   <option value="">Selecione a turma...</option>
                   {targets.map((t) => (
                     <option key={t.classId} value={t.classId}>
