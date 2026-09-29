@@ -10,11 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { NativeSelect } from "@/components/missions/DynamicFields";
 import {
   listMissionClassroomTargets,
   publishMissionToClassroom,
   startGoogleClassroomAuth,
+  unlinkMissionFromClassroom,
   updateMissionInClassroom,
 } from "@/lib/google-classroom.functions";
 
@@ -28,10 +40,12 @@ export function MissionClassroomPublish({
   const [open, setOpen] = useState(false);
   const [classId, setClassId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [orphan, setOrphan] = useState<Record<string, boolean>>({});
   const qc = useQueryClient();
   const list = useServerFn(listMissionClassroomTargets);
   const publish = useServerFn(publishMissionToClassroom);
   const update = useServerFn(updateMissionInClassroom);
+  const unlink = useServerFn(unlinkMissionFromClassroom);
   const startAuth = useServerFn(startGoogleClassroomAuth);
 
   useEffect(() => {
@@ -68,6 +82,28 @@ export function MissionClassroomPublish({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function doUpdate(cid: string) {
+    setBusy(true);
+    try {
+      const res = await update({ data: { missionId, classId: cid } });
+      if (res.orphan) {
+        setOrphan((o) => ({ ...o, [cid]: true }));
+      } else {
+        toast.success("Atividade atualizada no Google Classroom.");
+        await qc.invalidateQueries({ queryKey: ["classroom-mission-targets", missionId] });
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha na operação.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeLink(cid: string, ok: string) {
+    await run(() => unlink({ data: { missionId, classId: cid } }), ok);
+    setOrphan((o) => ({ ...o, [cid]: false }));
   }
 
   async function reconnect() {
@@ -144,6 +180,22 @@ export function MissionClassroomPublish({
                 selected.publication ? (
                   <div className="space-y-3 rounded-md border border-border p-3">
                     <p className="text-sm font-medium">Publicado no Google Classroom</p>
+                    {orphan[selected.classId] ? (
+                      <div className="space-y-2 rounded-md border border-destructive/40 p-2 text-sm">
+                        <p className="text-destructive">
+                          A atividade vinculada a esta missão não foi encontrada no Google Classroom. Ela pode ter
+                          sido excluída diretamente no Classroom.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => removeLink(selected.classId, "Vínculo removido. Você pode publicar novamente.")}
+                        >
+                          Remover vínculo com o Classroom
+                        </Button>
+                      </div>
+                    ) : null}
                     <p className="text-xs text-muted-foreground">
                       Última atualização:{" "}
                       {new Date(selected.publication.lastPublishedAt).toLocaleString("pt-BR", {
@@ -151,25 +203,46 @@ export function MissionClassroomPublish({
                       })}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {selected.publication.alternateLink ? (
+                      {selected.publication.alternateLink && !orphan[selected.classId] ? (
                         <Button size="sm" variant="outline" asChild>
                           <a href={selected.publication.alternateLink} target="_blank" rel="noreferrer">
                             Abrir no Classroom
                           </a>
                         </Button>
                       ) : null}
-                      <Button
-                        size="sm"
-                        disabled={busy || needsReconnect || !missionPublished}
-                        onClick={() =>
-                          run(
-                            () => update({ data: { missionId, classId: selected.classId } }),
-                            "Atividade atualizada no Google Classroom.",
-                          )
-                        }
-                      >
-                        Atualizar no Google Classroom
-                      </Button>
+                      {!orphan[selected.classId] ? (
+                        <Button
+                          size="sm"
+                          disabled={busy || needsReconnect || !missionPublished}
+                          onClick={() => doUpdate(selected.classId)}
+                        >
+                          Atualizar no Google Classroom
+                        </Button>
+                      ) : null}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" disabled={busy}>
+                            Desvincular do Google Classroom
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Desvincular do Google Classroom?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Isso removerá apenas o vínculo no QA Academy. A atividade existente no Google Classroom
+                              não será excluída.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => removeLink(selected.classId, "Missão desvinculada do Google Classroom.")}
+                            >
+                              Desvincular
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Se o Google recusar por falta de permissão, use "Reconectar conta Google".
