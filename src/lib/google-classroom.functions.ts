@@ -239,6 +239,13 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
     if (existingRes.error) throw new Error(existingRes.error.message);
     let existing = existingRes.data ?? [];
 
+    const ignoredRes = await supabaseAdmin
+      .from("google_classroom_ignored_students")
+      .select("classroom_user_id")
+      .eq("class_id", data.classId);
+    if (ignoredRes.error) throw new Error(ignoredRes.error.message);
+    const ignoredIds = new Set((ignoredRes.data ?? []).map((r) => r.classroom_user_id));
+
     const emptyResult: ClassroomSyncResult = {
       connection,
       link,
@@ -246,6 +253,7 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
       autoMatches: 0,
       manualMatches: 0,
       pending: 0,
+      ignored: 0,
       missingInClassroom: 0,
       rows: [],
       academy: profiles.map((p) => ({
