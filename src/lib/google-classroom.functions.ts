@@ -636,17 +636,39 @@ export const updateMissionInClassroom = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
     if (!existing.data) throw new Error("Esta missão ainda não foi publicada nesta turma.");
-    const { patchCourseWork } = await import("@/lib/google-classroom.server");
-    const updated = await patchCourseWork(
-      prep.token,
-      existing.data.classroom_course_id,
-      existing.data.coursework_id,
-      prep.input,
-    );
+    const { patchCourseWork, CourseWorkNotFoundError } = await import("@/lib/google-classroom.server");
+    let updated;
+    try {
+      updated = await patchCourseWork(
+        prep.token,
+        existing.data.classroom_course_id,
+        existing.data.coursework_id,
+        prep.input,
+      );
+    } catch (e) {
+      if (e instanceof CourseWorkNotFoundError) return { ok: false as const, orphan: true as const };
+      throw e;
+    }
     const { error } = await prep.supabaseAdmin
       .from("google_classroom_coursework")
       .update({ alternate_link: updated.alternateLink, last_published_at: new Date().toISOString() })
       .eq("id", existing.data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, orphan: false as const };
+  });
+
+/** Remove SOMENTE o vínculo local missão ↔ CourseWork. Não exclui nada no Classroom. */
+export const unlinkMissionFromClassroom = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { missionId: string; classId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await assertInstructorOfClass(context.supabase, data.classId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("google_classroom_coursework")
+      .delete()
+      .eq("mission_id", data.missionId)
+      .eq("class_id", data.classId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
