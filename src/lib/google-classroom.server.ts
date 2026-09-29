@@ -446,5 +446,3 @@ export async function patchCourseWork(
     throw error;
   }
 }
-
-}
