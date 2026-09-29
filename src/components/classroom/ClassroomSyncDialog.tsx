@@ -372,11 +372,53 @@ export function ClassroomSyncDialog({
                       >
                         Vincular
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={ignoreStudentMutation.isPending}
+                        onClick={() =>
+                          ignoreStudentMutation.mutate({
+                            classroomUserId: row.classroomUserId,
+                            classroomEmail: row.classroomEmail,
+                            classroomName: row.classroomName,
+                          })
+                        }
+                      >
+                        Ignorar
+                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+
+            {ignoredRows.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Ignorados ({ignoredRows.length})</p>
+                {ignoredRows.map((row) => (
+                  <div
+                    key={row.classroomUserId}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border p-2 text-sm"
+                  >
+                    <div>
+                      <div className="font-medium">{row.classroomName || "Sem nome"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {row.classroomEmail || "sem e-mail"}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={unignoreStudentMutation.isPending}
+                      onClick={() => unignoreStudentMutation.mutate(row.classroomUserId)}
+                    >
+                      Reavaliar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
 
             {matchedRows.length > 0 && (
               <div className="space-y-2">
