@@ -330,11 +330,16 @@ export const syncClassroomRoster = createServerFn({ method: "POST" })
     const rows: ClassroomRosterRow[] = classroomStudents.map((student) => {
       const saved = finalByClassroomUser.get(student.userId);
       const profile = saved ? profileById.get(saved.student_id) : undefined;
+      const status: ClassroomRosterRow["status"] = saved
+        ? (saved.match_type as "auto_email" | "manual")
+        : ignoredIds.has(student.userId)
+          ? "ignored"
+          : "pending";
       return {
         classroomUserId: student.userId,
         classroomName: student.name,
         classroomEmail: student.email,
-        status: saved ? (saved.match_type as "auto_email" | "manual") : "pending",
+        status,
         studentId: saved?.student_id ?? null,
         studentName: profile?.full_name ?? null,
         studentEmail: profile?.email ?? null,
