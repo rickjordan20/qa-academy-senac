@@ -261,12 +261,20 @@ export class CourseWorkNotFoundError extends Error {
   }
 }
 
-/** Extrai `reason` e `message` do corpo de erro padrão das APIs do Google. */
-function readGoogleError(body: string): { reason: string | null; message: string | null } {
+/** 400 FAILED_PRECONDITION do Google: causa ainda indefinida, exige confirmação. */
+class PreconditionFailedError extends Error {}
+
+/** Extrai `reason`, `message` e `status` do corpo de erro padrão das APIs do Google. */
+function readGoogleError(body: string): {
+  reason: string | null;
+  message: string | null;
+  status: string | null;
+} {
   try {
     const parsed = JSON.parse(body) as {
       error?: {
         message?: string;
+        status?: string;
         errors?: Array<{ reason?: string }>;
         details?: Array<{ reason?: string }>;
       };
@@ -275,11 +283,16 @@ function readGoogleError(body: string): { reason: string | null; message: string
     const legacy = parsed.error?.errors ?? [];
     const reason =
       details.find((d) => d?.reason)?.reason ?? legacy.find((d) => d?.reason)?.reason ?? null;
-    return { reason, message: parsed.error?.message ?? null };
+    return {
+      reason,
+      message: parsed.error?.message ?? null,
+      status: parsed.error?.status ?? null,
+    };
   } catch {
-    return { reason: null, message: null };
+    return { reason: null, message: null, status: null };
   }
 }
+
 
 const RECONNECT_MESSAGE =
   "O Google não autorizou a publicação. Reconecte sua conta Google para conceder a permissão de publicar atividades.";
@@ -298,7 +311,7 @@ async function classroomWrite<T>(
   const body = await response.text();
   if (!response.ok) {
     console.error(`[google-classroom] ${method} ${path} failed [${response.status}]: ${body}`);
-    const { reason, message } = readGoogleError(body);
+    const { reason, message, status } = readGoogleError(body);
 
     // 401 = token inválido/expirado → reconectar é sempre a ação correta.
     if (response.status === 401) throw new Error(RECONNECT_MESSAGE);
@@ -329,6 +342,17 @@ async function classroomWrite<T>(
       if (method === "PATCH") throw new CourseWorkNotFoundError();
       throw new Error("A atividade ou a turma não foi encontrada no Google Classroom.");
     }
+
+    // 400 FAILED_PRECONDITION no PATCH: pode ser atividade excluída (soft-delete) ou outra
+    // causa. Quem chama confirma consultando o estado real antes de decidir.
+    if (response.status === 400 && status === "FAILED_PRECONDITION" && method === "PATCH") {
+      throw new PreconditionFailedError(
+        message
+          ? `O Google Classroom não aceitou a atividade: ${message}`
+          : "O Google Classroom não aceitou a atividade. Tente novamente.",
+      );
+    }
+
     throw new Error(
       message
         ? `O Google Classroom não aceitou a atividade: ${message}`
@@ -369,6 +393,25 @@ export async function createCourseWork(
   return { id: res.id, alternateLink: res.alternateLink ?? null };
 }
 
+/**
+ * Confirma se o CourseWork foi realmente excluído no Classroom.
+ * O Google faz soft-delete: o GET responde 200 com state "DELETED".
+ */
+async function isCourseWorkDeleted(
+  accessToken: string,
+  courseId: string,
+  courseWorkId: string,
+): Promise<boolean> {
+  const response = await fetch(
+    `${CLASSROOM_API}/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (response.status === 404) return true;
+  if (!response.ok) return false;
+  const data = (await response.json()) as { state?: string };
+  return data.state === "DELETED";
+}
+
 export async function patchCourseWork(
   accessToken: string,
   courseId: string,
@@ -384,11 +427,22 @@ export async function patchCourseWork(
   }
   // Sem prazo (vencido ou removido): dueDate/dueTime permanecem no updateMask mas fora
   // do corpo — o Google limpa o prazo antigo do CourseWork em vez de rejeitar a chamada.
-  const res = await classroomWrite<{ id: string; alternateLink?: string }>(
-    accessToken,
-    "PATCH",
-    `/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}?updateMask=${mask}`,
-    body,
-  );
-  return { id: res.id, alternateLink: res.alternateLink ?? null };
+  try {
+    const res = await classroomWrite<{ id: string; alternateLink?: string }>(
+      accessToken,
+      "PATCH",
+      `/courses/${encodeURIComponent(courseId)}/courseWork/${encodeURIComponent(courseWorkId)}?updateMask=${mask}`,
+      body,
+    );
+    return { id: res.id, alternateLink: res.alternateLink ?? null };
+  } catch (error) {
+    if (error instanceof PreconditionFailedError) {
+      // Só tratamos como vínculo órfão quando a própria API confirma a exclusão.
+      if (await isCourseWorkDeleted(accessToken, courseId, courseWorkId)) {
+        throw new CourseWorkNotFoundError();
+      }
+      throw new Error(error.message);
+    }
+    throw error;
+  }
 }
