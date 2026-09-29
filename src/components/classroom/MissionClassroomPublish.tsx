@@ -118,6 +118,10 @@ export function MissionClassroomPublish({
                 </NativeSelect>
               </div>
 
+              <p className="text-sm text-muted-foreground">
+                Pontuação no Classroom: 10 pontos
+              </p>
+
               {!missionPublished ? (
                 <p className="text-sm text-muted-foreground">
                   Publique a missão no QA Academy antes de enviá-la ao Classroom.

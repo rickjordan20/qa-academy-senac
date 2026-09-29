@@ -296,6 +296,7 @@ export async function createCourseWork(
     materials: [{ link: { url: input.link } }],
     workType: "ASSIGNMENT",
     state: "PUBLISHED",
+    maxPoints: 10,
   };
   if (due.dueDate) {
     payload["dueDate"] = due.dueDate;
