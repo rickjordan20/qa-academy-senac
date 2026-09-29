@@ -261,12 +261,20 @@ export class CourseWorkNotFoundError extends Error {
   }
 }
 
-/** Extrai `reason` e `message` do corpo de erro padrão das APIs do Google. */
-function readGoogleError(body: string): { reason: string | null; message: string | null } {
+/** 400 FAILED_PRECONDITION do Google: causa ainda indefinida, exige confirmação. */
+class PreconditionFailedError extends Error {}
+
+/** Extrai `reason`, `message` e `status` do corpo de erro padrão das APIs do Google. */
+function readGoogleError(body: string): {
+  reason: string | null;
+  message: string | null;
+  status: string | null;
+} {
   try {
     const parsed = JSON.parse(body) as {
       error?: {
         message?: string;
+        status?: string;
         errors?: Array<{ reason?: string }>;
         details?: Array<{ reason?: string }>;
       };
@@ -275,11 +283,16 @@ function readGoogleError(body: string): { reason: string | null; message: string
     const legacy = parsed.error?.errors ?? [];
     const reason =
       details.find((d) => d?.reason)?.reason ?? legacy.find((d) => d?.reason)?.reason ?? null;
-    return { reason, message: parsed.error?.message ?? null };
+    return {
+      reason,
+      message: parsed.error?.message ?? null,
+      status: parsed.error?.status ?? null,
+    };
   } catch {
-    return { reason: null, message: null };
+    return { reason: null, message: null, status: null };
   }
 }
+
 
 const RECONNECT_MESSAGE =
   "O Google não autorizou a publicação. Reconecte sua conta Google para conceder a permissão de publicar atividades.";
