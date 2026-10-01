@@ -368,18 +368,24 @@ export type UnifiedEvidenceRecord = {
 type MissionSource = {
   entries: EntryRow[];
   missionTitles: Record<string, string>;
+  /** Estado da avaliação da execução de origem de cada registro. */
+  runStatuses: Record<string, string | null>;
 };
 
 async function fetchMissionEntries(scope: QaScope, userId: string | null): Promise<MissionSource> {
-  let runQuery = supabase.from("builder_mission_runs").select("id, mission_id");
+  let runQuery = supabase.from("builder_mission_runs").select("id, mission_id, eval_status");
   runQuery =
     scope.context === "cafe"
       ? runQuery.eq("group_id", scope.groupId!)
       : runQuery.eq("student_id", userId!);
   const runRes = await runQuery;
   if (runRes.error) throw runRes.error;
-  const runIds = ((runRes.data ?? []) as unknown as { id: string }[]).map((r) => r.id);
-  if (runIds.length === 0) return { entries: [], missionTitles: {} };
+  const runRows = (runRes.data ?? []) as unknown as { id: string; eval_status: string | null }[];
+  const runStatuses: Record<string, string | null> = {};
+  for (const r of runRows) runStatuses[r.id] = r.eval_status ?? null;
+  const runIds = runRows.map((r) => r.id);
+  if (runIds.length === 0) return { entries: [], missionTitles: {}, runStatuses };
+
 
   const entryRes = await supabase
     .from("builder_mission_entries")
