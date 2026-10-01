@@ -125,6 +125,7 @@ function StudentMissionPage() {
   /** Nenhuma gravação pode partir da tela quando bloqueada. */
   const blockWrites = lockedByEvaluation || beforeOpening;
   const stateNotice = run ? evalStateNotice(run.eval_status, run.submitted_at) : null;
+  const submitState = submitButtonState(run?.eval_status, run?.submitted_at);
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
