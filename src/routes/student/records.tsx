@@ -96,12 +96,18 @@ function RecordsPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() =>
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      "Tem certeza de que deseja excluir este registro? Esta ação não poderá ser desfeita.",
+                    )
+                  )
+                    return;
                   remove.mutate(b.id, {
                     onSuccess: () => toast.success("Registro removido."),
                     onError: (e) => toast.error(e.message),
-                  })
-                }
+                  });
+                }}
               >
                 Excluir
               </Button>
