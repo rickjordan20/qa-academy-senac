@@ -19,8 +19,8 @@
 - [x] Tabela de publicações (UNIQUE missão+turma), scope coursework.me, publicar/atualizar, modal com turma de destino, returnTo seguro no login
 
 ## Controle de edição das missões pelo estado da avaliação
-- [ ] Banco: builder_run_can_edit e policy de UPDATE em builder_mission_runs — editável em NULL/none/awaiting/revision; bloqueado em in_review/evaluated/reeval
-- [ ] Tela da missão: readOnly por eval_status (não por submitted_at), avisos por estado e botão de entrega/atualização/reenvio
-- [ ] MissionTaskBoard e SectionAssign respeitando o bloqueio
-- [ ] Central de QA (bugs, casos de teste, evidências) respeitando o estado da missão de origem
-- [ ] Testes dos estados e do ciclo completo, incluindo tentativas diretas no banco
+- [x] Banco: builder_run_can_edit e policy de UPDATE em builder_mission_runs — editável em NULL/none/awaiting/revision; bloqueado em in_review/evaluated/reeval
+- [x] Tela da missão: readOnly por eval_status (não por submitted_at), avisos por estado e botão de entrega/atualização/reenvio
+- [x] MissionTaskBoard, SectionAssign e contribuições respeitando o bloqueio
+- [x] Central de QA (bugs, casos de teste, evidências) respeitando o estado da missão de origem
+- [x] Testes dos estados e do ciclo completo, incluindo tentativas diretas no banco/API
