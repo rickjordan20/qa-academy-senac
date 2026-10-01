@@ -567,9 +567,10 @@ function StudentMissionPage() {
             </p>
           ) : null}
           <Button
-            disabled={submitRun.isPending || beforeOpening}
+            disabled={submitRun.isPending || beforeOpening || submitState.disabled}
             onClick={async () => {
-              if (beforeOpening) return;
+              if (beforeOpening || submitState.disabled) return;
+              const firstDelivery = !run.submitted_at;
               const attempt = await submitRun.mutateAsync({
                 run: run as unknown as SubmissionRun,
                 missionId: mission.id,
@@ -578,7 +579,7 @@ function StudentMissionPage() {
                 answers,
                 checklist: checklist,
               });
-              if (userId && attempt === 1)
+              if (userId && firstDelivery && attempt === 1)
                 await awardMissionXp({
                   studentId: userId,
                   groupId: run.group_id,
@@ -587,17 +588,21 @@ function StudentMissionPage() {
                   refId: mission.id,
                   note: mission.title,
                 });
-              if (isCafe && run.group_id)
+              if (isCafe && run.group_id && firstDelivery)
                 await awardGroupMissionXp({
                   groupId: run.group_id,
                   action: "cafe_mission_delivered",
                   refId: run.id,
                   note: mission.title,
                 });
-              toast.success("Missão entregue! A avaliação A/PA/NA é feita pelo instrutor.");
+              toast.success(
+                firstDelivery
+                  ? "Missão entregue! A avaliação A/PA/NA é feita pelo instrutor."
+                  : "Entrega atualizada.",
+              );
             }}
           >
-            {run.submitted_at ? "Reenviar missão revisada" : "Concluir e entregar missão"}
+            {submitState.label}
           </Button>
           <p className="text-xs text-muted-foreground">
             Acompanhe a situação em{" "}
