@@ -84,6 +84,71 @@ export function BugsPanel({
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
   const [retestNotes, setRetestNotes] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<MissionBugPatch>({
+    titulo: "",
+    descricao: "",
+    ambiente: "",
+    passos: "",
+    esperado: "",
+    obtido: "",
+    severidade: "",
+    prioridade: "",
+  });
+  const updateMissionBug = useUpdateMissionBug();
+  const removeMissionBug = useDeleteMissionBug();
+
+  function startEdit(b: UnifiedBug) {
+    if (editing === b.id) {
+      setEditing(null);
+      return;
+    }
+    setEditing(b.id);
+    setEditForm({
+      titulo: b.title,
+      descricao: b.description,
+      ambiente: b.environment,
+      passos: b.steps,
+      esperado: b.expected,
+      obtido: b.obtained,
+      severidade: b.severity,
+      prioridade: b.priority,
+    });
+  }
+
+  function saveEdit(b: UnifiedBug) {
+    if (!editForm.titulo.trim()) {
+      toast.error("Informe o título do bug.");
+      return;
+    }
+    const done = {
+      onSuccess: () => {
+        setEditing(null);
+        toast.success("Bug atualizado.");
+      },
+      onError: (e: Error) => toast.error(e.message),
+    };
+    if (b.origin === "mission") {
+      updateMissionBug.mutate({ id: b.id, patch: { ...editForm, titulo: editForm.titulo.trim() } }, done);
+      return;
+    }
+    update.mutate(
+      {
+        id: b.id,
+        patch: {
+          title: editForm.titulo.trim(),
+          description: editForm.descricao,
+          environment: editForm.ambiente,
+          steps: editForm.passos,
+          expected_result: editForm.esperado,
+          obtained_result: editForm.obtido,
+          severity: editForm.severidade,
+          priority: editForm.prioridade,
+        } as never,
+      },
+      done,
+    );
+  }
 
   function set(k: keyof typeof empty, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
