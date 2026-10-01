@@ -25,6 +25,8 @@ export type UnifiedExecution = {
   updatedAt: string | null;
   missionId: string | null;
   runId: string | null;
+  /** Estado da avaliação da missão de origem (null quando não vem de missão). */
+  runEvalStatus?: string | null;
   evidences: UnifiedEvidence[];
 };
 
@@ -54,6 +56,7 @@ export type UnifiedCase = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  runEvalStatus?: string | null;
   createdAt: string;
   updatedAt: string | null;
   executions: UnifiedExecution[];
@@ -340,6 +343,7 @@ export type UnifiedBug = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  runEvalStatus?: string | null;
   /** Bug pertencente ao fluxo de teste cruzado (reteste só via RPC transacional). */
   pairingId: string | null;
   createdAt: string;
@@ -361,6 +365,7 @@ export type UnifiedEvidenceRecord = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  runEvalStatus?: string | null;
   createdAt: string;
   updatedAt: string | null;
 };
