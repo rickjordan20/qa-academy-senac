@@ -324,7 +324,7 @@ export function EvidencesPanel({
                   {ev.content}
                 </pre>
               )}
-              {editing === ev.id && original && (
+              {editing === ev.id && (
                 <div className="mt-3 grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
                   <Field label="Título" id={`ed-title-${ev.id}`}>
                     <Input
