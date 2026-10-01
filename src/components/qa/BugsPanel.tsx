@@ -342,6 +342,129 @@ export function BugsPanel({
                   </div>
                 ) : null}
 
+                {!readOnly && !b.pairingId && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Button size="sm" variant="outline" onClick={() => startEdit(b)}>
+                      {editing === b.id ? "Cancelar edição" : "Editar"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (!window.confirm("Excluir este bug? Esta ação não poderá ser desfeita.")) return;
+                        const done = {
+                          onSuccess: () => {
+                            if (editing === b.id) setEditing(null);
+                            toast.success("Bug removido.");
+                          },
+                          onError: (e: Error) => toast.error(e.message),
+                        };
+                        if (b.origin === "mission") removeMissionBug.mutate(b.id, done);
+                        else remove.mutate(b.id, done);
+                      }}
+                    >
+                      Excluir
+                    </Button>
+                  </div>
+                )}
+
+                {!readOnly && editing === b.id && (
+                  <div className="grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
+                    <Field label="Título" id={`eb-title-${b.id}`} full>
+                      <Input
+                        id={`eb-title-${b.id}`}
+                        value={editForm.titulo}
+                        onChange={(e) => setEditForm((f) => ({ ...f, titulo: e.target.value }))}
+                      />
+                    </Field>
+                    <Field label="Severidade" id={`eb-sev-${b.id}`}>
+                      {b.origin === "qa" ? (
+                        <NativeSelect
+                          id={`eb-sev-${b.id}`}
+                          value={editForm.severidade}
+                          onChange={(v) => setEditForm((f) => ({ ...f, severidade: v }))}
+                          options={SEVERITIES.map((s) => ({ value: s.value, label: s.label }))}
+                        />
+                      ) : (
+                        <Input
+                          id={`eb-sev-${b.id}`}
+                          value={editForm.severidade}
+                          onChange={(e) => setEditForm((f) => ({ ...f, severidade: e.target.value }))}
+                        />
+                      )}
+                    </Field>
+                    <Field label="Prioridade" id={`eb-pri-${b.id}`}>
+                      {b.origin === "qa" ? (
+                        <NativeSelect
+                          id={`eb-pri-${b.id}`}
+                          value={editForm.prioridade}
+                          onChange={(v) => setEditForm((f) => ({ ...f, prioridade: v }))}
+                          options={PRIORITIES.map((s) => ({ value: s.value, label: s.label }))}
+                        />
+                      ) : (
+                        <Input
+                          id={`eb-pri-${b.id}`}
+                          value={editForm.prioridade}
+                          onChange={(e) => setEditForm((f) => ({ ...f, prioridade: e.target.value }))}
+                        />
+                      )}
+                    </Field>
+                    <Field label="Ambiente" id={`eb-env-${b.id}`} full>
+                      <Input
+                        id={`eb-env-${b.id}`}
+                        value={editForm.ambiente}
+                        onChange={(e) => setEditForm((f) => ({ ...f, ambiente: e.target.value }))}
+                      />
+                    </Field>
+                    <Field label="Descrição" id={`eb-desc-${b.id}`} full>
+                      <Textarea
+                        id={`eb-desc-${b.id}`}
+                        rows={3}
+                        value={editForm.descricao}
+                        onChange={(e) => setEditForm((f) => ({ ...f, descricao: e.target.value }))}
+                      />
+                    </Field>
+                    <Field label="Passos para reprodução" id={`eb-steps-${b.id}`} full>
+                      <Textarea
+                        id={`eb-steps-${b.id}`}
+                        rows={4}
+                        value={editForm.passos}
+                        onChange={(e) => setEditForm((f) => ({ ...f, passos: e.target.value }))}
+                      />
+                    </Field>
+                    <Field label="Resultado esperado" id={`eb-exp-${b.id}`}>
+                      <Textarea
+                        id={`eb-exp-${b.id}`}
+                        rows={3}
+                        value={editForm.esperado}
+                        onChange={(e) => setEditForm((f) => ({ ...f, esperado: e.target.value }))}
+                      />
+                    </Field>
+                    <Field label="Resultado obtido" id={`eb-obt-${b.id}`}>
+                      <Textarea
+                        id={`eb-obt-${b.id}`}
+                        rows={3}
+                        value={editForm.obtido}
+                        onChange={(e) => setEditForm((f) => ({ ...f, obtido: e.target.value }))}
+                      />
+                    </Field>
+                    <div className="flex gap-2 sm:col-span-2">
+                      <Button
+                        size="sm"
+                        disabled={update.isPending || updateMissionBug.isPending}
+                        onClick={() => saveEdit(b)}
+                      >
+                        Salvar alterações
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditing(null)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+
+
 
                 {bugRetests.length > 0 && (
                   <div className="rounded-lg border border-border p-3">
