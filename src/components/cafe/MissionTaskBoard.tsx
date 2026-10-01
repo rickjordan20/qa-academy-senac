@@ -89,14 +89,17 @@ export function SectionAssign({
   missionId,
   group,
   userId,
+  readOnly = false,
 }: {
   section: Section;
   runId: string;
   missionId: string;
   group: CafeGroup;
   userId: string | null;
+  /** Missão bloqueada (em avaliação, avaliada, reavaliação ou antes da abertura). */
+  readOnly?: boolean;
 }) {
-  const isLead = group.qa_lead_id === userId;
+  const isLead = group.qa_lead_id === userId && !readOnly;
   const { data: tasks } = useMissionTasks(runId);
   const create = useCreateMissionTask(runId, missionId, group.id, userId);
   const update = useUpdateMissionTask(runId);
@@ -166,14 +169,17 @@ export function MissionTaskBoard({
   group,
   userId,
   sections = [],
+  readOnly = false,
 }: {
   missionId: string;
   runId: string;
   group: CafeGroup;
   userId: string | null;
   sections?: Section[];
+  /** Missão bloqueada (em avaliação, avaliada, reavaliação ou antes da abertura). */
+  readOnly?: boolean;
 }) {
-  const isLead = group.qa_lead_id === userId;
+  const isLead = group.qa_lead_id === userId && !readOnly;
   const { data: tasks } = useMissionTasks(runId);
   const { data: contributions } = useMissionContributions(runId);
   const { data: modules } = useModules("cafe_central", group.id);
@@ -274,6 +280,8 @@ export function MissionTaskBoard({
     const who = memberLabel(group, t.assignee_id);
     const extra = collabOf(t.id);
     const mine = isResponsible(t);
+    /** Só pode agir quando a missão não está bloqueada pela avaliação. */
+    const canAct = mine && !readOnly;
     const block = sectionLabel(t.section_id);
     return (
       <div
@@ -309,7 +317,7 @@ export function MissionTaskBoard({
             {areaOf(t)}
           </p>
         ) : null}
-        {isLead || mine ? (
+        {isLead || canAct ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <NativeSelect
               id={`st-${t.id}`}
@@ -560,6 +568,7 @@ export function MissionTaskBoard({
               areaOf={areaOf}
               sectionLabel={sectionLabel}
               sections={sections}
+              readOnly={readOnly}
             />
           </TabsContent>
         </Tabs>
@@ -578,6 +587,7 @@ function ContributionsPanel({
   areaOf,
   sectionLabel,
   sections,
+  readOnly = false,
 }: {
   runId: string;
   missionId: string;
@@ -600,6 +610,8 @@ function ContributionsPanel({
   areaOf: (t: MissionTask) => string;
   sectionLabel: (id: string | null) => string;
   sections: Section[];
+  /** Missão bloqueada pela avaliação: só leitura. */
+  readOnly?: boolean;
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
@@ -673,7 +685,10 @@ function ContributionsPanel({
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
+      <div
+        className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4"
+        hidden={readOnly}
+      >
         <p className="text-xs text-muted-foreground">
           Registre aqui o que você <span className="font-semibold">já executou</span>. A
           distribuição de tarefas é feita pelo QA Líder no quadro acima.
@@ -809,7 +824,7 @@ function ContributionsPanel({
                     🔗 Abrir evidência
                   </a>
                 ) : null}
-                <div className="mt-2 flex gap-1">
+                <div className="mt-2 flex gap-1" hidden={readOnly}>
                   <Button
                     size="sm"
                     variant="ghost"

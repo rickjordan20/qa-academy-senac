@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fmtMissionDateTime, isMissionLocked, missionSituation } from "@/lib/mission-schedule";
+import {
+  evalStateNotice,
+  fmtMissionDateTime,
+  isEvalLocked,
+  isMissionLocked,
+  missionSituation,
+  submitButtonState,
+} from "@/lib/mission-schedule";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -107,12 +114,18 @@ function StudentMissionPage() {
     }
   }, [run]);
 
-  /** Entrega aguardando avaliação ou já avaliada bloqueia edição; revisão reabre. */
-  const lockedByDelivery =
-    !!run && (run.eval_status === "evaluated" || (!!run.submitted_at && run.eval_status !== "revision"));
+  /**
+   * O envio NÃO bloqueia: enquanto o instrutor não inicia a avaliação a missão
+   * continua editável. Bloqueiam: in_review, evaluated e reeval. Revisão reabre.
+   */
+  const lockedByEvaluation = !!run && isEvalLocked(run.eval_status);
   /** Antes da abertura configurada: nada pode ser aberto, gravado ou entregue. */
   const beforeOpening = !!mission && isMissionLocked(mission) && run?.eval_status !== "revision";
-  const readOnly = mission?.status !== "published" || !run || lockedByDelivery || beforeOpening;
+  const readOnly = mission?.status !== "published" || !run || lockedByEvaluation || beforeOpening;
+  /** Nenhuma gravação pode partir da tela quando bloqueada. */
+  const blockWrites = lockedByEvaluation || beforeOpening;
+  const stateNotice = run ? evalStateNotice(run.eval_status, run.submitted_at) : null;
+  const submitState = submitButtonState(run?.eval_status, run?.submitted_at);
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
@@ -246,7 +259,7 @@ function StudentMissionPage() {
   }
 
   function persist(nextAnswers: typeof answers, nextChecklist: typeof checklist) {
-    if (!run || !mission || beforeOpening) return;
+    if (!run || !mission || blockWrites) return;
     setSaving("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => {
@@ -267,7 +280,7 @@ function StudentMissionPage() {
   }
 
   async function addEntry(section: Section, values: Record<string, string>) {
-    if (!run || !userId || beforeOpening) return;
+    if (!run || !userId || blockWrites) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const featureId = values["feature_id"] || null;
@@ -338,7 +351,7 @@ function StudentMissionPage() {
     entry: { id: string; author_id: string; group_id: string | null },
     values: Record<string, string>,
   ) {
-    if (beforeOpening) return;
+    if (blockWrites) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const data = { ...values };
@@ -455,12 +468,27 @@ function StudentMissionPage() {
         </Button>
       ) : null}
 
+      {stateNotice ? (
+        <p
+          className={`rounded-md border p-3 text-sm ${
+            stateNotice.tone === "locked"
+              ? "border-border bg-secondary/40 text-muted-foreground"
+              : stateNotice.tone === "action"
+                ? "border-warning/40 bg-warning/10 text-foreground"
+                : "border-accent/40 bg-accent/10 text-foreground"
+          }`}
+        >
+          {stateNotice.text}
+        </p>
+      ) : null}
+
       {isCafe && run && group ? (
         <MissionTaskBoard
           missionId={mission.id}
           runId={run.id}
           group={group}
           userId={userId}
+          readOnly={readOnly}
           sections={(mission.sections ?? []).filter((s) => s.visible)}
         />
       ) : null}
@@ -480,6 +508,7 @@ function StudentMissionPage() {
                 missionId={mission.id}
                 group={group}
                 userId={userId}
+                readOnly={readOnly}
               />
             ) : null}
             {section.kind === "cross_test" ? (
@@ -539,9 +568,10 @@ function StudentMissionPage() {
             </p>
           ) : null}
           <Button
-            disabled={submitRun.isPending || beforeOpening}
+            disabled={submitRun.isPending || beforeOpening || submitState.disabled}
             onClick={async () => {
-              if (beforeOpening) return;
+              if (beforeOpening || submitState.disabled) return;
+              const firstDelivery = !run.submitted_at;
               const attempt = await submitRun.mutateAsync({
                 run: run as unknown as SubmissionRun,
                 missionId: mission.id,
@@ -550,7 +580,7 @@ function StudentMissionPage() {
                 answers,
                 checklist: checklist,
               });
-              if (userId && attempt === 1)
+              if (userId && firstDelivery && attempt === 1)
                 await awardMissionXp({
                   studentId: userId,
                   groupId: run.group_id,
@@ -559,17 +589,21 @@ function StudentMissionPage() {
                   refId: mission.id,
                   note: mission.title,
                 });
-              if (isCafe && run.group_id)
+              if (isCafe && run.group_id && firstDelivery)
                 await awardGroupMissionXp({
                   groupId: run.group_id,
                   action: "cafe_mission_delivered",
                   refId: run.id,
                   note: mission.title,
                 });
-              toast.success("Missão entregue! A avaliação A/PA/NA é feita pelo instrutor.");
+              toast.success(
+                firstDelivery
+                  ? "Missão entregue! A avaliação A/PA/NA é feita pelo instrutor."
+                  : "Entrega atualizada.",
+              );
             }}
           >
-            {run.submitted_at ? "Reenviar missão revisada" : "Concluir e entregar missão"}
+            {submitState.label}
           </Button>
           <p className="text-xs text-muted-foreground">
             Acompanhe a situação em{" "}

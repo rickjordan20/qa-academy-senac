@@ -25,6 +25,7 @@ import {
 } from "@/lib/qa";
 import { EvidenceGuide } from "@/components/EvidenceGuide";
 import {
+  missionRecordLock,
   useUnifiedEvidences,
   useUpdateMissionRecord,
   useDeleteMissionRecord,
@@ -211,6 +212,7 @@ export function EvidencesPanel({
       <div className="space-y-3">
         {(evidences ?? []).map((ev: UnifiedEvidenceRecord) => {
           const original = (qaEvidences ?? []).find((q) => q.id === ev.id);
+          const lock = missionRecordLock(ev);
           return (
             <div key={ev.id} className="rounded-lg border border-border p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -223,6 +225,11 @@ export function EvidencesPanel({
                     {ev.origin === "mission" && (
                       <span className="ml-2 rounded-md bg-accent/20 px-2 py-0.5 text-xs font-normal">
                         Criada na missão
+                      </span>
+                    )}
+                    {lock.locked && (
+                      <span className="ml-2 rounded-md bg-secondary px-2 py-0.5 text-xs font-normal text-muted-foreground">
+                        {lock.text}
                       </span>
                     )}
                   </div>
@@ -268,7 +275,7 @@ export function EvidencesPanel({
                       </Link>
                     </Button>
                   )}
-                  {!readOnly && (
+                  {!readOnly && !lock.locked && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -290,7 +297,7 @@ export function EvidencesPanel({
                       {editing === ev.id ? "Cancelar" : "Editar"}
                     </Button>
                   )}
-                  {!readOnly && (
+                  {!readOnly && !lock.locked && (
                     <Button
                       size="sm"
                       variant="ghost"

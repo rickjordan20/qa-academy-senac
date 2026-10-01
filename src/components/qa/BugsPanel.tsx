@@ -27,6 +27,7 @@ import {
 import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import {
+  missionRecordLock,
   useDeleteMissionBug,
   useUnifiedBugs,
   useUpdateMissionBug,
@@ -348,6 +349,7 @@ export function BugsPanel({
               : b.linkKind === "derived"
                 ? `${b.caseText} (identificado pelo registro)`
                 : "🐞 Bug não vinculado a um caso de teste";
+          const lock = missionRecordLock(b);
           return (
             <Card key={b.id}>
               <CardHeader className="pb-2">
@@ -359,6 +361,11 @@ export function BugsPanel({
                   <div className="flex items-center gap-2 text-xs">
                     {b.origin === "mission" && (
                       <span className="rounded-md bg-accent/20 px-2 py-0.5">Criado na missão</span>
+                    )}
+                    {lock.locked && (
+                      <span className="rounded-md bg-secondary px-2 py-0.5 text-muted-foreground">
+                        {lock.text}
+                      </span>
                     )}
                     <span className="rounded-md bg-secondary px-2 py-0.5">{bugStatusLabel(b.status)}</span>
                     <span className="text-muted-foreground">
@@ -413,7 +420,7 @@ export function BugsPanel({
                   </div>
                 ) : null}
 
-                {!readOnly && (
+                {!readOnly && !lock.locked && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <Button size="sm" variant="outline" onClick={() => startEdit(b)}>
                       {editing === b.id ? "Cancelar edição" : "Editar"}
@@ -439,7 +446,7 @@ export function BugsPanel({
                   </div>
                 )}
 
-                {!readOnly && editing === b.id && (
+                {!readOnly && !lock.locked && editing === b.id && (
                   <div className="grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
                     <Field label="Título" id={`eb-title-${b.id}`} full>
                       <Input

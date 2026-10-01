@@ -27,6 +27,7 @@ import {
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import {
   caseUpdatedAt,
+  missionRecordLock,
   useUnifiedCases,
   useUpdateMissionRecord,
   useDeleteMissionRecord,
@@ -344,7 +345,7 @@ export function TestCasesPanel({
             backMission={backMission}
             backLabel={backLabel}
             actions={
-              !readOnly && c.id !== "__sem-caso__" ? (
+              !readOnly && c.id !== "__sem-caso__" && !missionRecordLock(c).locked ? (
                 <div className="space-y-3 pt-2">
                   <div className="flex flex-wrap items-center gap-2">
                     {c.origin === "qa" && (
@@ -575,6 +576,11 @@ function CaseCard({
             <span className="rounded-full border border-border px-2 py-0.5 text-muted-foreground">
               {c.origin === "mission" ? "Registrado em missão" : "Registrado em Módulos QA"}
             </span>
+            {missionRecordLock(c).locked && (
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-muted-foreground">
+                {missionRecordLock(c).text}
+              </span>
+            )}
             <span className="text-muted-foreground">
               Atualizado em {new Date(updated).toLocaleDateString("pt-BR")}
             </span>

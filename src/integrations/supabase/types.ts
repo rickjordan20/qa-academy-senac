@@ -2650,6 +2650,10 @@ export type Database = {
         Args: { _run_id: string; _user_id: string }
         Returns: boolean
       }
+      builder_run_editable_status: {
+        Args: { _eval_status: string }
+        Returns: boolean
+      }
       can_manage_group: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean

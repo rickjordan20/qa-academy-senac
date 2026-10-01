@@ -25,6 +25,8 @@ export type UnifiedExecution = {
   updatedAt: string | null;
   missionId: string | null;
   runId: string | null;
+  /** Estado da avaliação da missão de origem (null quando não vem de missão). */
+  runEvalStatus?: string | null;
   evidences: UnifiedEvidence[];
 };
 
@@ -54,6 +56,7 @@ export type UnifiedCase = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  runEvalStatus?: string | null;
   createdAt: string;
   updatedAt: string | null;
   executions: UnifiedExecution[];
@@ -145,15 +148,21 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
       const qaRows = (qaRes.data ?? []) as unknown as CaseRow[];
 
       /* ---- Origem 2: registros criados dentro das missões ---- */
-      let runQuery = supabase.from("builder_mission_runs").select("id, mission_id");
+      let runQuery = supabase.from("builder_mission_runs").select("id, mission_id, eval_status");
       runQuery =
         scope.context === "cafe"
           ? runQuery.eq("group_id", scope.groupId!)
           : runQuery.eq("student_id", userId!);
       const runRes = await runQuery;
       if (runRes.error) throw runRes.error;
-      const runs = (runRes.data ?? []) as unknown as { id: string; mission_id: string }[];
+      const runs = (runRes.data ?? []) as unknown as {
+        id: string;
+        mission_id: string;
+        eval_status: string | null;
+      }[];
       const runIds = runs.map((r) => r.id);
+      const runStatuses: Record<string, string | null> = {};
+      for (const r of runs) runStatuses[r.id] = r.eval_status ?? null;
 
       let entries: EntryRow[] = [];
       const missionTitles: Record<string, string> = {};
@@ -225,6 +234,7 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
           missionId: e.mission_id,
           missionTitle: missionTitles[e.mission_id] ?? null,
           runId: e.run_id,
+          runEvalStatus: runStatuses[e.run_id] ?? null,
           createdAt: e.created_at,
           updatedAt: e.updated_at,
           executions: executions.filter((x) => x.caseId === e.id),
@@ -340,6 +350,7 @@ export type UnifiedBug = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  runEvalStatus?: string | null;
   /** Bug pertencente ao fluxo de teste cruzado (reteste só via RPC transacional). */
   pairingId: string | null;
   createdAt: string;
@@ -361,6 +372,7 @@ export type UnifiedEvidenceRecord = {
   missionId: string | null;
   missionTitle: string | null;
   runId: string | null;
+  runEvalStatus?: string | null;
   createdAt: string;
   updatedAt: string | null;
 };
@@ -368,18 +380,24 @@ export type UnifiedEvidenceRecord = {
 type MissionSource = {
   entries: EntryRow[];
   missionTitles: Record<string, string>;
+  /** Estado da avaliação da execução de origem de cada registro. */
+  runStatuses: Record<string, string | null>;
 };
 
 async function fetchMissionEntries(scope: QaScope, userId: string | null): Promise<MissionSource> {
-  let runQuery = supabase.from("builder_mission_runs").select("id, mission_id");
+  let runQuery = supabase.from("builder_mission_runs").select("id, mission_id, eval_status");
   runQuery =
     scope.context === "cafe"
       ? runQuery.eq("group_id", scope.groupId!)
       : runQuery.eq("student_id", userId!);
   const runRes = await runQuery;
   if (runRes.error) throw runRes.error;
-  const runIds = ((runRes.data ?? []) as unknown as { id: string }[]).map((r) => r.id);
-  if (runIds.length === 0) return { entries: [], missionTitles: {} };
+  const runRows = (runRes.data ?? []) as unknown as { id: string; eval_status: string | null }[];
+  const runStatuses: Record<string, string | null> = {};
+  for (const r of runRows) runStatuses[r.id] = r.eval_status ?? null;
+  const runIds = runRows.map((r) => r.id);
+  if (runIds.length === 0) return { entries: [], missionTitles: {}, runStatuses };
+
 
   const entryRes = await supabase
     .from("builder_mission_entries")
@@ -401,7 +419,7 @@ async function fetchMissionEntries(scope: QaScope, userId: string | null): Promi
       missionTitles[m.id] = m.title;
     }
   }
-  return { entries, missionTitles };
+  return { entries, missionTitles, runStatuses };
 }
 
 function normalizeText(v: string) {
@@ -471,7 +489,7 @@ export function useUnifiedBugs(scope: QaScope, userId: string | null) {
         updatedAt: (b["updated_at"] as string | null) ?? null,
       }));
 
-      const { entries, missionTitles } = await fetchMissionEntries(scope, userId);
+      const { entries, missionTitles, runStatuses } = await fetchMissionEntries(scope, userId);
       const missionBugs: UnifiedBug[] = entries
         .filter((e) => e.kind === "bug")
         .map((e) => {
@@ -499,6 +517,7 @@ export function useUnifiedBugs(scope: QaScope, userId: string | null) {
             missionId: e.mission_id,
             missionTitle: missionTitles[e.mission_id] ?? null,
             runId: e.run_id,
+            runEvalStatus: runStatuses[e.run_id] ?? null,
             pairingId: null,
             createdAt: e.created_at,
             updatedAt: e.updated_at,
@@ -547,7 +566,7 @@ export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
         updatedAt: (e["updated_at"] as string | null) ?? null,
       }));
 
-      const { entries, missionTitles } = await fetchMissionEntries(scope, userId);
+      const { entries, missionTitles, runStatuses } = await fetchMissionEntries(scope, userId);
       const missionEvidences: UnifiedEvidenceRecord[] = entries
         .filter((e) => e.kind === "evidence")
         .map((e) => ({
@@ -565,6 +584,7 @@ export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
           missionId: e.mission_id,
           missionTitle: missionTitles[e.mission_id] ?? null,
           runId: e.run_id,
+          runEvalStatus: runStatuses[e.run_id] ?? null,
           createdAt: e.created_at,
           updatedAt: e.updated_at,
         }));
@@ -574,6 +594,27 @@ export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
       );
     },
   });
+}
+
+/**
+ * Registro criado dentro de uma missão fica bloqueado enquanto o instrutor
+ * avalia. Registros criados direto na bancada nunca são bloqueados aqui.
+ */
+export function missionRecordLock(r: {
+  origin: RecordOrigin;
+  runEvalStatus?: string | null;
+}): { locked: boolean; text: string } {
+  if (r.origin !== "mission") return { locked: false, text: "" };
+  switch (r.runEvalStatus) {
+    case "in_review":
+      return { locked: true, text: "Bloqueado — avaliação da missão em andamento" };
+    case "reeval":
+      return { locked: true, text: "Bloqueado — reavaliação da missão em andamento" };
+    case "evaluated":
+      return { locked: true, text: "Bloqueado — registro de uma missão já avaliada" };
+    default:
+      return { locked: false, text: "" };
+  }
 }
 
 export function caseUpdatedAt(c: UnifiedCase) {
