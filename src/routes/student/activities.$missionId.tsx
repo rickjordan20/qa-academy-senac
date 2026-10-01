@@ -507,6 +507,7 @@ function StudentMissionPage() {
                 missionId={mission.id}
                 group={group}
                 userId={userId}
+                readOnly={readOnly}
               />
             ) : null}
             {section.kind === "cross_test" ? (
