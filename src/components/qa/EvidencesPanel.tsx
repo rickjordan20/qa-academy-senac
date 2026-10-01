@@ -367,7 +367,7 @@ export function EvidencesPanel({
                   <div className="sm:col-span-2 flex gap-2">
                     <Button
                       size="sm"
-                      disabled={update.isPending}
+                      disabled={update.isPending || updateMission.isPending}
                       onClick={async () => {
                         if (!editForm.title.trim()) {
                           toast.error("Informe o título da evidência.");
@@ -382,16 +382,30 @@ export function EvidencesPanel({
                           return;
                         }
                         try {
-                          await update.mutateAsync({
-                            id: ev.id,
-                            patch: {
+                          if (original) {
+                            await update.mutateAsync({
+                              id: ev.id,
+                              patch: {
+                                title: editForm.title.trim(),
+                                kind: editForm.kind,
+                                description: editForm.description.trim(),
+                                content: editForm.content.trim() || null,
+                                link: editForm.link.trim() || null,
+                              },
+                            });
+                          } else {
+                            await updateMission.mutateAsync({
+                              id: ev.id,
                               title: editForm.title.trim(),
-                              kind: editForm.kind,
-                              description: editForm.description.trim(),
-                              content: editForm.content.trim() || null,
-                              link: editForm.link.trim() || null,
-                            },
-                          });
+                              patch: {
+                                titulo: editForm.title.trim(),
+                                tipo: editForm.kind,
+                                descricao: editForm.description.trim(),
+                                conteudo: editForm.content.trim(),
+                                url: editForm.link.trim(),
+                              },
+                            });
+                          }
                           setEditing(null);
                           toast.success("Registro atualizado com sucesso.");
                         } catch (err) {
@@ -399,7 +413,7 @@ export function EvidencesPanel({
                         }
                       }}
                     >
-                      {update.isPending ? "Salvando..." : "Salvar alterações"}
+                      {update.isPending || updateMission.isPending ? "Salvando..." : "Salvar alterações"}
                     </Button>
                     <Button size="sm" variant="secondary" onClick={() => setEditing(null)}>
                       Cancelar
