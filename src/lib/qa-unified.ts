@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { QaScope } from "@/lib/qa";
 
@@ -582,4 +582,74 @@ export function caseUpdatedAt(c: UnifiedCase) {
     .map((s) => new Date(s as string).getTime())
     .filter((n) => !Number.isNaN(n));
   return stamps.length ? new Date(Math.max(...stamps)).toISOString() : c.createdAt;
+}
+
+/* ------------------------------------------------------------------ */
+/* Edição e exclusão de bugs registrados dentro de missões             */
+/* O registro é o mesmo (mesmo id): nada é duplicado nem migrado.      */
+/* ------------------------------------------------------------------ */
+
+/** Campos editáveis de um bug criado em um bloco de missão. */
+export type MissionBugPatch = {
+  titulo: string;
+  descricao: string;
+  ambiente: string;
+  passos: string;
+  esperado: string;
+  obtido: string;
+  severidade: string;
+  prioridade: string;
+};
+
+export function useUpdateMissionBug() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: MissionBugPatch }) => {
+      const current = await supabase
+        .from("builder_mission_entries")
+        .select("data")
+        .eq("id", id)
+        .maybeSingle();
+      if (current.error) throw current.error;
+      const previous = ((current.data as { data: Record<string, string> | null } | null)?.data ??
+        {}) as Record<string, string>;
+      const merged = { ...previous, ...patch };
+      const { error, count } = await supabase
+        .from("builder_mission_entries")
+        .update({ title: patch.titulo, data: merged as never } as never, { count: "exact" })
+        .eq("id", id);
+      if (error) throw error;
+      if (!count) {
+        throw new Error(
+          "Não foi possível editar este bug. A missão pode estar enviada, avaliada ou fora do prazo de edição.",
+        );
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["qa-unified"] });
+      void qc.invalidateQueries({ queryKey: ["builder-entries"] });
+    },
+  });
+}
+
+export function useDeleteMissionBug() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error, count } = await supabase
+        .from("builder_mission_entries")
+        .delete({ count: "exact" })
+        .eq("id", id);
+      if (error) throw error;
+      if (!count) {
+        throw new Error(
+          "Não foi possível excluir este bug. A missão pode estar enviada, avaliada ou fora do prazo de edição.",
+        );
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["qa-unified"] });
+      void qc.invalidateQueries({ queryKey: ["builder-entries"] });
+    },
+  });
 }
