@@ -381,7 +381,11 @@ export function eventText(
 }
 
 
-/** Envio do aluno (1ª vez ou reenvio) — nunca apaga a tentativa anterior. */
+/**
+ * Envio do aluno (1ª vez, atualização da entrega ou reenvio após revisão).
+ * Nunca apaga a tentativa anterior. Atualizar uma entrega que ainda aguarda
+ * avaliação não gera nova tentativa nem evento duplicado no histórico.
+ */
 export function useSubmitRun() {
   const qc = useQueryClient();
   return useMutation({
@@ -393,8 +397,12 @@ export function useSubmitRun() {
       answers: Record<string, Record<string, string>>;
       checklist: Record<string, boolean>;
     }) => {
-      const isResubmit = !!input.run.submitted_at;
-      const attempt = isResubmit ? input.run.attempt + 1 : 1;
+      const alreadySubmitted = !!input.run.submitted_at;
+      /** Reenvio real: o instrutor devolveu a missão para correção. */
+      const isResubmit = alreadySubmitted && input.run.eval_status === "revision";
+      /** Simples atualização da entrega enquanto ainda aguarda avaliação. */
+      const isUpdate = alreadySubmitted && !isResubmit;
+      const attempt = isResubmit ? input.run.attempt + 1 : (input.run.attempt || 1);
       const { error } = await supabase
         .from("builder_mission_runs")
         .update({
@@ -409,13 +417,15 @@ export function useSubmitRun() {
         } as never)
         .eq("id", input.run.id);
       if (error) throw error;
-      await logEvent({
-        runId: input.run.id,
-        missionId: input.missionId,
-        actorId: input.actorId,
-        kind: isResubmit ? "resubmitted" : "submitted",
-        attempt,
-      });
+      if (!isUpdate) {
+        await logEvent({
+          runId: input.run.id,
+          missionId: input.missionId,
+          actorId: input.actorId,
+          kind: isResubmit ? "resubmitted" : "submitted",
+          attempt,
+        });
+      }
       return attempt;
     },
     onSuccess: () => {
