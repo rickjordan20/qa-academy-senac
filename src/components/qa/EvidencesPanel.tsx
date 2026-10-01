@@ -397,6 +397,7 @@ export function EvidencesPanel({
                             await updateMission.mutateAsync({
                               id: ev.id,
                               title: editForm.title.trim(),
+                              link: editForm.link.trim() || null,
                               patch: {
                                 titulo: editForm.title.trim(),
                                 tipo: editForm.kind,
