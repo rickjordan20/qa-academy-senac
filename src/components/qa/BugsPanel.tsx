@@ -370,18 +370,22 @@ export function BugsPanel({
                         options={BUG_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
                         className="h-9 w-56"
                       />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          remove.mutate(b.id, {
-                            onSuccess: () => toast.success("Bug removido."),
-                            onError: (e) => toast.error(e.message),
-                          })
-                        }
-                      >
-                        Excluir
-                      </Button>
+                      {b.pairingId ? null : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            if (!window.confirm("Excluir este bug? Esta ação não poderá ser desfeita.")) return;
+                            remove.mutate(b.id, {
+                              onSuccess: () => toast.success("Bug removido."),
+                              onError: (e) => toast.error(e.message),
+                            });
+                          }}
+                        >
+                          Excluir
+                        </Button>
+                      )}
+
                     </div>
 
                     {b.status === "pronto_reteste" && (
