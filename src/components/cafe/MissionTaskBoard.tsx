@@ -586,6 +586,7 @@ function ContributionsPanel({
   areaOf,
   sectionLabel,
   sections,
+  readOnly = false,
 }: {
   runId: string;
   missionId: string;
