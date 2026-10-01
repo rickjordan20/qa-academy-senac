@@ -89,14 +89,17 @@ export function SectionAssign({
   missionId,
   group,
   userId,
+  readOnly = false,
 }: {
   section: Section;
   runId: string;
   missionId: string;
   group: CafeGroup;
   userId: string | null;
+  /** Missão bloqueada (em avaliação, avaliada, reavaliação ou antes da abertura). */
+  readOnly?: boolean;
 }) {
-  const isLead = group.qa_lead_id === userId;
+  const isLead = group.qa_lead_id === userId && !readOnly;
   const { data: tasks } = useMissionTasks(runId);
   const create = useCreateMissionTask(runId, missionId, group.id, userId);
   const update = useUpdateMissionTask(runId);
