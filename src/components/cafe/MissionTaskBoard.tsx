@@ -568,6 +568,7 @@ export function MissionTaskBoard({
               areaOf={areaOf}
               sectionLabel={sectionLabel}
               sections={sections}
+              readOnly={readOnly}
             />
           </TabsContent>
         </Tabs>
