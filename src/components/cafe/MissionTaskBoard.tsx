@@ -684,7 +684,10 @@ function ContributionsPanel({
 
   return (
     <div className="space-y-5">
-      <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
+      <div
+        className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4"
+        hidden={readOnly}
+      >
         <p className="text-xs text-muted-foreground">
           Registre aqui o que você <span className="font-semibold">já executou</span>. A
           distribuição de tarefas é feita pelo QA Líder no quadro acima.
