@@ -608,6 +608,8 @@ function ContributionsPanel({
   areaOf: (t: MissionTask) => string;
   sectionLabel: (id: string | null) => string;
   sections: Section[];
+  /** Missão bloqueada pela avaliação: só leitura. */
+  readOnly?: boolean;
 }) {
   const create = useCreateMissionContribution(runId, missionId, group.id, userId);
   const remove = useDeleteMissionContribution(runId);
