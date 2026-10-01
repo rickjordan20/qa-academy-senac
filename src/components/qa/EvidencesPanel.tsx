@@ -24,7 +24,12 @@ import {
   type QaScope,
 } from "@/lib/qa";
 import { EvidenceGuide } from "@/components/EvidenceGuide";
-import { useUnifiedEvidences, type UnifiedEvidenceRecord } from "@/lib/qa-unified";
+import {
+  useUnifiedEvidences,
+  useUpdateMissionRecord,
+  useDeleteMissionRecord,
+  type UnifiedEvidenceRecord,
+} from "@/lib/qa-unified";
 
 const empty = {
   title: "",
@@ -59,6 +64,8 @@ export function EvidencesPanel({
   const create = useCreateQaEvidence(scope, userId);
   const remove = useDeleteQaEvidence(scope, userId);
   const update = useUpdateQaEvidence(scope, userId);
+  const updateMission = useUpdateMissionRecord();
+  const removeMission = useDeleteMissionRecord();
   const [editing, setEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ ...empty });
   const { data: names } = useProfileNames((evidences ?? []).map((e) => e.authorId ?? ""));
@@ -261,29 +268,29 @@ export function EvidencesPanel({
                       </Link>
                     </Button>
                   )}
-                  {!readOnly && original && (
+                  {!readOnly && (
                     <Button
                       size="sm"
-                      variant="ghost"
+                      variant="outline"
                       onClick={() => {
                         setEditing(editing === ev.id ? null : ev.id);
                         setEditForm({
-                          title: original.title ?? "",
-                          kind: original.kind ?? "imagem",
-                          description: original.description ?? "",
-                          content: original.content ?? "",
-                          link: original.link ?? "",
-                          project: original.project ?? "",
-                          mission_id: original.mission_id ?? "",
-                          test_case_id: original.test_case_id ?? "",
-                          bug_id: original.bug_id ?? "",
+                          title: original?.title ?? ev.title ?? "",
+                          kind: original?.kind ?? ev.kind ?? "imagem",
+                          description: original?.description ?? ev.description ?? "",
+                          content: original?.content ?? ev.content ?? "",
+                          link: original?.link ?? ev.link ?? "",
+                          project: original?.project ?? "",
+                          mission_id: original?.mission_id ?? ev.missionId ?? "",
+                          test_case_id: original?.test_case_id ?? "",
+                          bug_id: original?.bug_id ?? "",
                         });
                       }}
                     >
                       {editing === ev.id ? "Cancelar" : "Editar"}
                     </Button>
                   )}
-                  {!readOnly && original && (
+                  {!readOnly && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -294,10 +301,17 @@ export function EvidencesPanel({
                           )
                         )
                           return;
-                        remove.mutate(original, {
-                          onSuccess: () => toast.success("Evidência removida."),
-                          onError: (e) => toast.error(e.message),
-                        });
+                        if (original) {
+                          remove.mutate(original, {
+                            onSuccess: () => toast.success("Evidência removida."),
+                            onError: (e) => toast.error(e.message),
+                          });
+                        } else {
+                          removeMission.mutate(ev.id, {
+                            onSuccess: () => toast.success("Evidência removida."),
+                            onError: (e) => toast.error(e.message),
+                          });
+                        }
                       }}
                     >
                       Excluir
@@ -310,7 +324,7 @@ export function EvidencesPanel({
                   {ev.content}
                 </pre>
               )}
-              {editing === ev.id && original && (
+              {editing === ev.id && (
                 <div className="mt-3 grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
                   <Field label="Título" id={`ed-title-${ev.id}`}>
                     <Input
@@ -353,7 +367,7 @@ export function EvidencesPanel({
                   <div className="sm:col-span-2 flex gap-2">
                     <Button
                       size="sm"
-                      disabled={update.isPending}
+                      disabled={update.isPending || updateMission.isPending}
                       onClick={async () => {
                         if (!editForm.title.trim()) {
                           toast.error("Informe o título da evidência.");
@@ -368,16 +382,31 @@ export function EvidencesPanel({
                           return;
                         }
                         try {
-                          await update.mutateAsync({
-                            id: ev.id,
-                            patch: {
+                          if (original) {
+                            await update.mutateAsync({
+                              id: ev.id,
+                              patch: {
+                                title: editForm.title.trim(),
+                                kind: editForm.kind,
+                                description: editForm.description.trim(),
+                                content: editForm.content.trim() || null,
+                                link: editForm.link.trim() || null,
+                              },
+                            });
+                          } else {
+                            await updateMission.mutateAsync({
+                              id: ev.id,
                               title: editForm.title.trim(),
-                              kind: editForm.kind,
-                              description: editForm.description.trim(),
-                              content: editForm.content.trim() || null,
                               link: editForm.link.trim() || null,
-                            },
-                          });
+                              patch: {
+                                titulo: editForm.title.trim(),
+                                tipo: editForm.kind,
+                                descricao: editForm.description.trim(),
+                                conteudo: editForm.content.trim(),
+                                url: editForm.link.trim(),
+                              },
+                            });
+                          }
                           setEditing(null);
                           toast.success("Registro atualizado com sucesso.");
                         } catch (err) {
@@ -385,7 +414,7 @@ export function EvidencesPanel({
                         }
                       }}
                     >
-                      {update.isPending ? "Salvando..." : "Salvar alterações"}
+                      {update.isPending || updateMission.isPending ? "Salvando..." : "Salvar alterações"}
                     </Button>
                     <Button size="sm" variant="secondary" onClick={() => setEditing(null)}>
                       Cancelar

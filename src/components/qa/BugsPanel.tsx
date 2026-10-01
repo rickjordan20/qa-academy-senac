@@ -413,7 +413,7 @@ export function BugsPanel({
                   </div>
                 ) : null}
 
-                {!readOnly && !b.pairingId && (
+                {!readOnly && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <Button size="sm" variant="outline" onClick={() => startEdit(b)}>
                       {editing === b.id ? "Cancelar edição" : "Editar"}

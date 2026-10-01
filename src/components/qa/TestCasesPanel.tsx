@@ -25,7 +25,13 @@ import {
   type AppProject,
 } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
-import { caseUpdatedAt, useUnifiedCases, type UnifiedCase } from "@/lib/qa-unified";
+import {
+  caseUpdatedAt,
+  useUnifiedCases,
+  useUpdateMissionRecord,
+  useDeleteMissionRecord,
+  type UnifiedCase,
+} from "@/lib/qa-unified";
 
 export type PersonOption = { id: string; name: string };
 
@@ -74,6 +80,17 @@ export function TestCasesPanel({
   const remove = useDeleteTestCase(scope, userId);
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
+  const updateMission = useUpdateMissionRecord();
+  const removeMission = useDeleteMissionRecord();
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    precondition: "",
+    inputData: "",
+    steps: "",
+    expected: "",
+    note: "",
+  });
 
   const [fMission, setFMission] = useState("");
   const [fAuthor, setFAuthor] = useState("");
@@ -327,41 +344,189 @@ export function TestCasesPanel({
             backMission={backMission}
             backLabel={backLabel}
             actions={
-              !readOnly && c.origin === "qa" ? (
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <NativeSelect
-                    id={`st-${c.id}`}
-                    value={c.executions[0]?.status ?? "nao_executado"}
-                    onChange={(v) =>
-                      update.mutate(
-                        {
-                          id: c.id,
-                          patch: {
-                            status: v,
-                            executed_at: v === "nao_executado" ? null : new Date().toISOString(),
-                            executed_by: v === "nao_executado" ? null : userId,
-                          },
-                        },
-                        { onError: (e) => toast.error(e.message) },
-                      )
-                    }
-                    options={CASE_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
-                    className="h-9 w-48"
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      if (!window.confirm("Excluir este caso de teste? Esta ação não poderá ser desfeita.")) return;
-                      remove.mutate(c.id, {
-                        onSuccess: () => toast.success("Caso removido."),
-                        onError: (e) => toast.error(e.message),
-                      });
-                    }}
-                  >
-                    Excluir
-                  </Button>
+              !readOnly && c.id !== "__sem-caso__" ? (
+                <div className="space-y-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {c.origin === "qa" && (
+                      <NativeSelect
+                        id={`st-${c.id}`}
+                        value={c.executions[0]?.status ?? "nao_executado"}
+                        onChange={(v) =>
+                          update.mutate(
+                            {
+                              id: c.id,
+                              patch: {
+                                status: v,
+                                executed_at:
+                                  v === "nao_executado" ? null : new Date().toISOString(),
+                                executed_by: v === "nao_executado" ? null : userId,
+                              },
+                            },
+                            { onError: (e) => toast.error(e.message) },
+                          )
+                        }
+                        options={CASE_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+                        className="h-9 w-48"
+                      />
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (editing === c.id) {
+                          setEditing(null);
+                          return;
+                        }
+                        setEditing(c.id);
+                        setEditForm({
+                          title: c.title === "(sem título)" ? "" : c.title,
+                          precondition: c.precondition,
+                          inputData: c.inputData,
+                          steps: c.steps,
+                          expected: c.expected,
+                          note: c.note,
+                        });
+                      }}
+                    >
+                      {editing === c.id ? "Cancelar" : "Editar"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "Excluir este caso de teste? Esta ação não poderá ser desfeita.",
+                          )
+                        )
+                          return;
+                        const opts = {
+                          onSuccess: () => toast.success("Caso removido."),
+                          onError: (e: Error) => toast.error(e.message),
+                        };
+                        if (c.origin === "qa") remove.mutate(c.id, opts);
+                        else removeMission.mutate(c.id, opts);
+                      }}
+                    >
+                      Excluir
+                    </Button>
+                  </div>
 
+                  {editing === c.id && (
+                    <div className="grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
+                      <Field label="Título" id={`ec-title-${c.id}`}>
+                        <Input
+                          id={`ec-title-${c.id}`}
+                          value={editForm.title}
+                          onChange={(e) =>
+                            setEditForm((f) => ({ ...f, title: e.target.value }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Pré-condição" id={`ec-pre-${c.id}`}>
+                        <Input
+                          id={`ec-pre-${c.id}`}
+                          value={editForm.precondition}
+                          onChange={(e) =>
+                            setEditForm((f) => ({ ...f, precondition: e.target.value }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Dados de entrada" id={`ec-data-${c.id}`} full>
+                        <Input
+                          id={`ec-data-${c.id}`}
+                          value={editForm.inputData}
+                          onChange={(e) =>
+                            setEditForm((f) => ({ ...f, inputData: e.target.value }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Passos" id={`ec-steps-${c.id}`} full>
+                        <Textarea
+                          id={`ec-steps-${c.id}`}
+                          rows={3}
+                          value={editForm.steps}
+                          onChange={(e) =>
+                            setEditForm((f) => ({ ...f, steps: e.target.value }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Resultado esperado" id={`ec-exp-${c.id}`} full>
+                        <Textarea
+                          id={`ec-exp-${c.id}`}
+                          rows={2}
+                          value={editForm.expected}
+                          onChange={(e) =>
+                            setEditForm((f) => ({ ...f, expected: e.target.value }))
+                          }
+                        />
+                      </Field>
+                      {c.origin === "mission" && (
+                        <Field label="Observação" id={`ec-note-${c.id}`} full>
+                          <Textarea
+                            id={`ec-note-${c.id}`}
+                            rows={2}
+                            value={editForm.note}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, note: e.target.value }))
+                            }
+                          />
+                        </Field>
+                      )}
+                      <div className="flex gap-2 sm:col-span-2">
+                        <Button
+                          size="sm"
+                          disabled={update.isPending || updateMission.isPending}
+                          onClick={async () => {
+                            if (!editForm.title.trim()) {
+                              toast.error("Informe o título do caso de teste.");
+                              return;
+                            }
+                            try {
+                              if (c.origin === "qa") {
+                                await update.mutateAsync({
+                                  id: c.id,
+                                  patch: {
+                                    title: editForm.title.trim(),
+                                    precondition: editForm.precondition.trim(),
+                                    input_data: editForm.inputData.trim(),
+                                    steps: editForm.steps.trim(),
+                                    expected_result: editForm.expected.trim(),
+                                  },
+                                });
+                              } else {
+                                await updateMission.mutateAsync({
+                                  id: c.id,
+                                  title: editForm.title.trim(),
+                                  patch: {
+                                    titulo: editForm.title.trim(),
+                                    precondicao: editForm.precondition.trim(),
+                                    dados: editForm.inputData.trim(),
+                                    passos: editForm.steps.trim(),
+                                    esperado: editForm.expected.trim(),
+                                    observacao: editForm.note.trim(),
+                                  },
+                                });
+                              }
+                              setEditing(null);
+                              toast.success("Caso de teste atualizado.");
+                            } catch (err) {
+                              toast.error(
+                                err instanceof Error ? err.message : "Não foi possível salvar.",
+                              );
+                            }
+                          }}
+                        >
+                          {update.isPending || updateMission.isPending
+                            ? "Salvando..."
+                            : "Salvar alterações"}
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setEditing(null)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : null
             }
