@@ -407,7 +407,7 @@ async function fetchMissionEntries(scope: QaScope, userId: string | null): Promi
       missionTitles[m.id] = m.title;
     }
   }
-  return { entries, missionTitles };
+  return { entries, missionTitles, runStatuses };
 }
 
 function normalizeText(v: string) {
