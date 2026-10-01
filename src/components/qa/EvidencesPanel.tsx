@@ -268,29 +268,29 @@ export function EvidencesPanel({
                       </Link>
                     </Button>
                   )}
-                  {!readOnly && original && (
+                  {!readOnly && (
                     <Button
                       size="sm"
-                      variant="ghost"
+                      variant="outline"
                       onClick={() => {
                         setEditing(editing === ev.id ? null : ev.id);
                         setEditForm({
-                          title: original.title ?? "",
-                          kind: original.kind ?? "imagem",
-                          description: original.description ?? "",
-                          content: original.content ?? "",
-                          link: original.link ?? "",
-                          project: original.project ?? "",
-                          mission_id: original.mission_id ?? "",
-                          test_case_id: original.test_case_id ?? "",
-                          bug_id: original.bug_id ?? "",
+                          title: original?.title ?? ev.title ?? "",
+                          kind: original?.kind ?? ev.kind ?? "imagem",
+                          description: original?.description ?? ev.description ?? "",
+                          content: original?.content ?? ev.content ?? "",
+                          link: original?.link ?? ev.link ?? "",
+                          project: original?.project ?? "",
+                          mission_id: original?.mission_id ?? ev.missionId ?? "",
+                          test_case_id: original?.test_case_id ?? "",
+                          bug_id: original?.bug_id ?? "",
                         });
                       }}
                     >
                       {editing === ev.id ? "Cancelar" : "Editar"}
                     </Button>
                   )}
-                  {!readOnly && original && (
+                  {!readOnly && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -301,10 +301,17 @@ export function EvidencesPanel({
                           )
                         )
                           return;
-                        remove.mutate(original, {
-                          onSuccess: () => toast.success("Evidência removida."),
-                          onError: (e) => toast.error(e.message),
-                        });
+                        if (original) {
+                          remove.mutate(original, {
+                            onSuccess: () => toast.success("Evidência removida."),
+                            onError: (e) => toast.error(e.message),
+                          });
+                        } else {
+                          removeMission.mutate(ev.id, {
+                            onSuccess: () => toast.success("Evidência removida."),
+                            onError: (e) => toast.error(e.message),
+                          });
+                        }
                       }}
                     >
                       Excluir
