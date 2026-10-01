@@ -665,10 +665,12 @@ export function useUpdateMissionRecord() {
     mutationFn: async ({
       id,
       title,
+      link,
       patch,
     }: {
       id: string;
       title?: string;
+      link?: string | null;
       patch: Record<string, string>;
     }) => {
       const current = await supabase
@@ -682,6 +684,7 @@ export function useUpdateMissionRecord() {
       const merged = { ...previous, ...patch };
       const payload: Record<string, unknown> = { data: merged };
       if (title !== undefined) payload["title"] = title;
+      if (link !== undefined) payload["link"] = link;
       const { error, count } = await supabase
         .from("builder_mission_entries")
         .update(payload as never, { count: "exact" })
