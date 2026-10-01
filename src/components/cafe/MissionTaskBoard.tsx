@@ -317,7 +317,7 @@ export function MissionTaskBoard({
             {areaOf(t)}
           </p>
         ) : null}
-        {isLead || mine ? (
+        {isLead || canAct ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <NativeSelect
               id={`st-${t.id}`}
