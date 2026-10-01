@@ -179,3 +179,66 @@ export function scheduleSummary(mission: MissionSchedule) {
   if (mission.due_at) parts.push(`Prazo: ${fmtMissionDateTime(mission.due_at, "due")}`);
   return parts.join(" · ");
 }
+
+/* ------------------------------------------------------------------ */
+/* Edição conforme o estado da avaliação                               */
+/* O envio (submitted_at) NÃO bloqueia: o bloqueio começa quando o     */
+/* instrutor inicia a avaliação e a revisão reabre a edição.           */
+/* ------------------------------------------------------------------ */
+
+/** Estados em que o aluno/grupo não pode alterar nada da execução. */
+export const EVAL_LOCKED_STATUSES = ["in_review", "evaluated", "reeval"] as const;
+
+/** true quando a avaliação do instrutor congela a execução. */
+export function isEvalLocked(evalStatus: string | null | undefined) {
+  if (!evalStatus) return false;
+  return (EVAL_LOCKED_STATUSES as readonly string[]).includes(evalStatus);
+}
+
+/** Aviso curto para o aluno conforme o estado da avaliação. */
+export function evalStateNotice(
+  evalStatus: string | null | undefined,
+  submittedAt: string | null | undefined,
+): { tone: "info" | "locked" | "action"; text: string } | null {
+  switch (evalStatus) {
+    case "in_review":
+      return {
+        tone: "locked",
+        text: "Avaliação em andamento — a missão está temporariamente bloqueada para alterações.",
+      };
+    case "reeval":
+      return {
+        tone: "locked",
+        text: "Reavaliação em andamento — a missão está temporariamente bloqueada para alterações.",
+      };
+    case "evaluated":
+      return { tone: "locked", text: "Missão avaliada — alterações estão bloqueadas." };
+    case "revision":
+      return { tone: "action", text: "Revisão solicitada — faça as correções indicadas e reenvie a missão." };
+    case "awaiting":
+      return {
+        tone: "info",
+        text: "Missão enviada — você ainda pode fazer alterações até o início da avaliação.",
+      };
+    default:
+      if (submittedAt)
+        return {
+          tone: "info",
+          text: "Missão enviada — você ainda pode fazer alterações até o início da avaliação.",
+        };
+      return null;
+  }
+}
+
+/** Rótulo e habilitação do botão de entrega conforme o estado. */
+export function submitButtonState(
+  evalStatus: string | null | undefined,
+  submittedAt: string | null | undefined,
+): { label: string; disabled: boolean } {
+  if (evalStatus === "in_review") return { label: "Avaliação em andamento", disabled: true };
+  if (evalStatus === "reeval") return { label: "Reavaliação em andamento", disabled: true };
+  if (evalStatus === "evaluated") return { label: "Missão avaliada", disabled: true };
+  if (evalStatus === "revision") return { label: "Revisar e reenviar missão", disabled: false };
+  if (submittedAt) return { label: "Atualizar entrega da missão", disabled: false };
+  return { label: "Concluir e entregar missão", disabled: false };
+}
