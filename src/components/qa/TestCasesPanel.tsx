@@ -27,6 +27,7 @@ import {
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import {
   caseUpdatedAt,
+  missionRecordLock,
   useUnifiedCases,
   useUpdateMissionRecord,
   useDeleteMissionRecord,
