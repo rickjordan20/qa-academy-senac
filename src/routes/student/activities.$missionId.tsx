@@ -258,7 +258,7 @@ function StudentMissionPage() {
   }
 
   function persist(nextAnswers: typeof answers, nextChecklist: typeof checklist) {
-    if (!run || !mission || beforeOpening) return;
+    if (!run || !mission || blockWrites) return;
     setSaving("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => {
@@ -279,7 +279,7 @@ function StudentMissionPage() {
   }
 
   async function addEntry(section: Section, values: Record<string, string>) {
-    if (!run || !userId || beforeOpening) return;
+    if (!run || !userId || blockWrites) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const featureId = values["feature_id"] || null;
@@ -350,7 +350,7 @@ function StudentMissionPage() {
     entry: { id: string; author_id: string; group_id: string | null },
     values: Record<string, string>,
   ) {
-    if (beforeOpening) return;
+    if (blockWrites) return;
     const def = blockDef(section.kind);
     const titleKey = def.fields?.[0]?.key ?? "titulo";
     const data = { ...values };
