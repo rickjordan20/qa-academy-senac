@@ -26,7 +26,13 @@ import {
 } from "@/lib/qa";
 import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
-import { useUnifiedBugs, type UnifiedBug } from "@/lib/qa-unified";
+import {
+  useDeleteMissionBug,
+  useUnifiedBugs,
+  useUpdateMissionBug,
+  type MissionBugPatch,
+  type UnifiedBug,
+} from "@/lib/qa-unified";
 import { useCrossRetest } from "@/lib/cross-test";
 
 const empty = {
