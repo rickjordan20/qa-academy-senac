@@ -24,7 +24,12 @@ import {
   type QaScope,
 } from "@/lib/qa";
 import { EvidenceGuide } from "@/components/EvidenceGuide";
-import { useUnifiedEvidences, type UnifiedEvidenceRecord } from "@/lib/qa-unified";
+import {
+  useUnifiedEvidences,
+  useUpdateMissionRecord,
+  useDeleteMissionRecord,
+  type UnifiedEvidenceRecord,
+} from "@/lib/qa-unified";
 
 const empty = {
   title: "",
@@ -59,6 +64,8 @@ export function EvidencesPanel({
   const create = useCreateQaEvidence(scope, userId);
   const remove = useDeleteQaEvidence(scope, userId);
   const update = useUpdateQaEvidence(scope, userId);
+  const updateMission = useUpdateMissionRecord();
+  const removeMission = useDeleteMissionRecord();
   const [editing, setEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ ...empty });
   const { data: names } = useProfileNames((evidences ?? []).map((e) => e.authorId ?? ""));
