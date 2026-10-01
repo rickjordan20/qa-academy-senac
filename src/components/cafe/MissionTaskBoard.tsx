@@ -169,14 +169,17 @@ export function MissionTaskBoard({
   group,
   userId,
   sections = [],
+  readOnly = false,
 }: {
   missionId: string;
   runId: string;
   group: CafeGroup;
   userId: string | null;
   sections?: Section[];
+  /** Missão bloqueada (em avaliação, avaliada, reavaliação ou antes da abertura). */
+  readOnly?: boolean;
 }) {
-  const isLead = group.qa_lead_id === userId;
+  const isLead = group.qa_lead_id === userId && !readOnly;
   const { data: tasks } = useMissionTasks(runId);
   const { data: contributions } = useMissionContributions(runId);
   const { data: modules } = useModules("cafe_central", group.id);
