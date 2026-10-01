@@ -25,7 +25,13 @@ import {
   type AppProject,
 } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
-import { caseUpdatedAt, useUnifiedCases, type UnifiedCase } from "@/lib/qa-unified";
+import {
+  caseUpdatedAt,
+  useUnifiedCases,
+  useUpdateMissionRecord,
+  useDeleteMissionRecord,
+  type UnifiedCase,
+} from "@/lib/qa-unified";
 
 export type PersonOption = { id: string; name: string };
 
@@ -74,6 +80,17 @@ export function TestCasesPanel({
   const remove = useDeleteTestCase(scope, userId);
   const [form, setForm] = useState({ ...empty });
   const [open, setOpen] = useState(false);
+  const updateMission = useUpdateMissionRecord();
+  const removeMission = useDeleteMissionRecord();
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    precondition: "",
+    inputData: "",
+    steps: "",
+    expected: "",
+    note: "",
+  });
 
   const [fMission, setFMission] = useState("");
   const [fAuthor, setFAuthor] = useState("");
