@@ -467,12 +467,27 @@ function StudentMissionPage() {
         </Button>
       ) : null}
 
+      {stateNotice ? (
+        <p
+          className={`rounded-md border p-3 text-sm ${
+            stateNotice.tone === "locked"
+              ? "border-border bg-secondary/40 text-muted-foreground"
+              : stateNotice.tone === "action"
+                ? "border-warning/40 bg-warning/10 text-foreground"
+                : "border-accent/40 bg-accent/10 text-foreground"
+          }`}
+        >
+          {stateNotice.text}
+        </p>
+      ) : null}
+
       {isCafe && run && group ? (
         <MissionTaskBoard
           missionId={mission.id}
           runId={run.id}
           group={group}
           userId={userId}
+          readOnly={readOnly}
           sections={(mission.sections ?? []).filter((s) => s.visible)}
         />
       ) : null}
