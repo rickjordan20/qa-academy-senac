@@ -148,15 +148,21 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
       const qaRows = (qaRes.data ?? []) as unknown as CaseRow[];
 
       /* ---- Origem 2: registros criados dentro das missões ---- */
-      let runQuery = supabase.from("builder_mission_runs").select("id, mission_id");
+      let runQuery = supabase.from("builder_mission_runs").select("id, mission_id, eval_status");
       runQuery =
         scope.context === "cafe"
           ? runQuery.eq("group_id", scope.groupId!)
           : runQuery.eq("student_id", userId!);
       const runRes = await runQuery;
       if (runRes.error) throw runRes.error;
-      const runs = (runRes.data ?? []) as unknown as { id: string; mission_id: string }[];
+      const runs = (runRes.data ?? []) as unknown as {
+        id: string;
+        mission_id: string;
+        eval_status: string | null;
+      }[];
       const runIds = runs.map((r) => r.id);
+      const runStatuses: Record<string, string | null> = {};
+      for (const r of runs) runStatuses[r.id] = r.eval_status ?? null;
 
       let entries: EntryRow[] = [];
       const missionTitles: Record<string, string> = {};
@@ -228,6 +234,7 @@ export function useUnifiedCases(scope: QaScope, userId: string | null) {
           missionId: e.mission_id,
           missionTitle: missionTitles[e.mission_id] ?? null,
           runId: e.run_id,
+          runEvalStatus: runStatuses[e.run_id] ?? null,
           createdAt: e.created_at,
           updatedAt: e.updated_at,
           executions: executions.filter((x) => x.caseId === e.id),
@@ -482,7 +489,7 @@ export function useUnifiedBugs(scope: QaScope, userId: string | null) {
         updatedAt: (b["updated_at"] as string | null) ?? null,
       }));
 
-      const { entries, missionTitles } = await fetchMissionEntries(scope, userId);
+      const { entries, missionTitles, runStatuses } = await fetchMissionEntries(scope, userId);
       const missionBugs: UnifiedBug[] = entries
         .filter((e) => e.kind === "bug")
         .map((e) => {
@@ -510,6 +517,7 @@ export function useUnifiedBugs(scope: QaScope, userId: string | null) {
             missionId: e.mission_id,
             missionTitle: missionTitles[e.mission_id] ?? null,
             runId: e.run_id,
+            runEvalStatus: runStatuses[e.run_id] ?? null,
             pairingId: null,
             createdAt: e.created_at,
             updatedAt: e.updated_at,
@@ -558,7 +566,7 @@ export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
         updatedAt: (e["updated_at"] as string | null) ?? null,
       }));
 
-      const { entries, missionTitles } = await fetchMissionEntries(scope, userId);
+      const { entries, missionTitles, runStatuses } = await fetchMissionEntries(scope, userId);
       const missionEvidences: UnifiedEvidenceRecord[] = entries
         .filter((e) => e.kind === "evidence")
         .map((e) => ({
@@ -576,6 +584,7 @@ export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
           missionId: e.mission_id,
           missionTitle: missionTitles[e.mission_id] ?? null,
           runId: e.run_id,
+          runEvalStatus: runStatuses[e.run_id] ?? null,
           createdAt: e.created_at,
           updatedAt: e.updated_at,
         }));
