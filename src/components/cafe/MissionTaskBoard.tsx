@@ -279,7 +279,7 @@ export function MissionTaskBoard({
   function TaskCard({ t }: { t: MissionTask }) {
     const who = memberLabel(group, t.assignee_id);
     const extra = collabOf(t.id);
-    const mine = isResponsible(t);
+    const mine = isResponsible(t) && !readOnly;
     const block = sectionLabel(t.section_id);
     return (
       <div
