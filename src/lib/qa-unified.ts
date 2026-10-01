@@ -596,6 +596,27 @@ export function useUnifiedEvidences(scope: QaScope, userId: string | null) {
   });
 }
 
+/**
+ * Registro criado dentro de uma missão fica bloqueado enquanto o instrutor
+ * avalia. Registros criados direto na bancada nunca são bloqueados aqui.
+ */
+export function missionRecordLock(r: {
+  origin: RecordOrigin;
+  runEvalStatus?: string | null;
+}): { locked: boolean; text: string } {
+  if (r.origin !== "mission") return { locked: false, text: "" };
+  switch (r.runEvalStatus) {
+    case "in_review":
+      return { locked: true, text: "Bloqueado — avaliação da missão em andamento" };
+    case "reeval":
+      return { locked: true, text: "Bloqueado — reavaliação da missão em andamento" };
+    case "evaluated":
+      return { locked: true, text: "Bloqueado — registro de uma missão já avaliada" };
+    default:
+      return { locked: false, text: "" };
+  }
+}
+
 export function caseUpdatedAt(c: UnifiedCase) {
   const stamps = [c.updatedAt, c.createdAt, ...c.executions.map((e) => e.updatedAt ?? e.executedAt)]
     .filter(Boolean)
