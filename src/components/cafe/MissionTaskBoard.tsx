@@ -317,12 +317,27 @@ export function MissionTaskBoard({
               onChange={(v) => updateTask.mutate({ id: t.id, patch: { status: v as TaskStatus } })}
               options={BOARD_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
             />
-            {isLead ? (
+            {isLead || t.created_by === userId ? (
               <>
                 <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
                   Editar
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => deleteTask.mutate(t.id)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        "Tem certeza de que deseja excluir esta tarefa? Esta ação não poderá ser desfeita.",
+                      )
+                    )
+                      return;
+                    deleteTask.mutate(t.id, {
+                      onSuccess: () => toast.success("Tarefa removida."),
+                      onError: (e: Error) => toast.error(e.message),
+                    });
+                  }}
+                >
                   Excluir
                 </Button>
               </>
