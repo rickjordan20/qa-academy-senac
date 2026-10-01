@@ -114,12 +114,17 @@ function StudentMissionPage() {
     }
   }, [run]);
 
-  /** Entrega aguardando avaliação ou já avaliada bloqueia edição; revisão reabre. */
-  const lockedByDelivery =
-    !!run && (run.eval_status === "evaluated" || (!!run.submitted_at && run.eval_status !== "revision"));
+  /**
+   * O envio NÃO bloqueia: enquanto o instrutor não inicia a avaliação a missão
+   * continua editável. Bloqueiam: in_review, evaluated e reeval. Revisão reabre.
+   */
+  const lockedByEvaluation = !!run && isEvalLocked(run.eval_status);
   /** Antes da abertura configurada: nada pode ser aberto, gravado ou entregue. */
   const beforeOpening = !!mission && isMissionLocked(mission) && run?.eval_status !== "revision";
-  const readOnly = mission?.status !== "published" || !run || lockedByDelivery || beforeOpening;
+  const readOnly = mission?.status !== "published" || !run || lockedByEvaluation || beforeOpening;
+  /** Nenhuma gravação pode partir da tela quando bloqueada. */
+  const blockWrites = lockedByEvaluation || beforeOpening;
+  const stateNotice = run ? evalStateNotice(run.eval_status, run.submitted_at) : null;
 
   const names = useProfileNames((entries ?? []).map((e) => e.author_id));
 
