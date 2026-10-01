@@ -823,7 +823,7 @@ function ContributionsPanel({
                     🔗 Abrir evidência
                   </a>
                 ) : null}
-                <div className="mt-2 flex gap-1">
+                <div className="mt-2 flex gap-1" hidden={readOnly}>
                   <Button
                     size="sm"
                     variant="ghost"
