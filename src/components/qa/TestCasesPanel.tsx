@@ -575,6 +575,11 @@ function CaseCard({
             <span className="rounded-full border border-border px-2 py-0.5 text-muted-foreground">
               {c.origin === "mission" ? "Registrado em missão" : "Registrado em Módulos QA"}
             </span>
+            {missionRecordLock(c).locked && (
+              <span className="rounded-full bg-secondary px-2 py-0.5 text-muted-foreground">
+                {missionRecordLock(c).text}
+              </span>
+            )}
             <span className="text-muted-foreground">
               Atualizado em {new Date(updated).toLocaleDateString("pt-BR")}
             </span>
