@@ -653,3 +653,71 @@ export function useDeleteMissionBug() {
     },
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Edição e exclusão genéricas de QUALQUER registro feito em missão    */
+/* (caso de teste, execução, evidência, bug, etc.) — mesmo id.         */
+/* ------------------------------------------------------------------ */
+
+export function useUpdateMissionRecord() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      title,
+      patch,
+    }: {
+      id: string;
+      title?: string;
+      patch: Record<string, string>;
+    }) => {
+      const current = await supabase
+        .from("builder_mission_entries")
+        .select("data")
+        .eq("id", id)
+        .maybeSingle();
+      if (current.error) throw current.error;
+      const previous = ((current.data as { data: Record<string, string> | null } | null)?.data ??
+        {}) as Record<string, string>;
+      const merged = { ...previous, ...patch };
+      const payload: Record<string, unknown> = { data: merged };
+      if (title !== undefined) payload["title"] = title;
+      const { error, count } = await supabase
+        .from("builder_mission_entries")
+        .update(payload as never, { count: "exact" })
+        .eq("id", id);
+      if (error) throw error;
+      if (!count) {
+        throw new Error(
+          "Não foi possível editar este registro. A missão pode estar enviada, avaliada ou fora do prazo de edição.",
+        );
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["qa-unified"] });
+      void qc.invalidateQueries({ queryKey: ["builder-entries"] });
+    },
+  });
+}
+
+export function useDeleteMissionRecord() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error, count } = await supabase
+        .from("builder_mission_entries")
+        .delete({ count: "exact" })
+        .eq("id", id);
+      if (error) throw error;
+      if (!count) {
+        throw new Error(
+          "Não foi possível excluir este registro. A missão pode estar enviada, avaliada ou fora do prazo de edição.",
+        );
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["qa-unified"] });
+      void qc.invalidateQueries({ queryKey: ["builder-entries"] });
+    },
+  });
+}
