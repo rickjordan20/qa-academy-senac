@@ -351,15 +351,17 @@ export function TestCasesPanel({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() =>
+                    onClick={() => {
+                      if (!window.confirm("Excluir este caso de teste? Esta ação não poderá ser desfeita.")) return;
                       remove.mutate(c.id, {
                         onSuccess: () => toast.success("Caso removido."),
                         onError: (e) => toast.error(e.message),
-                      })
-                    }
+                      });
+                    }}
                   >
                     Excluir
                   </Button>
+
                 </div>
               ) : null
             }
