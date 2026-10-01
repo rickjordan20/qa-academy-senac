@@ -290,8 +290,12 @@ export function useDeleteTestCase(scope: QaScope, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("qa_test_cases").delete().eq("id", id);
+      const { error, count } = await supabase
+        .from("qa_test_cases")
+        .delete({ count: "exact" })
+        .eq("id", id);
       if (error) throw error;
+      if (!count) throw new Error("Não foi possível excluir este caso de teste.");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["qa", "cases", scopeKey(scope, userId)] });
@@ -299,6 +303,7 @@ export function useDeleteTestCase(scope: QaScope, userId: string | null) {
     },
   });
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Bugs                                                                */
@@ -372,15 +377,25 @@ export function useDeleteBug(scope: QaScope, userId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("qa_bugs").delete().eq("id", id);
+      const { error, count } = await supabase
+        .from("qa_bugs")
+        .delete({ count: "exact" })
+        .eq("id", id);
       if (error) throw error;
+      if (!count) {
+        throw new Error(
+          "Não foi possível excluir este bug. Bugs de teste cruzado ou de outro autor não podem ser excluídos.",
+        );
+      }
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["qa", "bugs", scopeKey(scope, userId)] });
       void qc.invalidateQueries({ queryKey: ["qa", "retests"] });
+      void qc.invalidateQueries({ queryKey: ["qa-unified"] });
     },
   });
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Retestes                                                            */

@@ -1129,12 +1129,25 @@ export function useDeleteEntry(runId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("builder_mission_entries").delete().eq("id", id);
+      const { error, count } = await supabase
+        .from("builder_mission_entries")
+        .delete({ count: "exact" })
+        .eq("id", id);
       if (error) throw error;
+      if (!count) {
+        throw new Error(
+          "Não foi possível excluir este registro. A missão pode estar enviada, avaliada ou fora do prazo de edição.",
+        );
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["builder-entries", runId] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["builder-entries"] });
+      void qc.invalidateQueries({ queryKey: ["qa-unified"] });
+      void runId;
+    },
   });
 }
+
 
 /** XP do motor: conclusão automática e entregas pendentes de validação. */
 export async function awardMissionXp(params: {
