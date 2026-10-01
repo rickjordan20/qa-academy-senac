@@ -344,7 +344,7 @@ export function TestCasesPanel({
             backMission={backMission}
             backLabel={backLabel}
             actions={
-              !readOnly && c.id !== "__sem-caso__" ? (
+              !readOnly && c.id !== "__sem-caso__" && !missionRecordLock(c).locked ? (
                 <div className="space-y-3 pt-2">
                   <div className="flex flex-wrap items-center gap-2">
                     {c.origin === "qa" && (
