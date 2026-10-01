@@ -27,6 +27,7 @@ import {
 import { projectLabel, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import { ModuleFeatureSelect, featureTrace } from "@/components/qa/ModuleFeatureSelect";
 import {
+  missionRecordLock,
   useDeleteMissionBug,
   useUnifiedBugs,
   useUpdateMissionBug,
