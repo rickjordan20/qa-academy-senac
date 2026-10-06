@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isLegacyEntry, loadMetricDisplayPairs } from "@/lib/load-metrics";
 import {
   blockDef,
   type BuilderMission,
