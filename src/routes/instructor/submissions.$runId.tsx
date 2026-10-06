@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useIndicators } from "@/lib/uc10";
 import { blockDef, entryFieldLabel, HIDDEN_ENTRY_KEYS, type Section } from "@/lib/mission-builder";
+import { loadMetricDisplayPairs } from "@/lib/load-metrics";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
 import { GroupParticipation } from "@/components/missions/GroupParticipation";
 
@@ -270,14 +271,36 @@ function EvaluatePage() {
                           <p className="font-semibold">
                             {blockDef(e.kind).icon} {e.title || blockDef(e.kind).label}
                           </p>
-                          {Object.entries(e.data ?? {})
-                            .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
-                            .map(([k, v]) => (
-                              <p key={k}>
-                                <span className="text-muted-foreground">{entryFieldLabel(e.kind, k)}: </span>
-                                {v}
-                              </p>
-                            ))}
+                          {(
+                            loadMetricDisplayPairs(e.kind, e.data ?? {}, {
+                              parentMissing: e.kind === "metrics" && !e.parent_id,
+                            }) ??
+                            Object.entries(e.data ?? {})
+                              .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
+                              .map(([k, v]) => ({ key: k, label: entryFieldLabel(e.kind, k), value: String(v) }))
+                          ).map((p) => (
+                            <p key={p.key}>
+                              <span className="text-muted-foreground">{p.label}: </span>
+                              {p.value}
+                            </p>
+                          ))}
+                          {e.kind === "load"
+                            ? (() => {
+                                const related = entries.filter((m) => m.kind === "metrics" && m.parent_id === e.id);
+                                return related.length ? (
+                                  <div className="mt-1 border-l-2 border-border pl-2">
+                                    <p className="font-semibold text-muted-foreground">📊 Métricas desta execução</p>
+                                    {related.map((m) => (
+                                      <p key={m.id}>
+                                        {m.title}
+                                        {m.data?.["agregacao"] ? ` (${m.data["agregacao"]})` : ""}
+                                        {m.data?.["valor"] ? `: ${m.data["valor"]} ${m.data?.["unidade"] ?? ""}` : ""}
+                                      </p>
+                                    ))}
+                                  </div>
+                                ) : null;
+                              })()
+                            : null}
                           {e.link ? (
                             <a
                               href={e.link}
