@@ -125,7 +125,7 @@ function A11yGuide() {
 const MANUAL_FEATURE = "__manual__";
 
 /** Exclusão de registro com confirmação padrão (não remove artefatos vinculados). */
-function DeleteEntryButton({ onConfirm }: { onConfirm: () => void }) {
+function DeleteEntryButton({ onConfirm, linkedMetrics = 0 }: { onConfirm: () => void; linkedMetrics?: number }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -138,6 +138,9 @@ function DeleteEntryButton({ onConfirm }: { onConfirm: () => void }) {
           <AlertDialogTitle>Excluir este registro?</AlertDialogTitle>
           <AlertDialogDescription>
             Somente este registro será excluído. Casos de teste, evidências e bugs vinculados continuam salvos.
+            {linkedMetrics > 0
+              ? ` Esta execução possui ${linkedMetrics} métrica(s) relacionada(s): elas continuam salvas, mas ficarão marcadas como "execução excluída" até você relacioná-las a outra execução.`
+              : ""}{" "}
             Esta ação não poderá ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -721,22 +724,44 @@ function SectionCard({
                               {editingEntry === e.id ? "Cancelar" : "Editar"}
                             </Button>
                           ) : null}
-                          <DeleteEntryButton onConfirm={() => handlers.onDeleteEntry(e.id)} />
+                          <DeleteEntryButton
+                            onConfirm={() => handlers.onDeleteEntry(e.id)}
+                            linkedMetrics={
+                              e.kind === "load"
+                                ? state.entries.filter((m) => m.kind === "metrics" && m.parent_id === e.id).length
+                                : 0
+                            }
+                          />
                         </div>
                       ) : null}
                     </div>
                     <dl className="mt-2 grid gap-1 sm:grid-cols-2">
-                      {Object.entries(e.data ?? {})
-                        .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
-                        .map(([k, v]) => (
-                          <div key={k}>
-                            <dt className="text-xs uppercase text-muted-foreground">
-                              {entryFieldLabel(section.kind, k)}
-                            </dt>
-                            <dd><RichText text={String(v)} className="space-y-1 text-sm leading-relaxed text-foreground" /></dd>
-                          </div>
-                        ))}
+                      {(
+                        loadMetricDisplayPairs(e.kind, e.data ?? {}, {
+                          parentMissing: e.kind === "metrics" && !e.parent_id,
+                        }) ??
+                        Object.entries(e.data ?? {})
+                          .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
+                          .map(([k, v]) => ({ key: k, label: entryFieldLabel(section.kind, k), value: String(v) }))
+                      ).map((p) => (
+                        <div key={p.key}>
+                          <dt className="text-xs uppercase text-muted-foreground">{p.label}</dt>
+                          <dd>
+                            <RichText text={p.value} className="space-y-1 text-sm leading-relaxed text-foreground" />
+                          </dd>
+                        </div>
+                      ))}
                     </dl>
+                    {e.kind === "load"
+                      ? (() => {
+                          const related = state.entries.filter((m) => m.kind === "metrics" && m.parent_id === e.id);
+                          return related.length ? (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              📊 Métricas relacionadas: {related.map((m) => m.title || "(sem nome)").join(", ")}
+                            </p>
+                          ) : null;
+                        })()
+                      : null}
                     {e.link ? (
                       <a
                         href={e.link}
