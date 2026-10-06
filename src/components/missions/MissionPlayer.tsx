@@ -38,6 +38,8 @@ import {
   type QuestionDef,
   type Section,
 } from "@/lib/mission-builder";
+import { isLegacyEntry, loadMetricDisplayPairs } from "@/lib/load-metrics";
+import { LoadFields, MetricFields, validateLoad, validateMetric } from "@/components/missions/LoadMetricFields";
 
 export type PlayerState = {
   answers: Record<string, Record<string, string>>;
@@ -312,7 +314,25 @@ function EntryForm({
         </div>
       ) : null}
       {section.kind === "accessibility" ? <A11yGuide /> : null}
-      <div className="grid gap-3 sm:grid-cols-2">
+      {section.kind === "load" ? (
+        <LoadFields
+          values={values}
+          setValues={setValues}
+          disabled={disabled}
+          appOptions={pickers?.appOptions ?? []}
+          presetTool={section.presetTool}
+        />
+      ) : null}
+      {section.kind === "metrics" ? (
+        <MetricFields
+          values={values}
+          setValues={setValues}
+          disabled={disabled}
+          runs={pickers?.loadRuns ?? []}
+          relational={!!pickers?.hasLoadSection}
+        />
+      ) : null}
+      <div className={structured ? "hidden" : "grid gap-3 sm:grid-cols-2"}>
         {fields.map((f) => {
           const isFeaturePicker =
             ((section.kind === "test_case" && f.key === "funcionalidade") ||
@@ -507,9 +527,26 @@ function EntryForm({
                 return;
               }
             }
+            if (section.kind === "load" && !legacyEntry) {
+              const err = validateLoad(values);
+              if (err) {
+                toast.error(err);
+                return;
+              }
+            }
+            if (section.kind === "metrics" && !legacyEntry) {
+              const err = validateMetric(
+                values,
+                !!pickers?.hasLoadSection && (pickers?.loadRuns?.length ?? 0) > 0,
+              );
+              if (err) {
+                toast.error(err);
+                return;
+              }
+            }
             onSubmit(values);
             if (!editMode) {
-              setValues({});
+              setValues(blank);
               setOpen(false);
             }
           }}
