@@ -316,6 +316,17 @@ export function SectionEditor({
           </label>
         ) : null}
 
+        {section.kind === "load" ? (
+          <div className="space-y-1">
+            <Label className="text-xs">Ferramenta sugerida (opcional)</Label>
+            <Input
+              value={section.presetTool ?? ""}
+              placeholder="Ex.: Grafana Cloud k6 — o aluno pode alterar"
+              onChange={(e) => onChange({ presetTool: e.target.value || undefined })}
+            />
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-xs">
           <label className="flex items-center gap-2">
             <Checkbox checked={section.required} onCheckedChange={(c) => onChange({ required: !!c })} />
