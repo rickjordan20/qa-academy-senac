@@ -67,6 +67,12 @@ export type MissionPickers = {
   priorEvidences?: PickerOption[] | undefined;
   /** Bugs de missões anteriores visíveis ao usuário. */
   priorBugs?: PickerOption[] | undefined;
+  /** Execuções de Teste de carga desta entrega (para relacionar Métricas). */
+  loadRuns?: PickerOption[] | undefined;
+  /** Aplicações conhecidas pela missão (autopreenchimento do Teste de carga). */
+  appOptions?: string[] | undefined;
+  /** A missão possui bloco Teste de carga visível. */
+  hasLoadSection?: boolean | undefined;
 };
 
 export type PlayerHandlers = {
@@ -246,8 +252,18 @@ function EntryForm({
   onCancel?: (() => void) | undefined;
 }) {
   const editMode = !!initial;
-  const [values, setValues] = useState<Record<string, string>>(initial ?? {});
+  const blank: Record<string, string> =
+    section.kind === "load"
+      ? {
+          duracao_unidade: "segundos",
+          ...(pickers?.appOptions?.length === 1 ? { aplicacao: pickers.appOptions[0]! } : {}),
+          ...(section.presetTool ? { ferramenta: section.presetTool } : {}),
+        }
+      : {};
+  const [values, setValues] = useState<Record<string, string>>(initial ?? blank);
   const [open, setOpen] = useState(editMode);
+  const structured = section.kind === "load" || section.kind === "metrics";
+  const legacyEntry = editMode && isLegacyEntry(section.kind, initial ?? {});
 
   const featureOptions = pickers?.features ?? [];
   const caseOptions = pickers?.cases ?? [];
