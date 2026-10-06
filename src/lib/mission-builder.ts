@@ -50,6 +50,8 @@ export type Section = {
   required: boolean;
   /** bloco de usabilidade: solicitar identificação do participante do teste */
   askParticipant?: boolean | undefined;
+  /** bloco de teste de carga: ferramenta pré-selecionada pelo instrutor (aluno pode alterar) */
+  presetTool?: string | undefined;
   scope: "individual" | "group";
   minItems?: number | undefined;
   maxItems?: number | undefined;
@@ -507,17 +509,18 @@ export const BLOCK_CATALOG: BlockDef[] = [
     group: "Técnico",
     defaultTitle: "Teste de carga",
     fields: [
-      { key: "titulo", label: "Objetivo", type: "text", required: true },
-      { key: "recurso", label: "Recurso / rota / endpoint", type: "text" },
-      { key: "ferramenta", label: "Ferramenta", type: "text" },
-      { key: "cenario", label: "Cenário", type: "textarea" },
-      { key: "configuracao", label: "Configuração", type: "textarea" },
-      { key: "usuarios", label: "Usuários / requisições", type: "text" },
-      { key: "duracao", label: "Duração", type: "text" },
-      { key: "ambiente", label: "Ambiente", type: "text" },
-      { key: "resultado", label: "Resultado", type: "textarea" },
+      { key: "titulo", label: "Cenário / nome da execução", type: "text", required: true },
+      { key: "aplicacao", label: "Aplicação / recurso testado", type: "text", required: true },
+      { key: "endpoint", label: "URL / endpoint", type: "text" },
+      { key: "ferramenta", label: "Ferramenta", type: "text", required: true },
+      { key: "vus", label: "Usuários virtuais (VUs)", type: "text", required: true },
+      { key: "duracao_valor", label: "Duração", type: "text", required: true },
+      { key: "duracao_unidade", label: "Unidade da duração", type: "text" },
+      { key: "check", label: "Check utilizado", type: "text" },
+      { key: "check_taxa", label: "Check — taxa de sucesso (%)", type: "text" },
+      { key: "check_sucessos", label: "Check — sucessos", type: "text" },
+      { key: "check_falhas", label: "Check — falhas", type: "text" },
       { key: "observacao", label: "Observação", type: "textarea" },
-      { key: "conclusao", label: "Conclusão", type: "textarea" },
     ],
   },
   {
@@ -528,11 +531,12 @@ export const BLOCK_CATALOG: BlockDef[] = [
     group: "Técnico",
     defaultTitle: "Métricas",
     fields: [
-      { key: "titulo", label: "Nome da métrica", type: "text", required: true },
+      { key: "titulo", label: "Métrica", type: "text", required: true },
+      { key: "execucao_label", label: "Execução / cenário", type: "text" },
+      { key: "agregacao", label: "Aggregation", type: "text" },
       { key: "valor", label: "Valor", type: "text" },
       { key: "unidade", label: "Unidade", type: "text" },
-      { key: "referencia", label: "Referência (opcional)", type: "text" },
-      { key: "interpretacao", label: "Interpretação", type: "textarea" },
+      { key: "interpretacao", label: "Interpretação", type: "textarea", required: true },
       { key: "observacao", label: "Observação", type: "textarea" },
     ],
   },
