@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isLegacyEntry, loadMetricDisplayPairs } from "@/lib/load-metrics";
 import {
   blockDef,
   type BuilderMission,
@@ -130,6 +131,22 @@ function entriesOf(section: Section, entries: MissionEntry[]) {
     .filter((e) => e.section_id === section.id)
     .map((e) => {
       const data = (e.data ?? {}) as Record<string, string>;
+      const structured = loadMetricDisplayPairs(e.kind, data, {
+        parentMissing: e.kind === "metrics" && !e.parent_id,
+      });
+      if (structured) {
+        const legacy = isLegacyEntry(e.kind, data);
+        const missing = legacy
+          ? []
+          : (def.fields ?? [])
+              .filter((f) => f.required && !(data[f.key] ?? "").toString().trim())
+              .map((f) => ({ label: f.label, value: "Não preenchido" }));
+        return {
+          title: e.title || "Registro",
+          fields: [...structured.map((p) => ({ label: p.label, value: p.value })), ...missing],
+          link: e.link ?? null,
+        };
+      }
       const fields = (def.fields ?? []).map((f) => ({
         label: f.label,
         value: (data[f.key] ?? "").toString().trim(),

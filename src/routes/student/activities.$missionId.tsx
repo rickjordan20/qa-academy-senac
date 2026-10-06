@@ -39,6 +39,7 @@ import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
 import { useBadgeCatalog } from "@/lib/gamification";
 import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import type { MissionPickers } from "@/components/missions/MissionPlayer";
+import { loadRunLabel, projectAppLabel } from "@/lib/load-metrics";
 
 /** contexto de retorno opcional (ex.: missão de Revisão e Auditoria) */
 export type MissionSearch = { backMission?: string; backLabel?: string };
@@ -209,6 +210,13 @@ function StudentMissionPage() {
           label: artifactLabel(a.kind, i + 1, a.title, a.lessonNumber),
         }));
 
+    /** Execuções de Teste de carga desta entrega (RLS + escopo do bloco). */
+    const loadRuns = (entries ?? [])
+      .filter((e) => e.kind === "load" && visible(e))
+      .map((e) => ({ value: e.id, label: loadRunLabel(e.title, e.data ?? {}) }));
+    const app = projectAppLabel(mission?.project);
+    const appOptions = [...new Set([app, isCafe ? group?.name : ""].filter((x): x is string => !!x))];
+
     return {
       features: [...features, ...orphans],
       cases,
@@ -218,6 +226,9 @@ function StudentMissionPage() {
       priorCases: priorOf("test_case"),
       priorEvidences: priorOf("evidence"),
       priorBugs: priorOf("bug"),
+      loadRuns,
+      appOptions,
+      hasLoadSection: (mission?.sections ?? []).some((sec) => sec.kind === "load" && sec.visible),
     };
   }, [invFeatures, invModules, mission, entries, isCafe, userId, group, prior]);
   const progress = useMemo(

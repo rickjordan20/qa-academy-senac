@@ -38,6 +38,8 @@ import {
   type QuestionDef,
   type Section,
 } from "@/lib/mission-builder";
+import { isLegacyEntry, loadMetricDisplayPairs } from "@/lib/load-metrics";
+import { LoadFields, MetricFields, validateLoad, validateMetric } from "@/components/missions/LoadMetricFields";
 
 export type PlayerState = {
   answers: Record<string, Record<string, string>>;
@@ -67,6 +69,12 @@ export type MissionPickers = {
   priorEvidences?: PickerOption[] | undefined;
   /** Bugs de missões anteriores visíveis ao usuário. */
   priorBugs?: PickerOption[] | undefined;
+  /** Execuções de Teste de carga desta entrega (para relacionar Métricas). */
+  loadRuns?: PickerOption[] | undefined;
+  /** Aplicações conhecidas pela missão (autopreenchimento do Teste de carga). */
+  appOptions?: string[] | undefined;
+  /** A missão possui bloco Teste de carga visível. */
+  hasLoadSection?: boolean | undefined;
 };
 
 export type PlayerHandlers = {
@@ -117,7 +125,7 @@ function A11yGuide() {
 const MANUAL_FEATURE = "__manual__";
 
 /** Exclusão de registro com confirmação padrão (não remove artefatos vinculados). */
-function DeleteEntryButton({ onConfirm }: { onConfirm: () => void }) {
+function DeleteEntryButton({ onConfirm, linkedMetrics = 0 }: { onConfirm: () => void; linkedMetrics?: number }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -130,6 +138,9 @@ function DeleteEntryButton({ onConfirm }: { onConfirm: () => void }) {
           <AlertDialogTitle>Excluir este registro?</AlertDialogTitle>
           <AlertDialogDescription>
             Somente este registro será excluído. Casos de teste, evidências e bugs vinculados continuam salvos.
+            {linkedMetrics > 0
+              ? ` Esta execução possui ${linkedMetrics} métrica(s) relacionada(s): elas continuam salvas, mas ficarão marcadas como "execução excluída" até você relacioná-las a outra execução.`
+              : ""}{" "}
             Esta ação não poderá ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -246,8 +257,18 @@ function EntryForm({
   onCancel?: (() => void) | undefined;
 }) {
   const editMode = !!initial;
-  const [values, setValues] = useState<Record<string, string>>(initial ?? {});
+  const blank: Record<string, string> =
+    section.kind === "load"
+      ? {
+          duracao_unidade: "segundos",
+          ...(pickers?.appOptions?.length === 1 ? { aplicacao: pickers.appOptions[0]! } : {}),
+          ...(section.presetTool ? { ferramenta: section.presetTool } : {}),
+        }
+      : {};
+  const [values, setValues] = useState<Record<string, string>>(initial ?? blank);
   const [open, setOpen] = useState(editMode);
+  const structured = section.kind === "load" || section.kind === "metrics";
+  const legacyEntry = editMode && isLegacyEntry(section.kind, initial ?? {});
 
   const featureOptions = pickers?.features ?? [];
   const caseOptions = pickers?.cases ?? [];
@@ -296,7 +317,25 @@ function EntryForm({
         </div>
       ) : null}
       {section.kind === "accessibility" ? <A11yGuide /> : null}
-      <div className="grid gap-3 sm:grid-cols-2">
+      {section.kind === "load" ? (
+        <LoadFields
+          values={values}
+          setValues={setValues}
+          disabled={disabled}
+          appOptions={pickers?.appOptions ?? []}
+          presetTool={section.presetTool}
+        />
+      ) : null}
+      {section.kind === "metrics" ? (
+        <MetricFields
+          values={values}
+          setValues={setValues}
+          disabled={disabled}
+          runs={pickers?.loadRuns ?? []}
+          relational={!!pickers?.hasLoadSection}
+        />
+      ) : null}
+      <div className={structured ? "hidden" : "grid gap-3 sm:grid-cols-2"}>
         {fields.map((f) => {
           const isFeaturePicker =
             ((section.kind === "test_case" && f.key === "funcionalidade") ||
@@ -491,9 +530,26 @@ function EntryForm({
                 return;
               }
             }
+            if (section.kind === "load" && !legacyEntry) {
+              const err = validateLoad(values);
+              if (err) {
+                toast.error(err);
+                return;
+              }
+            }
+            if (section.kind === "metrics" && !legacyEntry) {
+              const err = validateMetric(
+                values,
+                !!pickers?.hasLoadSection && (pickers?.loadRuns?.length ?? 0) > 0,
+              );
+              if (err) {
+                toast.error(err);
+                return;
+              }
+            }
             onSubmit(values);
             if (!editMode) {
-              setValues({});
+              setValues(blank);
               setOpen(false);
             }
           }}
@@ -668,22 +724,44 @@ function SectionCard({
                               {editingEntry === e.id ? "Cancelar" : "Editar"}
                             </Button>
                           ) : null}
-                          <DeleteEntryButton onConfirm={() => handlers.onDeleteEntry(e.id)} />
+                          <DeleteEntryButton
+                            onConfirm={() => handlers.onDeleteEntry(e.id)}
+                            linkedMetrics={
+                              e.kind === "load"
+                                ? state.entries.filter((m) => m.kind === "metrics" && m.parent_id === e.id).length
+                                : 0
+                            }
+                          />
                         </div>
                       ) : null}
                     </div>
                     <dl className="mt-2 grid gap-1 sm:grid-cols-2">
-                      {Object.entries(e.data ?? {})
-                        .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
-                        .map(([k, v]) => (
-                          <div key={k}>
-                            <dt className="text-xs uppercase text-muted-foreground">
-                              {entryFieldLabel(section.kind, k)}
-                            </dt>
-                            <dd><RichText text={String(v)} className="space-y-1 text-sm leading-relaxed text-foreground" /></dd>
-                          </div>
-                        ))}
+                      {(
+                        loadMetricDisplayPairs(e.kind, e.data ?? {}, {
+                          parentMissing: e.kind === "metrics" && !e.parent_id,
+                        }) ??
+                        Object.entries(e.data ?? {})
+                          .filter(([k, v]) => !HIDDEN_ENTRY_KEYS.includes(k) && (v ?? "").toString().trim())
+                          .map(([k, v]) => ({ key: k, label: entryFieldLabel(section.kind, k), value: String(v) }))
+                      ).map((p) => (
+                        <div key={p.key}>
+                          <dt className="text-xs uppercase text-muted-foreground">{p.label}</dt>
+                          <dd>
+                            <RichText text={p.value} className="space-y-1 text-sm leading-relaxed text-foreground" />
+                          </dd>
+                        </div>
+                      ))}
                     </dl>
+                    {e.kind === "load"
+                      ? (() => {
+                          const related = state.entries.filter((m) => m.kind === "metrics" && m.parent_id === e.id);
+                          return related.length ? (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              📊 Métricas relacionadas: {related.map((m) => m.title || "(sem nome)").join(", ")}
+                            </p>
+                          ) : null;
+                        })()
+                      : null}
                     {e.link ? (
                       <a
                         href={e.link}
