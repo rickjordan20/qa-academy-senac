@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- "Ver como aluno": instructor keeps own auth session; server-side `student_view_sessions` + `start/get/end_student_view` RPCs authorize, and trigger `zz_student_view_guard` (on every public table) + restrictive storage policies block all writes while a session exists — new public tables must get the same trigger. Why: frontend locks are not a guarantee.
