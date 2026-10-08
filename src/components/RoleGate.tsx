@@ -16,7 +16,16 @@ function FullScreenMessage({ text }: { text: string }) {
 }
 
 /** Libera a interface somente depois de sessão + profile + papel resolvidos. */
-export function RoleGate({ allow, children }: { allow: AppRole; children: React.ReactNode }) {
+export function RoleGate({
+  allow,
+  allowInstructorView = false,
+  children,
+}: {
+  allow: AppRole;
+  /** Área do aluno: libera o instrutor (a sessão de visualização é validada no banco). */
+  allowInstructorView?: boolean;
+  children: React.ReactNode;
+}) {
   const { loading, session, profile, role, error } = useAuth();
   const navigate = useNavigate();
 
@@ -27,10 +36,11 @@ export function RoleGate({ allow, children }: { allow: AppRole; children: React.
       navigate({ to: "/login", replace: true });
       return;
     }
-    if (role && role !== allow) {
+    const viewing = allowInstructorView && role === "instructor";
+    if (role && role !== allow && !viewing) {
       navigate({ to: homeForRole(role), replace: true });
     }
-  }, [loading, session, role, allow, navigate]);
+  }, [loading, session, role, allow, allowInstructorView, navigate]);
 
   if (loading || !session) return <FullScreenMessage text="Carregando sua conta..." />;
 
@@ -55,7 +65,7 @@ export function RoleGate({ allow, children }: { allow: AppRole; children: React.
   }
 
   if (!role || !profile) return <FullScreenMessage text="Carregando sua conta..." />;
-  if (role !== allow) return <FullScreenMessage text="Carregando sua conta..." />;
+  if (role !== allow && !(allowInstructorView && role === "instructor")) return <FullScreenMessage text="Carregando sua conta..." />;
 
   return <>{children}</>;
 }
