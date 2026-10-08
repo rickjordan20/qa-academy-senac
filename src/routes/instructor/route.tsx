@@ -1,4 +1,7 @@
+import { useEffect } from "react";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { endStudentView } from "@/lib/student-view";
 import { BarChart3, BookOpen, ClipboardCheck, FlaskConical, Home, Users } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";

@@ -1,4 +1,16 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import {
+  endStudentView,
+  StudentViewProvider,
+  useStudentViewSession,
+  type StudentView,
+} from "@/lib/student-view";
 import { Award, ClipboardList, FlaskConical, Home } from "lucide-react";
 import { AppShell, type NavGroup, type NavItem } from "@/components/AppShell";
 import { RoleGate } from "@/components/RoleGate";
@@ -59,7 +71,8 @@ const groups: NavGroup[] = [
 export const Route = createFileRoute("/student")({
   ssr: false,
   component: () => (
-    <RoleGate allow="student">
+    <RoleGate allow="student" allowInstructorView>
+      <StudentArea>
       <AppShell
         items={items}
         groups={groups}
@@ -69,6 +82,66 @@ export const Route = createFileRoute("/student")({
       >
         <Outlet />
       </AppShell>
+      </StudentArea>
     </RoleGate>
   ),
 });
+
+/** Aluno: passa direto. Instrutor: só com sessão de visualização válida no banco. */
+function StudentArea({ children }: { children: ReactNode }) {
+  const { role } = useAuth();
+  const isInstructor = role === "instructor";
+  const { data: view, isPending, isError } = useStudentViewSession(isInstructor);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isInstructor || isPending) return;
+    if (isError || !view) {
+      toast.error("Visualização como aluno inativa ou não autorizada.");
+      navigate({ to: "/instructor/students", replace: true });
+    }
+  }, [isInstructor, isPending, isError, view, navigate]);
+
+  if (!isInstructor) return <>{children}</>;
+  if (isPending || !view) {
+    return <p className="p-6 text-sm text-muted-foreground">Validando visualização...</p>;
+  }
+  return (
+    <StudentViewProvider key={`${view.student_id}:${view.class_id}`} view={view}>
+      <StudentViewBanner view={view} />
+      {children}
+    </StudentViewProvider>
+  );
+}
+
+function StudentViewBanner({ view }: { view: StudentView }) {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  async function leave(to: "/instructor/dashboard" | "/instructor/students") {
+    await endStudentView(qc);
+    navigate({ to, replace: true });
+  }
+  return (
+    <div
+      role="status"
+      className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b-2 border-accent bg-accent/15 px-4 py-2 text-sm"
+    >
+      <div className="flex items-center gap-2">
+        <Eye className="h-4 w-4 shrink-0 text-accent" />
+        <span>
+          Visualizando como <strong>{view.student_name}</strong>
+          {view.class_name ? <> · Turma {view.class_name}</> : null}
+          <span className="ml-2 rounded bg-accent/25 px-2 py-0.5 text-xs font-semibold">Somente leitura</span>
+        </span>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={() => void leave("/instructor/students")}>
+          Trocar de aluno
+        </Button>
+        <Button size="sm" onClick={() => void leave("/instructor/dashboard")}>
+          Voltar ao painel do instrutor
+        </Button>
+      </div>
+    </div>
+  );
+}
