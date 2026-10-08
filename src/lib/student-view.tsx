@@ -92,8 +92,9 @@ const BLOCK_MSG = 'Modo "Ver como aluno": alterações estão bloqueadas.';
 let guardDepth = 0;
 let restore: (() => void) | null = null;
 
+/** Mesmo formato de resposta do cliente ({ data, error }), sem chamar a rede. */
 function blocked() {
-  return Promise.reject(new Error(BLOCK_MSG));
+  return Promise.resolve({ data: null, error: new Error(BLOCK_MSG), status: 403, statusText: "Blocked" });
 }
 
 /** Objeto encadeável (.select().single()...) que sempre rejeita sem chamar a rede. */
