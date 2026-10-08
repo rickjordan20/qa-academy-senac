@@ -96,6 +96,23 @@ function blocked() {
   return Promise.reject(new Error(BLOCK_MSG));
 }
 
+/** Objeto encadeável (.select().single()...) que sempre rejeita sem chamar a rede. */
+function blockedChain(): unknown {
+  const target = function () {} as unknown as object;
+  const proxy: unknown = new Proxy(target, {
+    get(_t, prop) {
+      if (prop === "then") return (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => blocked().then(res, rej);
+      if (prop === "catch") return (rej: (e: unknown) => unknown) => blocked().catch(rej);
+      if (prop === "finally") return (f: () => void) => blocked().finally(f);
+      return () => proxy;
+    },
+    apply() {
+      return proxy;
+    },
+  });
+  return proxy;
+}
+
 function installGuard() {
   guardDepth += 1;
   if (guardDepth > 1) return;
@@ -109,11 +126,11 @@ function installGuard() {
   const origStorageFrom = client.storage.from;
   client.from = function (table: string) {
     const qb = origFrom.call(supabase, table);
-    for (const m of ["insert", "update", "upsert", "delete"]) qb[m] = () => ({ then: (r: unknown, j: (e: Error) => void) => blocked().then(r as never, j), throwOnError: () => blocked() });
+    for (const m of ["insert", "update", "upsert", "delete"]) qb[m] = () => blockedChain();
     return qb;
   };
   client.rpc = function (fn: string, ...rest: unknown[]) {
-    if (!ALLOWED_RPCS.has(fn)) return { then: (r: unknown, j: (e: Error) => void) => blocked().then(r as never, j) };
+    if (!ALLOWED_RPCS.has(fn)) return blockedChain();
     return origRpc.call(supabase, fn, ...rest);
   };
   client.storage.from = function (bucket: string) {
