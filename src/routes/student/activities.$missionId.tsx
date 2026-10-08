@@ -249,6 +249,8 @@ function StudentMissionPage() {
     [mission, run, answers, checklist, entries],
   );
 
+  if (view && viewMissions && !mission)
+    return <p className="text-sm text-muted-foreground">Esta missão não está disponível para este aluno.</p>;
   if (!mission) return <p className="text-sm text-muted-foreground">Carregando missão...</p>;
 
   if (beforeOpening) {
@@ -475,7 +477,7 @@ function StudentMissionPage() {
 
       {!run && mission.status === "published" ? (
         <Button
-          disabled={(isCafe && !groupId) || !userId || start.isPending || beforeOpening}
+          disabled={(isCafe && !groupId) || !userId || !!view || start.isPending || beforeOpening}
           onClick={async () => {
             if (beforeOpening) return;
             await start.mutateAsync();
@@ -585,7 +587,7 @@ function StudentMissionPage() {
             </p>
           ) : null}
           <Button
-            disabled={submitRun.isPending || beforeOpening || submitState.disabled}
+            disabled={!!view || submitRun.isPending || beforeOpening || submitState.disabled}
             onClick={async () => {
               if (beforeOpening || submitState.disabled) return;
               const firstDelivery = !run.submitted_at;
