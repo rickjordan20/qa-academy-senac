@@ -15,6 +15,7 @@ import { MissionPlayer } from "@/components/missions/MissionPlayer";
 import { MissionTaskBoard, SectionAssign } from "@/components/cafe/MissionTaskBoard";
 import { CrossTestPanel } from "@/components/missions/CrossTestPanel";
 import { useAuth } from "@/lib/auth";
+import { useStudentView } from "@/lib/student-view";
 import { useCreateMissionContribution, useMyGroups } from "@/lib/cafe";
 import { useProfileNames } from "@/lib/qa";
 import {
@@ -26,6 +27,7 @@ import {
   type LinkableArtifact,
   computeProgress,
   useBuilderMission,
+  useStudentMissions,
   useCreateEntry,
   useUpdateEntry,
   useDeleteEntry,
@@ -72,7 +74,11 @@ function StudentMissionPage() {
   const { backMission, backLabel } = Route.useSearch();
   const { user } = useAuth();
   const userId = user?.id ?? null;
-  const { data: mission } = useBuilderMission(missionId);
+  const view = useStudentView();
+  const { data: rawMission } = useBuilderMission(missionId);
+  const { data: viewMissions } = useStudentMissions();
+  // Na visualização, só vale o que o banco confirma como visível ao aluno.
+  const mission = view ? (viewMissions?.find((m) => m.id === missionId) ?? null) : rawMission;
   const { data: badgeCatalog } = useBadgeCatalog();
   const { data: groups } = useMyGroups(userId);
 
@@ -122,9 +128,9 @@ function StudentMissionPage() {
   const lockedByEvaluation = !!run && isEvalLocked(run.eval_status);
   /** Antes da abertura configurada: nada pode ser aberto, gravado ou entregue. */
   const beforeOpening = !!mission && isMissionLocked(mission) && run?.eval_status !== "revision";
-  const readOnly = mission?.status !== "published" || !run || lockedByEvaluation || beforeOpening;
+  const readOnly = !!view || mission?.status !== "published" || !run || lockedByEvaluation || beforeOpening;
   /** Nenhuma gravação pode partir da tela quando bloqueada. */
-  const blockWrites = lockedByEvaluation || beforeOpening;
+  const blockWrites = !!view || lockedByEvaluation || beforeOpening;
   const stateNotice = run ? evalStateNotice(run.eval_status, run.submitted_at) : null;
   const submitState = submitButtonState(run?.eval_status, run?.submitted_at);
 

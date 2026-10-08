@@ -99,8 +99,18 @@ export const Route = createFileRoute("/instructor")({
         badge="Instrutor"
         profileTo="/instructor/profile"
       >
+        <EndStudentViewOnEnter />
         <Outlet />
       </AppShell>
     </RoleGate>
   ),
 });
+
+/** Ao voltar à área do instrutor, encerra qualquer visualização ativa (libera gravações). */
+function EndStudentViewOnEnter() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    void endStudentView(qc);
+  }, [qc]);
+  return null;
+}
