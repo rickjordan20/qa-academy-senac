@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ViewAsStudentButton } from "@/components/ViewAsStudentButton";
 import { ClassroomSyncDialog } from "@/components/classroom/ClassroomSyncDialog";
 import {
   Select,
@@ -264,9 +265,12 @@ function ClassDetail() {
                     <div className="font-medium">{m.profile?.full_name || "Sem nome"}</div>
                     <div className="text-xs text-muted-foreground">{m.profile?.email}</div>
                   </div>
+                  <div className="flex items-center gap-1">
+                  <ViewAsStudentButton studentId={m.student_id} classId={classId} />
                   <Button variant="ghost" size="sm" onClick={() => removeStudent(m.id)}>
                     <Trash2 className="h-4 w-4 text-danger" />
                   </Button>
+                  </div>
                 </div>
               ))}
               {(members ?? []).length === 0 && (

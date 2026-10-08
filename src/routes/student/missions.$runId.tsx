@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useStudentView } from "@/lib/student-view";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +18,7 @@ import {
   runSituation,
   useRunEvaluations,
   useSubmission,
+  useMySubmissions,
   type BlockResult,
 } from "@/lib/mission-submissions";
 
@@ -276,6 +278,14 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
 
 function SubmissionDetailPage() {
   const { runId } = Route.useParams();
+  const view = useStudentView();
+  const { data: mine } = useMySubmissions(view?.student_id ?? null);
+  if (view) {
+    if (!mine) return <p className="text-sm text-muted-foreground">Carregando envio...</p>;
+    // Na visualização, só abre envios que pertencem ao aluno ou a seus grupos.
+    if (!mine.some((r) => r.id === runId))
+      return <p className="text-sm text-muted-foreground">Envio não disponível para este aluno.</p>;
+  }
   return (
     <SubmissionDetail
       runId={runId}
