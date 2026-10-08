@@ -1,6 +1,6 @@
 import { createContext, useContext, useLayoutEffect, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import type { User } from "@supabase/supabase-js";
+import { SupabaseClient, type User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext, useAuth, type AuthValue } from "@/lib/auth";
 
@@ -92,8 +92,9 @@ const BLOCK_MSG = 'Modo "Ver como aluno": alterações estão bloqueadas.';
 let guardDepth = 0;
 let restore: (() => void) | null = null;
 
+/** Mesmo formato de resposta do cliente ({ data, error }), sem chamar a rede. */
 function blocked() {
-  return Promise.reject(new Error(BLOCK_MSG));
+  return Promise.resolve({ data: null, error: new Error(BLOCK_MSG), status: 403, statusText: "Blocked" });
 }
 
 /** Objeto encadeável (.select().single()...) que sempre rejeita sem chamar a rede. */
@@ -116,32 +117,34 @@ function blockedChain(): unknown {
 function installGuard() {
   guardDepth += 1;
   if (guardDepth > 1) return;
-  const client = supabase as unknown as Record<string, unknown> & {
-    from: (t: string) => Record<string, unknown>;
-    rpc: (fn: string, ...rest: unknown[]) => unknown;
-    storage: { from: (b: string) => Record<string, unknown> };
+  // O cliente exportado é um Proxy somente-leitura: a trava é aplicada no protótipo
+  // da classe (from/rpc) e na API de arquivos.
+  const proto = SupabaseClient.prototype as unknown as {
+    from: (this: unknown, t: string) => Record<string, unknown>;
+    rpc: (this: unknown, fn: string, ...rest: unknown[]) => unknown;
   };
-  const origFrom = client.from;
-  const origRpc = client.rpc;
-  const origStorageFrom = client.storage.from;
-  client.from = function (table: string) {
-    const qb = origFrom.call(supabase, table);
+  const storage = supabase.storage as unknown as { from: (b: string) => Record<string, unknown> };
+  const origFrom = proto.from;
+  const origRpc = proto.rpc;
+  const origStorageFrom = storage.from;
+  proto.from = function (this: unknown, table: string) {
+    const qb = origFrom.call(this, table);
     for (const m of ["insert", "update", "upsert", "delete"]) qb[m] = () => blockedChain();
     return qb;
   };
-  client.rpc = function (fn: string, ...rest: unknown[]) {
+  proto.rpc = function (this: unknown, fn: string, ...rest: unknown[]) {
     if (!ALLOWED_RPCS.has(fn)) return blockedChain();
-    return origRpc.call(supabase, fn, ...rest);
+    return origRpc.call(this, fn, ...rest);
   };
-  client.storage.from = function (bucket: string) {
-    const api = origStorageFrom.call(client.storage, bucket);
+  storage.from = function (bucket: string) {
+    const api = origStorageFrom.call(storage, bucket);
     for (const m of ["upload", "update", "remove", "move", "copy", "uploadToSignedUrl", "createSignedUploadUrl"]) api[m] = () => blocked();
     return api;
   };
   restore = () => {
-    client.from = origFrom;
-    client.rpc = origRpc;
-    client.storage.from = origStorageFrom;
+    proto.from = origFrom;
+    proto.rpc = origRpc;
+    storage.from = origStorageFrom;
   };
 }
 
