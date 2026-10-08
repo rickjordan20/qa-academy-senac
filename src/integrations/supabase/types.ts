@@ -2333,6 +2333,38 @@ export type Database = {
           },
         ]
       }
+      student_view_sessions: {
+        Row: {
+          class_id: string
+          expires_at: string
+          instructor_id: string
+          started_at: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          expires_at?: string
+          instructor_id: string
+          started_at?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          expires_at?: string
+          instructor_id?: string
+          started_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_view_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       techeduca_bug_reports: {
         Row: {
           classification: string
@@ -2715,6 +2747,7 @@ export type Database = {
         Args: { _bug_id: string; _note?: string; _status: string }
         Returns: undefined
       }
+      end_student_view: { Args: never; Returns: undefined }
       enroll_student_by_email: {
         Args: { _class_id: string; _email: string }
         Returns: string
@@ -2746,6 +2779,44 @@ export type Database = {
           badge_code: string
         }[]
       }
+      get_student_view: { Args: never; Returns: Json }
+      get_student_view_missions: {
+        Args: never
+        Returns: {
+          activity_kind: string
+          badge_code: string | null
+          base_xp: number
+          code: string | null
+          created_at: string
+          created_by: string
+          description: string
+          due_at: string | null
+          feature_ids: string[]
+          id: string
+          indicator_codes: string[]
+          is_library_template: boolean
+          lesson_number: number | null
+          library_name: string | null
+          modality: string
+          objective: string
+          opens_at: string | null
+          position: number
+          project: string
+          sections: Json
+          status: string
+          subtitle: string
+          template: string
+          title: string
+          updated_at: string
+          workload: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "builder_missions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       group_class_id: { Args: { _group_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -2754,6 +2825,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      in_student_view: { Args: { _user_id: string }; Returns: boolean }
       is_class_instructor: {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean
@@ -2796,6 +2868,14 @@ export type Database = {
       }
       shares_group: {
         Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
+      start_student_view: {
+        Args: { _class_id: string; _student_id: string }
+        Returns: Json
+      }
+      student_view_authorized: {
+        Args: { _class: string; _instructor: string; _student: string }
         Returns: boolean
       }
     }
