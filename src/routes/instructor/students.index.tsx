@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { ViewAsStudentButton } from "@/components/ViewAsStudentButton";
 import { NativeSelect } from "@/components/qa/TestCasesPanel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,7 @@ function StudentsPage() {
                     options={(classes ?? []).map((c) => ({ value: c.id, label: `Transferir → ${c.name}` }))}
                   />
                 </div>
+                <ViewAsStudentButton studentId={r.student_id} classId={r.class_id} />
                 <Button
                   variant="ghost"
                   size="sm"

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useStudentView } from "@/lib/student-view";
 import { useMyEnrollment } from "@/lib/uc10";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/student/profile")({
 
 function StudentProfile() {
   const { user, profile, refresh } = useAuth();
+  const view = useStudentView();
   const { data: enrollment } = useMyEnrollment(user?.id ?? null);
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -101,7 +103,7 @@ function StudentProfile() {
                 <Input value="Aluno" disabled />
               </div>
             </div>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || !!view}>
               Salvar alterações
             </Button>
           </form>

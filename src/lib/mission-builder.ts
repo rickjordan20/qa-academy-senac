@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useStudentView } from "@/lib/student-view";
 import { missionSituation } from "@/lib/mission-schedule";
 
 /* ==================================================================== */
@@ -984,9 +985,18 @@ export function useMissionRunsForInstructor(missionId: string | null) {
 /* ==================================================================== */
 
 export function useStudentMissions() {
+  const view = useStudentView();
   return useQuery({
-    queryKey: ["builder-student-missions"],
+    queryKey: view
+      ? ["student-view", view.student_id, view.class_id, "missions"]
+      : ["builder-student-missions"],
     queryFn: async () => {
+      if (view) {
+        // Mesma regra de visibilidade da RLS do aluno, aplicada no banco.
+        const { data, error } = await supabase.rpc("get_student_view_missions" as never);
+        if (error) throw error;
+        return ((data ?? []) as unknown[]).map((d) => normalize(d as Record<string, unknown>));
+      }
       const { data, error } = await supabase
         .from("builder_missions")
         .select("*")

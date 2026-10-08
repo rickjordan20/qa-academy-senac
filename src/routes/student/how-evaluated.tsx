@@ -14,6 +14,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useStudentView } from "@/lib/student-view";
 import {
   useAcknowledgeEvaluation,
   useMyEvaluationAck,
@@ -93,6 +94,7 @@ function HowEvaluatedPage() {
   const { data: ack } = useMyEvaluationAck(user?.id ?? null);
   const acknowledge = useAcknowledgeEvaluation(user?.id ?? null);
   const [confirming, setConfirming] = useState(false);
+  const view = useStudentView();
 
   async function handleAcknowledge() {
     try {
@@ -422,7 +424,7 @@ function HowEvaluatedPage() {
               <p className="text-sm text-muted-foreground">
                 Confirme sua ciência para registrar que você entendeu como será avaliado.
               </p>
-              <Button size="lg" onClick={() => setConfirming(true)}>
+              <Button size="lg" disabled={!!view} onClick={() => setConfirming(true)}>
                 <CheckCircle2 className="mr-2 h-5 w-5" />
                 Li e compreendi como serei avaliado
               </Button>
