@@ -200,8 +200,8 @@ function GroupPanel() {
                   key={t.id}
                   task={t}
                   runId={runId}
-                  canManage={isLead}
-                  isAssignee={t.assignee_id === user?.id}
+                  canManage={isLead && run?.status !== "submitted"}
+                  isAssignee={t.assignee_id === user?.id && run?.status !== "submitted"}
                   collaboratorNames={collaborators
                     .filter((c) => c.task_id === t.id)
                     .map((c) => nameOf(c.student_id))}

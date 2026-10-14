@@ -213,6 +213,13 @@ export function MissionTaskBoard({
     [list, userId, collaborators],
   );
   const myRole = memberLabel(group, userId).role;
+  const isMember =
+    group.qa_lead_id === userId || group.members.some((m) => m.student_id === userId);
+  /** Gestão integral: QA Líder ou autor da tarefa ainda integrante (missão não bloqueada). */
+  const canManageTask = (t: MissionTask) =>
+    !readOnly && (isLead || (t.created_by === userId && isMember));
+  /** Editando apenas como responsável/colaborador: sem redistribuir nem trocar o bloco. */
+  const restricted = !!editing && !canManageTask(editing);
 
   const sectionLabel = (id: string | null) => {
     if (!id) return "";
@@ -241,7 +248,14 @@ export function MissionTaskBoard({
     };
     try {
       const extra = form.collaborators.filter((id) => id && id !== form.assignee_id);
-      if (editing) {
+      if (editing && restricted) {
+        const { title, description, area, module_id, feature_id, status } = payload;
+        await updateTask.mutateAsync({
+          id: editing.id,
+          patch: { title, description, area, module_id, feature_id, status },
+        });
+        toast.success("Tarefa atualizada.");
+      } else if (editing) {
         await updateTask.mutateAsync({ id: editing.id, patch: payload });
         await setCollaborators.mutateAsync({ taskId: editing.id, studentIds: extra });
         toast.success("Tarefa atualizada.");
@@ -255,7 +269,9 @@ export function MissionTaskBoard({
       setOpen(false);
     } catch (err) {
       console.error("[café] falha ao salvar tarefa:", err);
-      toast.error("Não foi possível salvar a tarefa. Apenas o QA Líder pode distribuir tarefas.");
+      toast.error(
+        `Não foi possível salvar a tarefa: ${(err as Error)?.message ?? "permissão negada."}`,
+      );
     }
   }
 
@@ -317,9 +333,9 @@ export function MissionTaskBoard({
             {areaOf(t)}
           </p>
         ) : null}
-        {isLead || canAct || (!readOnly && t.created_by === userId) ? (
+        {canManageTask(t) || canAct ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {isLead || canAct ? (
+            {canManageTask(t) || canAct ? (
             <NativeSelect
               id={`st-${t.id}`}
               value={COLUMNS.find((c) => c.accepts.includes(t.status))?.key ?? "todo"}
@@ -327,13 +343,11 @@ export function MissionTaskBoard({
               options={BOARD_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
             />
             ) : null}
-            {isLead || (!readOnly && t.created_by === userId) ? (
+            <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
+              Editar
+            </Button>
+            {canManageTask(t) ? (
               <>
-                {isLead || (canAct && t.created_by === userId) ? (
-                  <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
-                    Editar
-                  </Button>
-                ) : null}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -376,7 +390,7 @@ export function MissionTaskBoard({
           acompanham o quadro e atualizam o andamento das próprias tarefas.
         </p>
 
-        {isLead ? (
+        {isLead || (open && editing) ? (
           open ? (
             <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
@@ -399,6 +413,13 @@ export function MissionTaskBoard({
                     placeholder="Opcional: detalhe o que precisa ser feito."
                   />
                 </div>
+                {restricted ? (
+                  <p className="sm:col-span-2 rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+                    Você pode atualizar título, descrição, funcionalidade e status. Responsáveis e
+                    bloco da missão só podem ser alterados pelo autor da tarefa ou pelo QA Líder.
+                  </p>
+                ) : (
+                <>
                 <div>
                   <Label htmlFor="task-assignee">Responsável</Label>
                   <NativeSelect
@@ -444,6 +465,8 @@ export function MissionTaskBoard({
                     )}
                   </div>
                 </div>
+                </>
+                )}
                 <div>
                   <Label htmlFor="task-status">Status</Label>
                   <NativeSelect
@@ -453,6 +476,7 @@ export function MissionTaskBoard({
                     options={BOARD_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
                   />
                 </div>
+                {restricted ? null : (
                 <div className="sm:col-span-2">
                   <Label htmlFor="task-section">Bloco da missão relacionado (opcional)</Label>
                   <NativeSelect
@@ -475,6 +499,7 @@ export function MissionTaskBoard({
                     ]}
                   />
                 </div>
+                )}
                 <div className="sm:col-span-2">
                   <p className="mb-1 text-xs text-muted-foreground">
                     Tela/Funcionalidade relacionada (opcional)
@@ -514,11 +539,11 @@ export function MissionTaskBoard({
                 </Button>
               </div>
             </div>
-          ) : (
+          ) : isLead ? (
             <Button size="sm" onClick={() => setOpen(true)}>
               + Nova tarefa
             </Button>
-          )
+          ) : null
         ) : null}
 
         <Tabs defaultValue="quadro">

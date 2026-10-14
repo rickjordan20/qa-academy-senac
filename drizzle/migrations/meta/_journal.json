@@ -15,6 +15,34 @@
       "when": 1792006451492,
       "tag": "0001_cafe_tasks_delete_creator",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792012036079,
+      "tag": "0002_cafe_tasks_edit_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792012168257,
+      "tag": "0003_cafe_tasks_perm_test_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792012184583,
+      "tag": "0004_cafe_tasks_perm_test_grants_helpers",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792012203941,
+      "tag": "0005_cafe_tasks_guard_refactor",
+      "breakpoints": true
     }
   ]
 }
