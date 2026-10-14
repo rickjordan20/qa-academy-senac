@@ -665,6 +665,98 @@ export function blockDef(kind: string): BlockDef {
 }
 
 /* ==================================================================== */
+/* Relatório técnico configurável                                       */
+/* ==================================================================== */
+
+/** Campos tradicionais do Relatório (modelo completo). Chaves preservadas. */
+export const CLASSIC_REPORT_FIELDS: FieldDef[] = blockDef("report").answerFields ?? [];
+
+/** Preset "Dossiê de Qualidade" (Missão 5 do Café Central). */
+export const DOSSIE_REPORT_FIELDS: { key: string; label: string }[] = [
+  { key: "dossie_resumo", label: "Resumo dos testes realizados" },
+  { key: "dossie_resultados", label: "Principais resultados obtidos" },
+  { key: "dossie_bugs", label: "Bugs identificados, corrigidos e pendentes" },
+  { key: "dossie_retestes", label: "Retestes e validações realizadas" },
+  { key: "dossie_riscos", label: "Riscos e melhorias recomendadas" },
+  { key: "dossie_conclusao", label: "Conclusão técnica" },
+];
+
+export function reportModelFields(model: "completo" | "dossie" | "personalizado"): ReportFieldDef[] {
+  if (model === "completo")
+    return CLASSIC_REPORT_FIELDS.map((f) => ({ ...f, id: uid(), required: false }));
+  if (model === "dossie")
+    return DOSSIE_REPORT_FIELDS.map((f) => ({ ...f, id: uid(), type: "textarea" as FieldType, required: true }));
+  return [];
+}
+
+export function hasCustomReport(section: Section) {
+  return section.kind === "report" && Array.isArray(section.reportFields);
+}
+
+/** Campos exibidos ao aluno, na ordem configurada (sem os desativados). */
+export function reportFieldsOf(section: Section): FieldDef[] {
+  if (!hasCustomReport(section)) return CLASSIC_REPORT_FIELDS;
+  return (section.reportFields ?? []).filter((f) => !f.disabled);
+}
+
+/** Campos de resposta de qualquer bloco "answers". */
+export function answerFieldsOf(section: Section): FieldDef[] {
+  if (section.kind === "report") return reportFieldsOf(section);
+  const def = blockDef(section.kind);
+  return def.answerFields ?? ((section.items ?? []) as QuestionDef[]);
+}
+
+/** Rótulo de uma resposta, inclusive de campos desativados/removidos. */
+export function answerFieldLabel(section: Section, key: string): string {
+  const all: FieldDef[] = [
+    ...(section.kind === "report" ? (section.reportFields ?? []) : []),
+    ...answerFieldsOf(section),
+    ...((section.items ?? []) as QuestionDef[]),
+    ...(blockDef(section.kind).answerFields ?? []),
+  ];
+  const f = all.find((x) => x.key === key);
+  if (f) return f.label || key;
+  return `${key} (campo removido)`;
+}
+
+/** Ordena as respostas pela ordem dos campos configurados. */
+export function orderedAnswerPairs(section: Section, values: Record<string, unknown>) {
+  const order = answerFieldsOf(section).map((f) => f.key);
+  return Object.entries(values ?? {})
+    .filter(([, v]) => (v ?? "").toString().trim())
+    .sort(([a], [b]) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    })
+    .map(([k, v]) => ({ label: answerFieldLabel(section, k), value: String(v) }));
+}
+
+/** Relatório personalizado: completo se obrigatórios preenchidos (ou algum, se nenhum obrigatório). */
+export function reportSectionComplete(section: Section, answers: Record<string, string>) {
+  const fields = reportFieldsOf(section);
+  if (!fields.length) return true;
+  const filled = (k: string) => (answers?.[k] ?? "").toString().trim().length > 0;
+  const req = fields.filter((f) => f.required);
+  return req.length ? req.every((f) => filled(f.key)) : fields.some((f) => filled(f.key));
+}
+
+/** Campos obrigatórios ainda vazios em relatórios visíveis (para validar a entrega). */
+export function missingRequiredReportFields(
+  mission: BuilderMission,
+  answers: Record<string, Record<string, string>>,
+): string[] {
+  const out: string[] = [];
+  for (const s of mission.sections ?? []) {
+    if (s.kind !== "report" || s.visible === false || !hasCustomReport(s)) continue;
+    for (const f of reportFieldsOf(s)) {
+      if (f.required && !(answers?.[s.id]?.[f.key] ?? "").toString().trim()) out.push(`${s.title}: ${f.label}`);
+    }
+  }
+  return out;
+}
+
+/* ==================================================================== */
 /* Presets                                                              */
 /* ==================================================================== */
 
@@ -771,6 +863,10 @@ export function computeProgress(mission: BuilderMission, run: MissionRun | null,
       const items = (s.items ?? []) as ChecklistItemDef[];
       const ok = items.length > 0 && items.every((i) => run?.checklist_state?.[i.id]);
       if (ok) done += 1;
+      continue;
+    }
+    if (s.kind === "report" && hasCustomReport(s)) {
+      if (reportSectionComplete(s, (run?.answers?.[s.id] ?? {}) as Record<string, string>)) done += 1;
       continue;
     }
     if (def.family === "answers") {
