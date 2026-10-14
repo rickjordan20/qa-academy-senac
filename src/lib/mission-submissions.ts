@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { BuilderMission, MissionEntry, Section } from "@/lib/mission-builder";
+import { orderedAnswerPairs, type BuilderMission, type MissionEntry, type Section } from "@/lib/mission-builder";
 
 /* ==================================================================== */
 /* Fluxo de envios / avaliação das missões (usa as tabelas existentes)   */
@@ -710,12 +710,7 @@ export function answerSummary(sections: Section[], answers: Record<string, Recor
   const out: { section: Section; pairs: { label: string; value: string }[] }[] = [];
   for (const s of sections ?? []) {
     const values = answers?.[s.id] ?? {};
-    const pairs = Object.entries(values)
-      .filter(([, v]) => (v ?? "").toString().trim())
-      .map(([k, v]) => {
-        const item = ((s.items ?? []) as { key?: string; label?: string }[]).find((i) => i.key === k);
-        return { label: item?.label ?? k, value: v };
-      });
+    const pairs = orderedAnswerPairs(s, values);
     if (pairs.length) out.push({ section: s, pairs });
   }
   return out;

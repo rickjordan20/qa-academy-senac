@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  answerFieldsOf,
   blockDef,
   entryFieldLabel,
   HIDDEN_ENTRY_KEYS,
@@ -669,9 +670,20 @@ function SectionCard({
           </div>
         ) : null}
 
+        {section.kind === "report" && section.reportGuidance ? (
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <RichText text={section.reportGuidance} />
+          </div>
+        ) : null}
+        {section.kind === "report" && answerFieldsOf(section).some((f) => f.required) ? (
+          <p className="text-xs text-muted-foreground">
+            <span className="text-destructive">*</span> Resposta obrigatória para a entrega.
+          </p>
+        ) : null}
+
         {def.family === "answers" && section.kind !== "checklist" ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            {(def.answerFields ?? ((section.items ?? []) as QuestionDef[])).map((f) => (
+            {answerFieldsOf(section).map((f) => (
               <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
                 <FieldInput
                   field={f}

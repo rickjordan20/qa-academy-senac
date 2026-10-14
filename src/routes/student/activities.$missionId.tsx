@@ -36,6 +36,7 @@ import {
   useSaveRun,
   useStartRun,
   type Section,
+  missingRequiredReportFields,
 } from "@/lib/mission-builder";
 import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
 import { useBadgeCatalog } from "@/lib/gamification";
@@ -590,6 +591,11 @@ function StudentMissionPage() {
             disabled={!!view || submitRun.isPending || beforeOpening || submitState.disabled}
             onClick={async () => {
               if (beforeOpening || submitState.disabled) return;
+              const missing = missingRequiredReportFields(mission, answers);
+              if (missing.length) {
+                toast.error(`Preencha os campos obrigatórios do relatório: ${missing.join("; ")}`);
+                return;
+              }
               const firstDelivery = !run.submitted_at;
               const attempt = await submitRun.mutateAsync({
                 run: run as unknown as SubmissionRun,
