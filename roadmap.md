@@ -27,3 +27,8 @@
 
 ## Relatório configurável
 - [x] Modelos (completo, Dossiê de Qualidade, em branco), editor de campos, avisos com respostas existentes, obrigatórios na entrega/progresso, rótulos na correção e relatórios
+
+## Permissões das tarefas do Café Central
+- [x] Banco: edição por autor integrante, responsável e colaborador; gestão de responsáveis só autor/QA Líder/instrutor; campos de vínculo imutáveis; bloqueio pela avaliação da missão
+- [x] Quadro da missão e quadro do Café Central alinhados às permissões e ao bloqueio
+- [x] Testes do banco (tests/db/cafe_tasks_permissions.sql, desfeitos ao final)
