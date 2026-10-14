@@ -94,16 +94,18 @@ BEGIN
   END;
 
   -- 4) Missão bloqueada (em avaliação / avaliada / reavaliação) e reabertura em revisão
-  DECLARE st text; r2 uuid; t3 uuid; BEGIN
+  DECLARE st text; r2 uuid; t3 uuid; g3 uuid; BEGIN
     FOREACH st IN ARRAY ARRAY['in_review','evaluated','reeval','revision'] LOOP
-      INSERT INTO builder_mission_runs(mission_id, group_id, created_by, eval_status) VALUES (mission, grp, lead, st) RETURNING id INTO r2;
+      INSERT INTO groups(class_id, name, qa_lead_id) VALUES (cls, '__g_'||st, lead) RETURNING id INTO g3;
+      INSERT INTO group_members(group_id, student_id) VALUES (g3, creator), (g3, assg), (g3, collab);
+      INSERT INTO builder_mission_runs(mission_id, group_id, created_by, eval_status) VALUES (mission, g3, lead, st) RETURNING id INTO r2;
       INSERT INTO cafe_tasks(group_id, builder_run_id, mission_id, title, created_by, assignee_id)
-        VALUES (grp, r2, mission, 'T-'||st, creator, assg) RETURNING id INTO t3;
+        VALUES (g3, r2, mission, 'T-'||st, creator, assg) RETURNING id INTO t3;
       FOR u IN VALUES (lead), (creator), (assg), (collab) LOOP
-        IF (cafe_task_write_open(grp, r2, NULL, u) OR cafe_task_can_manage(t3, u)) = (st = 'revision')
+        IF (cafe_task_write_open(g3, r2, NULL, u) OR cafe_task_can_manage(t3, u)) = (st = 'revision')
           THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % em %', u, st; END IF;
       END LOOP;
-      IF cafe_task_write_open(grp, r2, NULL, inst) AND cafe_task_can_manage(t3, inst) THEN passed := passed + 1;
+      IF cafe_task_write_open(g3, r2, NULL, inst) AND cafe_task_can_manage(t3, inst) THEN passed := passed + 1;
       ELSE failed := failed + 1; RAISE WARNING 'FALHA: instrutor bloqueado em %', st; END IF;
     END LOOP;
   END;
