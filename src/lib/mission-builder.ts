@@ -35,6 +35,8 @@ export type FieldDef = {
 };
 
 export type QuestionDef = FieldDef & { id: string };
+/** Campo do Relatório técnico. `key` é estável: renomear não perde respostas. */
+export type ReportFieldDef = FieldDef & { id: string; disabled?: boolean | undefined };
 export type ChecklistItemDef = { id: string; label: string };
 
 export type BlockFamily = "content" | "answers" | "entries";
@@ -53,6 +55,15 @@ export type Section = {
   askParticipant?: boolean | undefined;
   /** bloco de teste de carga: ferramenta pré-selecionada pelo instrutor (aluno pode alterar) */
   presetTool?: string | undefined;
+  /**
+   * Bloco Relatório: campos configurados pelo instrutor. Ausente = modelo completo
+   * (campos tradicionais). Independente de `items` (usado por Perguntas).
+   */
+  reportFields?: ReportFieldDef[] | undefined;
+  /** Bloco Relatório: modelo de origem escolhido pelo instrutor */
+  reportModel?: "completo" | "dossie" | "personalizado" | undefined;
+  /** Bloco Relatório: orientação geral (markdown simples) */
+  reportGuidance?: string | undefined;
   scope: "individual" | "group";
   minItems?: number | undefined;
   maxItems?: number | undefined;
