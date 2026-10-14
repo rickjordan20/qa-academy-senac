@@ -24,3 +24,6 @@
 - [x] MissionTaskBoard, SectionAssign e contribuições respeitando o bloqueio
 - [x] Central de QA (bugs, casos de teste, evidências) respeitando o estado da missão de origem
 - [x] Testes dos estados e do ciclo completo, incluindo tentativas diretas no banco/API
+
+## Relatório configurável
+- [x] Modelos (completo, Dossiê de Qualidade, em branco), editor de campos, avisos com respostas existentes, obrigatórios na entrega/progresso, rótulos na correção e relatórios
