@@ -335,7 +335,7 @@ export function MissionTaskBoard({
         ) : null}
         {canManageTask(t) || canAct ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {isLead || canAct ? (
+            {canManageTask(t) || canAct ? (
             <NativeSelect
               id={`st-${t.id}`}
               value={COLUMNS.find((c) => c.accepts.includes(t.status))?.key ?? "todo"}
