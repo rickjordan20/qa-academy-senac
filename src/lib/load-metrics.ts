@@ -106,8 +106,21 @@ export function formatCheckResult(d: Data): string {
 /** Registros criados antes da estruturação (não exigem os novos campos obrigatórios). */
 export function isLegacyEntry(kind: string, d: Data): boolean {
   if (kind === "load") return !s(d, "vus") && !s(d, "duracao_valor") && !s(d, "aplicacao");
-  if (kind === "metrics") return !s(d, "agregacao") && !s(d, "execucao_label") && !!s(d, "referencia");
+  // "referencia" era opcional no modelo antigo; um registro novo nunca é salvo sem agregação
+  // (validateMetric exige), então ausência de agregação + execução + vínculo indica registro anterior.
+  if (kind === "metrics") return !s(d, "agregacao") && !s(d, "execucao_label") && !s(d, "case_id");
   return false;
+}
+
+/** Chaves dos campos do formato anterior, por bloco (nomes exatos gravados no banco). */
+export const LEGACY_FIELD_KEYS: Record<string, string[]> = {
+  load: ["recurso", "cenario", "configuracao", "usuarios", "duracao", "ambiente", "resultado", "conclusao"],
+  metrics: ["referencia"],
+};
+
+/** Campos antigos presentes no registro (para continuarem editáveis). */
+export function legacyFieldKeys(kind: string, d: Data): string[] {
+  return (LEGACY_FIELD_KEYS[kind] ?? []).filter((k) => k in d);
 }
 
 /** Rótulos de campos antigos, mantidos legíveis nos registros históricos. */

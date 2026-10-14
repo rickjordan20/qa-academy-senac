@@ -430,8 +430,10 @@ export function useDeleteTask(runId: string | null) {
   const invalidate = useRunInvalidator(runId);
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("cafe_tasks").delete().eq("id", id);
-      if (error) throw error;
+      const { data, error } = await supabase.from("cafe_tasks").delete().eq("id", id).select("id");
+      if (error) throw new Error(`Não foi possível excluir a tarefa: ${error.message}`);
+      if (!data?.length)
+        throw new Error("A tarefa não foi excluída: você não tem permissão ou ela já não existe.");
     },
     onSuccess: () => invalidate(["tasks", "contributions"]),
   });
@@ -799,8 +801,10 @@ export function useDeleteMissionTask(builderRunId: string | null) {
   const invalidate = useMissionInvalidator(builderRunId);
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("cafe_tasks").delete().eq("id", id);
-      if (error) throw error;
+      const { data, error } = await supabase.from("cafe_tasks").delete().eq("id", id).select("id");
+      if (error) throw new Error(`Não foi possível excluir a tarefa: ${error.message}`);
+      if (!data?.length)
+        throw new Error("A tarefa não foi excluída: você não tem permissão ou ela já não existe.");
     },
     onSuccess: () => invalidate("mission-tasks"),
   });

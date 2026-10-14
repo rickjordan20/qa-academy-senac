@@ -317,19 +317,23 @@ export function MissionTaskBoard({
             {areaOf(t)}
           </p>
         ) : null}
-        {isLead || canAct ? (
+        {isLead || canAct || (!readOnly && t.created_by === userId) ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {isLead || canAct ? (
             <NativeSelect
               id={`st-${t.id}`}
               value={COLUMNS.find((c) => c.accepts.includes(t.status))?.key ?? "todo"}
               onChange={(v) => updateTask.mutate({ id: t.id, patch: { status: v as TaskStatus } })}
               options={BOARD_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
             />
-            {isLead || t.created_by === userId ? (
+            ) : null}
+            {isLead || (!readOnly && t.created_by === userId) ? (
               <>
-                <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
-                  Editar
-                </Button>
+                {isLead || (canAct && t.created_by === userId) ? (
+                  <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
+                    Editar
+                  </Button>
+                ) : null}
                 <Button
                   size="sm"
                   variant="ghost"

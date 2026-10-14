@@ -9,6 +9,7 @@ import {
   LOAD_CHECKS,
   LOAD_TOOLS,
   METRIC_UNIT,
+  LEGACY_LOAD_METRIC_LABELS,
   METRICS_CATALOG,
   NO_CHECK,
   OTHER_OPTION,
@@ -420,5 +421,44 @@ export function validateMetric(v: Values, runsAvailable: boolean): string | null
   const val = (v["valor"] ?? "").trim();
   if (val && Number.isNaN(Number(val))) return "O valor deve ser numérico (use ponto para decimais).";
   if (!(v["interpretacao"] ?? "").trim()) return "Explique a interpretação desta métrica.";
+  return null;
+}
+
+/** Campos do formato anterior, mantidos editáveis sem exigir conversão. */
+export function LegacyFields({
+  keys,
+  values,
+  setValues,
+  disabled,
+}: {
+  keys: string[];
+  values: Values;
+  setValues: SetValues;
+  disabled: boolean;
+}) {
+  if (!keys.length) return null;
+  return (
+    <div className="space-y-3 rounded-md border border-dashed border-border p-3">
+      <p className="text-xs font-semibold text-muted-foreground">Campos do registro anterior</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {keys.map((k) => (
+          <div key={k} className="space-y-1">
+            <Label className="text-xs">{LEGACY_LOAD_METRIC_LABELS[k] ?? k}</Label>
+            <Textarea
+              value={values[k] ?? ""}
+              disabled={disabled}
+              rows={2}
+              onChange={(e) => setValues((s) => ({ ...s, [k]: e.target.value }))}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Validação mínima de registros anteriores: só o que já era exigido (nome). */
+export function validateLegacy(kind: string, v: Values): string | null {
+  if (!(v["titulo"] ?? "").trim()) return kind === "load" ? "Informe o objetivo do teste." : "Informe a métrica.";
   return null;
 }
