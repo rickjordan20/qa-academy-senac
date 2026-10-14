@@ -183,13 +183,7 @@ export function buildTargetBlocks(
   for (const section of sections) {
     const def = blockDef(section.kind);
     const answers = (run?.answers?.[section.id] ?? {}) as Record<string, string>;
-    const pairs = Object.entries(answers)
-      .filter(([, v]) => (v ?? "").toString().trim())
-      .map(([k, v]) => {
-        const item = ((section.items ?? []) as (QuestionDef & { key?: string })[]).find((i) => i.key === k);
-        const field = (def.answerFields ?? []).find((f) => f.key === k);
-        return { label: item?.label ?? field?.label ?? k, value: String(v) };
-      });
+    const pairs = orderedAnswerPairs(section, answers);
 
     const checklist =
       section.kind === "checklist"
