@@ -9,3 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 - "Ver como aluno": instructor keeps own auth session; server-side `student_view_sessions` + `start/get/end_student_view` RPCs authorize, and trigger `zz_student_view_guard` (on every public table) + restrictive storage policies block all writes while a session exists — new public tables must get the same trigger. Why: frontend locks are not a guarantee.
+- Report blocks store their configurable fields in `section.reportFields` (absent = classic fixed template), never in `items`; field keys are stable and removed fields keep their saved answers. Why: keeps Relatório independent from Perguntas and protects legacy submissions.
