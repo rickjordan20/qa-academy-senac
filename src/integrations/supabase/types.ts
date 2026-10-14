@@ -2686,6 +2686,19 @@ export type Database = {
         Args: { _eval_status: string }
         Returns: boolean
       }
+      cafe_task_can_manage: {
+        Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
+      cafe_task_write_open: {
+        Args: {
+          _builder_run_id: string
+          _group_id: string
+          _run_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       can_manage_group: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean

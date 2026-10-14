@@ -15,6 +15,13 @@
       "when": 1792006451492,
       "tag": "0001_cafe_tasks_delete_creator",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792012036079,
+      "tag": "0002_cafe_tasks_edit_permissions",
+      "breakpoints": true
     }
   ]
 }
