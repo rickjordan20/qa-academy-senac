@@ -39,8 +39,8 @@ import {
   type QuestionDef,
   type Section,
 } from "@/lib/mission-builder";
-import { isLegacyEntry, loadMetricDisplayPairs } from "@/lib/load-metrics";
-import { LoadFields, MetricFields, validateLoad, validateMetric } from "@/components/missions/LoadMetricFields";
+import { isLegacyEntry, legacyFieldKeys, loadMetricDisplayPairs } from "@/lib/load-metrics";
+import { LegacyFields, LoadFields, MetricFields, validateLegacy, validateLoad, validateMetric } from "@/components/missions/LoadMetricFields";
 
 export type PlayerState = {
   answers: Record<string, Record<string, string>>;
@@ -270,6 +270,7 @@ function EntryForm({
   const [open, setOpen] = useState(editMode);
   const structured = section.kind === "load" || section.kind === "metrics";
   const legacyEntry = editMode && isLegacyEntry(section.kind, initial ?? {});
+  const [legacyKeys] = useState(() => (editMode ? legacyFieldKeys(section.kind, initial ?? {}) : []));
 
   const featureOptions = pickers?.features ?? [];
   const caseOptions = pickers?.cases ?? [];
@@ -335,6 +336,9 @@ function EntryForm({
           runs={pickers?.loadRuns ?? []}
           relational={!!pickers?.hasLoadSection}
         />
+      ) : null}
+      {structured ? (
+        <LegacyFields keys={legacyKeys} values={values} setValues={setValues} disabled={disabled} />
       ) : null}
       <div className={structured ? "hidden" : "grid gap-3 sm:grid-cols-2"}>
         {fields.map((f) => {
@@ -528,6 +532,13 @@ function EntryForm({
               }
               if (url && !isHttps) {
                 toast.error("Informe um link válido para a evidência.");
+                return;
+              }
+            }
+            if (structured && legacyEntry) {
+              const err = validateLegacy(section.kind, values);
+              if (err) {
+                toast.error(err);
                 return;
               }
             }
