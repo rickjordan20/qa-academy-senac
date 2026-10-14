@@ -463,7 +463,7 @@ function ReportFieldsEditor({
             : `Modelo completo tradicional (${CLASSIC_REPORT_FIELDS.length} campos). Escolha um modelo abaixo para personalizar.`}
         </p>
         {totalAnswered > 0 ? (
-          <p className="text-xs text-warning-foreground">
+          <p className="text-xs text-warning">
             ⚠ Este relatório já possui respostas de estudantes. Alterações não apagam respostas registradas.
           </p>
         ) : null}
