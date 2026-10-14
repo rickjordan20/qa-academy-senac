@@ -96,10 +96,9 @@ BEGIN
   -- 4) Missão bloqueada (em avaliação / avaliada / reavaliação) e reabertura em revisão
   DECLARE st text; r2 uuid; t3 uuid; BEGIN
     FOREACH st IN ARRAY ARRAY['in_review','evaluated','reeval','revision'] LOOP
-      INSERT INTO builder_mission_runs(mission_id, group_id, created_by, eval_status) VALUES (mission, grp2, lead, st) RETURNING id INTO r2;
+      INSERT INTO builder_mission_runs(mission_id, group_id, created_by, eval_status) VALUES (mission, grp, lead, st) RETURNING id INTO r2;
       INSERT INTO cafe_tasks(group_id, builder_run_id, mission_id, title, created_by, assignee_id)
         VALUES (grp, r2, mission, 'T-'||st, creator, assg) RETURNING id INTO t3;
-      UPDATE builder_mission_runs SET group_id = grp WHERE id = r2;
       FOR u IN VALUES (lead), (creator), (assg), (collab) LOOP
         IF (cafe_task_write_open(grp, r2, NULL, u) OR cafe_task_can_manage(t3, u)) = (st = 'revision')
           THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % em %', u, st; END IF;
