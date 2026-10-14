@@ -481,6 +481,7 @@ function MissionBuilderPage() {
             total={sections.length}
             missionId={missionId}
             classIds={classIds}
+            answerCounts={s.kind === "report" ? reportAnswerCounts(runs ?? [], s.id) : undefined}
             onChange={(p) => patchSection(s.id, p)}
             onMove={(dir) => moveSection(s.id, dir)}
             onDuplicate={() =>
@@ -509,4 +510,13 @@ function MissionBuilderPage() {
       ) : null}
     </div>
   );
+}
+
+function reportAnswerCounts(runs: { answers: Record<string, unknown> }[], sectionId: string) {
+  const out: Record<string, number> = {};
+  for (const r of runs) {
+    const vals = (r.answers?.[sectionId] ?? {}) as Record<string, unknown>;
+    for (const [k, v] of Object.entries(vals)) if ((v ?? "").toString().trim()) out[k] = (out[k] ?? 0) + 1;
+  }
+  return out;
 }
