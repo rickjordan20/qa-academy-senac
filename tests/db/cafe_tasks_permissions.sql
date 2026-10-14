@@ -51,7 +51,7 @@ BEGIN
   END LOOP;
 
   -- 2) Campos protegidos (mesma função usada pelo gatilho BEFORE UPDATE)
-  DECLARE o cafe_tasks; n cafe_tasks; fld text; BEGIN
+  DECLARE o cafe_tasks; o2 cafe_tasks; n cafe_tasks; fld text; BEGIN
     SELECT * INTO o FROM cafe_tasks WHERE id = task;
     FOR u, ok IN VALUES (assg, false), (collab, false), (lead, true), (creator, true), (inst, true), (member, false) LOOP
       FOREACH fld IN ARRAY ARRAY['assignee','section','position'] LOOP
@@ -83,8 +83,9 @@ BEGIN
       END LOOP;
     END LOOP;
     -- 3) Autor que não é mais integrante da equipe perde a gestão
-    n := o; n.created_by := outsider; n.assignee_id := member;
-    IF cafe_task_update_violation((SELECT x FROM (SELECT (o).*) x), n, outsider) IS NOT NULL THEN passed := passed + 1; END IF;
+    o2 := o; o2.created_by := outsider; n := o2; n.assignee_id := member;
+    IF cafe_task_update_violation(o2, n, outsider) IS NOT NULL THEN passed := passed + 1;
+    ELSE failed := failed + 1; RAISE WARNING 'FALHA: ex-integrante redistribuiu'; END IF;
   END;
   DECLARE t2 uuid; BEGIN
     INSERT INTO cafe_tasks(group_id, builder_run_id, mission_id, title, created_by)
