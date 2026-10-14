@@ -36,6 +36,13 @@
       "when": 1792012184583,
       "tag": "0004_cafe_tasks_perm_test_grants_helpers",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792012203941,
+      "tag": "0005_cafe_tasks_guard_refactor",
+      "breakpoints": true
     }
   ]
 }

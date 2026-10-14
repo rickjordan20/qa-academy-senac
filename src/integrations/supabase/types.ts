@@ -2690,6 +2690,14 @@ export type Database = {
         Args: { _task_id: string; _user_id: string }
         Returns: boolean
       }
+      cafe_task_update_violation: {
+        Args: {
+          _new: Database["public"]["Tables"]["cafe_tasks"]["Row"]
+          _old: Database["public"]["Tables"]["cafe_tasks"]["Row"]
+          _uid: string
+        }
+        Returns: string
+      }
       cafe_task_write_open: {
         Args: {
           _builder_run_id: string
