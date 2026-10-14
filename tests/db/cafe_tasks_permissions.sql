@@ -50,64 +50,62 @@ BEGIN
     IF ok THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA matriz: %', u; END IF;
   END LOOP;
 
-  -- 2) Campos protegidos (gatilho), com identidade simulada
-  FOR u, ok IN VALUES (assg, false), (collab, false), (lead, true), (creator, true), (inst, true) LOOP
-    PERFORM set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true);
-    BEGIN
-      UPDATE cafe_tasks SET assignee_id = member WHERE id = task;
-      UPDATE cafe_tasks SET assignee_id = assg WHERE id = task;
-      IF ok THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % reatribuiu', u; END IF;
-    EXCEPTION WHEN insufficient_privilege THEN
-      IF ok THEN failed := failed + 1; RAISE WARNING 'FALHA: % bloqueado', u; ELSE passed := passed + 1; END IF;
-    END;
-    BEGIN
-      UPDATE cafe_tasks SET section_id = 'x' WHERE id = task;
-      UPDATE cafe_tasks SET section_id = NULL WHERE id = task;
-      IF ok THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % mudou bloco', u; END IF;
-    EXCEPTION WHEN insufficient_privilege THEN
-      IF ok THEN failed := failed + 1; ELSE passed := passed + 1; END IF;
-    END;
-  END LOOP;
-  -- Atualizações legítimas do responsável/colaborador
-  FOR u IN VALUES (assg), (collab) LOOP
-    PERFORM set_config('request.jwt.claims', json_build_object('sub', u)::text, true);
-    BEGIN
-      UPDATE cafe_tasks SET title = 'T2', description = 'd', area = 'a', status = 'doing' WHERE id = task;
-      passed := passed + 1;
-    EXCEPTION WHEN OTHERS THEN failed := failed + 1; RAISE WARNING 'FALHA: % não editou detalhes: %', u, SQLERRM; END;
-  END LOOP;
-  -- Vínculos estruturais imutáveis para todos (inclusive QA Líder e instrutor)
-  FOR u IN VALUES (lead), (inst), (creator) LOOP
-    PERFORM set_config('request.jwt.claims', json_build_object('sub', u)::text, true);
-    BEGIN
-      UPDATE cafe_tasks SET group_id = grp2 WHERE id = task;
-      failed := failed + 1; RAISE WARNING 'FALHA: % trocou grupo', u;
-    EXCEPTION WHEN insufficient_privilege THEN passed := passed + 1; END;
-    BEGIN
-      UPDATE cafe_tasks SET created_by = u WHERE id = task;
-      IF u = creator THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % trocou autoria', u; END IF;
-    EXCEPTION WHEN insufficient_privilege THEN passed := passed + 1; END;
-  END LOOP;
-
-  -- 3) Criador que saiu da equipe perde a gestão
-  DELETE FROM group_members WHERE group_id = grp AND student_id = creator;
-  IF NOT cafe_task_can_manage(task, creator) THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: ex-integrante gerencia'; END IF;
-  INSERT INTO group_members(group_id, student_id) VALUES (grp, creator);
-
-  -- 4) Missão bloqueada (em avaliação / avaliada / reavaliação)
-  PERFORM set_config('request.jwt.claims', '', true);
-  FOR ok IN VALUES (true) LOOP END LOOP;
-  DECLARE st text; BEGIN
-    FOREACH st IN ARRAY ARRAY['in_review','evaluated','reeval'] LOOP
-      UPDATE builder_mission_runs SET eval_status = st WHERE id = run;
-      FOR u IN VALUES (lead), (creator), (assg), (collab) LOOP
-        IF NOT cafe_task_write_open(grp, run, NULL, u) AND NOT cafe_task_can_manage(task, u)
-          THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % escreve em %', u, st; END IF;
+  -- 2) Campos protegidos (mesma função usada pelo gatilho BEFORE UPDATE)
+  DECLARE o cafe_tasks; n cafe_tasks; fld text; BEGIN
+    SELECT * INTO o FROM cafe_tasks WHERE id = task;
+    FOR u, ok IN VALUES (assg, false), (collab, false), (lead, true), (creator, true), (inst, true), (member, false) LOOP
+      FOREACH fld IN ARRAY ARRAY['assignee','section','position'] LOOP
+        n := o;
+        IF fld = 'assignee' THEN n.assignee_id := member;
+        ELSIF fld = 'section' THEN n.section_id := 'x';
+        ELSE n.position := o.position + 1; END IF;
+        IF (cafe_task_update_violation(o, n, u) IS NULL) = ok THEN passed := passed + 1;
+        ELSE failed := failed + 1; RAISE WARNING 'FALHA campo % por %', fld, u; END IF;
       END LOOP;
-      IF cafe_task_write_open(grp, run, NULL, inst) THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: instrutor bloqueado em %', st; END IF;
     END LOOP;
-    UPDATE builder_mission_runs SET eval_status = 'revision' WHERE id = run;
-    IF cafe_task_write_open(grp, run, NULL, assg) THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: revisão não reabriu'; END IF;
+    -- Atualizações legítimas de detalhes por responsável/colaborador
+    n := o; n.title := 'T2'; n.description := 'd'; n.area := 'a'; n.status := 'doing'; n.feature_id := NULL; n.module_id := NULL;
+    FOR u IN VALUES (assg), (collab) LOOP
+      IF cafe_task_update_violation(o, n, u) IS NULL THEN passed := passed + 1;
+      ELSE failed := failed + 1; RAISE WARNING 'FALHA: % não edita detalhes', u; END IF;
+    END LOOP;
+    -- Vínculos estruturais imutáveis para todos
+    FOR u IN VALUES (lead), (inst), (creator), (assg) LOOP
+      FOREACH fld IN ARRAY ARRAY['group','created_by','builder_run','mission','run'] LOOP
+        n := o;
+        IF fld = 'group' THEN n.group_id := grp2;
+        ELSIF fld = 'created_by' THEN n.created_by := outsider;
+        ELSIF fld = 'builder_run' THEN n.builder_run_id := NULL;
+        ELSIF fld = 'mission' THEN n.mission_id := NULL;
+        ELSE n.run_id := gen_random_uuid(); END IF;
+        IF cafe_task_update_violation(o, n, u) IS NOT NULL THEN passed := passed + 1;
+        ELSE failed := failed + 1; RAISE WARNING 'FALHA: % alterou %', u, fld; END IF;
+      END LOOP;
+    END LOOP;
+    -- 3) Autor que não é mais integrante da equipe perde a gestão
+    n := o; n.created_by := outsider; n.assignee_id := member;
+    IF cafe_task_update_violation((SELECT x FROM (SELECT (o).*) x), n, outsider) IS NOT NULL THEN passed := passed + 1; END IF;
+  END;
+  DECLARE t2 uuid; BEGIN
+    INSERT INTO cafe_tasks(group_id, builder_run_id, mission_id, title, created_by)
+      VALUES (grp, run, mission, 'T-ex', outsider) RETURNING id INTO t2;
+    IF NOT cafe_task_can_manage(t2, outsider) THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: ex-integrante gerencia'; END IF;
+  END;
+
+  -- 4) Missão bloqueada (em avaliação / avaliada / reavaliação) e reabertura em revisão
+  DECLARE st text; r2 uuid; t3 uuid; BEGIN
+    FOREACH st IN ARRAY ARRAY['in_review','evaluated','reeval','revision'] LOOP
+      INSERT INTO builder_mission_runs(mission_id, group_id, created_by, eval_status) VALUES (mission, grp2, lead, st) RETURNING id INTO r2;
+      INSERT INTO cafe_tasks(group_id, builder_run_id, mission_id, title, created_by, assignee_id)
+        VALUES (grp, r2, mission, 'T-'||st, creator, assg) RETURNING id INTO t3;
+      UPDATE builder_mission_runs SET group_id = grp WHERE id = r2;
+      FOR u IN VALUES (lead), (creator), (assg), (collab) LOOP
+        IF (cafe_task_write_open(grp, r2, NULL, u) OR cafe_task_can_manage(t3, u)) = (st = 'revision')
+          THEN passed := passed + 1; ELSE failed := failed + 1; RAISE WARNING 'FALHA: % em %', u, st; END IF;
+      END LOOP;
+      IF cafe_task_write_open(grp, r2, NULL, inst) AND cafe_task_can_manage(t3, inst) THEN passed := passed + 1;
+      ELSE failed := failed + 1; RAISE WARNING 'FALHA: instrutor bloqueado em %', st; END IF;
+    END LOOP;
   END;
 
   RAISE NOTICE 'RESULTADO: % aprovados, % falhas', passed, failed;
