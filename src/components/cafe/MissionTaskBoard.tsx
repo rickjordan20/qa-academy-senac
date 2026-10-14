@@ -329,9 +329,11 @@ export function MissionTaskBoard({
             ) : null}
             {isLead || (!readOnly && t.created_by === userId) ? (
               <>
-                <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
-                  Editar
-                </Button>
+                {isLead || (canAct && t.created_by === userId) ? (
+                  <Button size="sm" variant="secondary" onClick={() => startEdit(t)}>
+                    Editar
+                  </Button>
+                ) : null}
                 <Button
                   size="sm"
                   variant="ghost"
