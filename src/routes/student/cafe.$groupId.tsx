@@ -433,7 +433,14 @@ function TaskCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => remove.mutate(task.id)}
+              onClick={() => {
+                if (!window.confirm("Tem certeza de que deseja excluir esta tarefa? Esta ação não poderá ser desfeita."))
+                  return;
+                remove.mutate(task.id, {
+                  onSuccess: () => toast.success("Tarefa removida."),
+                  onError: (e: Error) => toast.error(e.message),
+                });
+              }}
               className="text-danger"
             >
               Remover
