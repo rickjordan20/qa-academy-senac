@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  answerFieldsOf,
   blockDef,
   entryFieldLabel,
   HIDDEN_ENTRY_KEYS,

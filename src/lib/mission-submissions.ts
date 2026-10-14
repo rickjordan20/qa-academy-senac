@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { BuilderMission, MissionEntry, Section } from "@/lib/mission-builder";
+import { orderedAnswerPairs, type BuilderMission, type MissionEntry, type Section } from "@/lib/mission-builder";
 
 /* ==================================================================== */
 /* Fluxo de envios / avaliação das missões (usa as tabelas existentes)   */

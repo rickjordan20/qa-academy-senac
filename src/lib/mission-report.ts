@@ -6,7 +6,7 @@ import {
   type BuilderMission,
   type ChecklistItemDef,
   type MissionEntry,
-  type QuestionDef,
+  orderedAnswerPairs,
   type Section,
 } from "@/lib/mission-builder";
 import type { BlockResult, RunEvaluation } from "@/lib/mission-submissions";
