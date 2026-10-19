@@ -26,8 +26,8 @@ export function BlockFeedback({
   version,
 }: {
   result: BlockResult | undefined | null;
-  isCurrent?: boolean;
-  version?: number;
+  isCurrent?: boolean | undefined;
+  version?: number | undefined;
 }) {
   if (!result || !hasBlockFeedback(result)) return null;
   const concepts = Object.entries(result.indicators ?? {}).filter(([, c]) => c);
