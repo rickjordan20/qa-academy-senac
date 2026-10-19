@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
+import { BlockFeedback, pickDisplayEvaluation } from "@/components/missions/BlockFeedback";
 import {
   blockDef,
   entryFieldLabel,
@@ -51,42 +52,13 @@ export function SubmissionDetail({ runId, backTo }: { runId: string; backTo: Rea
   const entriesBySection = new Map(
     sections.map((section) => [section.id, entries.filter((entry) => entry.section_id === section.id)]),
   );
-  const currentEvaluation = evaluations?.find((evaluation) => evaluation.is_current) ?? null;
+  const picked = pickDisplayEvaluation(evaluations);
   const resultsBySection = new Map(
-    (currentEvaluation?.block_results ?? []).map((result) => [result.section_id, result]),
+    (picked?.evaluation.block_results ?? []).map((result) => [result.section_id, result]),
   );
 
   function BlockEvaluation({ result }: { result: BlockResult | undefined }) {
-    const concepts = Object.entries(result?.indicators ?? {}).filter(([, concept]) => concept);
-    if (!result || concepts.length === 0) return null;
-    const needsAttention = concepts.some(([, concept]) => concept === "PA" || concept === "NA");
-
-    return (
-      <div
-        className={`mb-4 border-l-4 p-3 ${
-          needsAttention ? "border-warning bg-warning/10" : "border-success bg-success/10"
-        }`}
-      >
-        <p className="text-xs font-semibold text-muted-foreground">Resultado do bloco</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {concepts.map(([code, concept]) => (
-            <span key={code} className="inline-flex items-center gap-1.5 text-xs">
-              <span className="font-semibold">{code}</span>
-              <ConceptBadge concept={concept as Concept} full />
-            </span>
-          ))}
-        </div>
-        {result.comment.trim() ? (
-          <div className={`mt-3 border-t pt-3 ${needsAttention ? "border-warning/30" : "border-success/30"}`}>
-            <p className="text-xs font-semibold">Feedback do instrutor</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{result.comment}</p>
-            {needsAttention ? (
-              <p className="mt-2 text-xs font-medium text-warning">Revise este bloco seguindo as orientações acima.</p>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    );
+    return <BlockFeedback result={result} isCurrent={picked?.isCurrent ?? true} version={picked?.evaluation.version} />;
   }
 
   return (
