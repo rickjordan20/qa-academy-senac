@@ -38,7 +38,8 @@ import {
   type Section,
   missingRequiredReportFields,
 } from "@/lib/mission-builder";
-import { useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
+import { useRunEvaluations, useSubmitRun, type SubmissionRun } from "@/lib/mission-submissions";
+import { BlockFeedback, pickDisplayEvaluation } from "@/components/missions/BlockFeedback";
 import { useBadgeCatalog } from "@/lib/gamification";
 import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 import type { MissionPickers } from "@/components/missions/MissionPlayer";
@@ -98,6 +99,8 @@ function StudentMissionPage() {
   const save = useSaveRun(missionId);
   const submitRun = useSubmitRun();
   const { data: entries } = useRunEntries(run?.id ?? null);
+  const { data: runEvaluations } = useRunEvaluations(run?.id ?? null);
+  const pickedEval = pickDisplayEvaluation(runEvaluations);
   const createEntry = useCreateEntry(run?.id ?? "");
   const createContribution = useCreateMissionContribution(
     run?.id ?? null,
@@ -521,6 +524,13 @@ function StudentMissionPage() {
         authorName={(id) => names.data?.[id] ?? "aluno"}
         sectionExtra={(section) => (
           <>
+            {pickedEval ? (
+              <BlockFeedback
+                result={pickedEval.evaluation.block_results?.find((b) => b.section_id === section.id)}
+                isCurrent={pickedEval.isCurrent}
+                version={pickedEval.evaluation.version}
+              />
+            ) : null}
             {isCafe && run && group ? (
               <SectionAssign
                 section={section}
