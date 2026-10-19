@@ -539,6 +539,11 @@ export function useEvaluateSubmission() {
       const evalStatus: EvalStatus =
         input.decision === "evaluated" ? "evaluated" : input.decision === "revision" ? "revision" : "in_review";
 
+      // Regra de status: avaliação definitiva sempre conclui a execução;
+      // pedido de revisão devolve ao aluno; rascunho de avaliação mantém o estado.
+      const nextStatus =
+        input.decision === "evaluated" ? "completed" : input.decision === "revision" ? "in_progress" : input.run.status;
+
       const { error } = await supabase
         .from("builder_mission_runs")
         .update({
@@ -547,7 +552,7 @@ export function useEvaluateSubmission() {
           feedback: input.feedback,
           evaluated_by: input.instructorId,
           evaluated_at: input.decision === "draft" ? null : new Date().toISOString(),
-          status: input.decision === "revision" ? "in_progress" : input.run.status,
+          status: nextStatus,
         } as never)
         .eq("id", input.run.id);
       if (error) throw error;
