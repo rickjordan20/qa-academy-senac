@@ -515,6 +515,20 @@ export function suggestConcept(values: string[]): string {
   return list.every((v) => v === "A") ? "A" : "PA";
 }
 
+/**
+ * Regra de status da execução após uma decisão do instrutor:
+ * avaliação definitiva sempre conclui; pedido de revisão devolve ao aluno;
+ * rascunho de avaliação mantém o estado atual.
+ */
+export function evaluationNextStatus(
+  decision: "draft" | "evaluated" | "revision",
+  currentStatus: string,
+): string {
+  if (decision === "evaluated") return "completed";
+  if (decision === "revision") return "in_progress";
+  return currentStatus;
+}
+
 /** Avaliação do instrutor: status, XP, feedback e indicadores A/PA/NA. */
 export function useEvaluateSubmission() {
   const qc = useQueryClient();
@@ -539,6 +553,8 @@ export function useEvaluateSubmission() {
       const evalStatus: EvalStatus =
         input.decision === "evaluated" ? "evaluated" : input.decision === "revision" ? "revision" : "in_review";
 
+      const nextStatus = evaluationNextStatus(input.decision, input.run.status);
+
       const { error } = await supabase
         .from("builder_mission_runs")
         .update({
@@ -547,7 +563,7 @@ export function useEvaluateSubmission() {
           feedback: input.feedback,
           evaluated_by: input.instructorId,
           evaluated_at: input.decision === "draft" ? null : new Date().toISOString(),
-          status: input.decision === "revision" ? "in_progress" : input.run.status,
+          status: nextStatus,
         } as never)
         .eq("id", input.run.id);
       if (error) throw error;
