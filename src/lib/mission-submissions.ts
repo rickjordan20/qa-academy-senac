@@ -515,6 +515,20 @@ export function suggestConcept(values: string[]): string {
   return list.every((v) => v === "A") ? "A" : "PA";
 }
 
+/**
+ * Regra de status da execução após uma decisão do instrutor:
+ * avaliação definitiva sempre conclui; pedido de revisão devolve ao aluno;
+ * rascunho de avaliação mantém o estado atual.
+ */
+export function evaluationNextStatus(
+  decision: "draft" | "evaluated" | "revision",
+  currentStatus: string,
+): string {
+  if (decision === "evaluated") return "completed";
+  if (decision === "revision") return "in_progress";
+  return currentStatus;
+}
+
 /** Avaliação do instrutor: status, XP, feedback e indicadores A/PA/NA. */
 export function useEvaluateSubmission() {
   const qc = useQueryClient();
