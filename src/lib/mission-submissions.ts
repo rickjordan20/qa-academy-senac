@@ -553,10 +553,7 @@ export function useEvaluateSubmission() {
       const evalStatus: EvalStatus =
         input.decision === "evaluated" ? "evaluated" : input.decision === "revision" ? "revision" : "in_review";
 
-      // Regra de status: avaliação definitiva sempre conclui a execução;
-      // pedido de revisão devolve ao aluno; rascunho de avaliação mantém o estado.
-      const nextStatus =
-        input.decision === "evaluated" ? "completed" : input.decision === "revision" ? "in_progress" : input.run.status;
+      const nextStatus = evaluationNextStatus(input.decision, input.run.status);
 
       const { error } = await supabase
         .from("builder_mission_runs")
