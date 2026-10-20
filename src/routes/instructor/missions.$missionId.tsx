@@ -35,6 +35,7 @@ import {
 } from "@/lib/mission-builder";
 import { useBadgeCatalog } from "@/lib/gamification";
 import { useIndicators } from "@/lib/uc10";
+import { RecoveryPreview } from "@/components/missions/RecoveryPreview";
 import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 
 export const Route = createFileRoute("/instructor/missions/$missionId")({
@@ -514,6 +515,8 @@ function MissionBuilderPage() {
           </p>
         ) : null}
       </div>
+
+      <RecoveryPreview missionId={draft.id} enabled={!!draft.personalize_by_pending_indicators} />
 
       {sections.length > 0 ? (
         <p className="text-xs text-muted-foreground">
