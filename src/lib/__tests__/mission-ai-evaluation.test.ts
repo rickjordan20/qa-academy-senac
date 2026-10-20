@@ -97,4 +97,13 @@ describe("avaliação assistida por IA", () => {
     mergeSuggestion(form, r, new Set(), true);
     expect(form.blockConcepts.b1).toEqual({});
   });
+  it("blocos sem XP próprio: não sugere XP e pede revisão docente", () => {
+    const c = ctx();
+    c.blocks = c.blocks.map((b) => ({ ...b, xp_max: 0 }));
+    const r = sanitizeEvaluation(ai(), c);
+    expect(r.xp).toBeNull();
+    expect(r.alerts.some((a) => a.includes("XP manualmente"))).toBe(true);
+    const { next } = mergeSuggestion({ ...empty, xp: "50" }, r, new Set(), true);
+    expect(next.xp).toBe("50");
+  });
 });

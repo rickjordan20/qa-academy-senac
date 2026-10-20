@@ -70,7 +70,8 @@ export type CleanBlock = {
 export type CleanEvaluation = {
   blocks: CleanBlock[];
   finals: Record<string, Concept>;
-  xp: number;
+  /** null = sem critério fundamentado (blocos sem XP próprio): decisão docente */
+  xp: number | null;
   xpCap: number;
   generalFeedback: string;
   memberOverrides: Record<string, Record<string, Concept>>;
@@ -153,7 +154,9 @@ export function sanitizeEvaluation(ai: AiAnswer, ctx: EvalContext): CleanEvaluat
   // XP: soma dos blocos (cada um no seu limite), limitada ao teto da missão
   const xpCap = ctx.mission.xp_cap;
   const anyBlockXp = ctx.blocks.some((b) => b.xp_max > 0);
-  const xp = anyBlockXp ? Math.min(xpCap, blocks.reduce((s, b) => s + b.xp, 0)) : blocks.some((b) => !b.needs_review) ? xpCap : 0;
+  // Sem limites por bloco não há regra oficial de distribuição: não sugere XP.
+  const xp = anyBlockXp ? Math.min(xpCap, blocks.reduce((s, b) => s + b.xp, 0)) : null;
+  if (xp === null) alerts.push("Os blocos desta missão não têm XP próprio: defina o XP manualmente (revisão docente necessária).");
 
   // Diferenciações individuais: só integrantes reais e indicadores consolidados
   const memberOverrides: Record<string, Record<string, Concept>> = {};
@@ -249,9 +252,12 @@ export function mergeSuggestion(
   put("overrideNotes", "Justificativa da diferenciação", form.overrideNotes, s.overrideNotes, () => {
     next.overrideNotes = s.overrideNotes;
   });
-  put("xp", "XP", form.xp, String(s.xp), () => {
-    next.xp = String(s.xp);
-  });
+  if (s.xp !== null) {
+    const xpText = String(s.xp);
+    put("xp", "XP", form.xp, xpText, () => {
+      next.xp = xpText;
+    });
+  }
   put("feedback", "Feedback geral", form.feedback, s.generalFeedback, () => {
     next.feedback = s.generalFeedback;
   });

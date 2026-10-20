@@ -121,7 +121,7 @@ export function AiMissionEvaluation({
               </div>
             ))}
             <p className="text-xs text-muted-foreground">
-              Menções finais sugeridas: {Object.entries(result.finals).map(([c, v]) => `${c} ${v}`).join(" · ") || "—"} · XP sugerido {result.xp}/{result.xpCap}
+              Menções finais sugeridas: {Object.entries(result.finals).map(([c, v]) => `${c} ${v}`).join(" · ") || "—"} · XP sugerido {result.xp === null ? "— (decisão docente)" : `${result.xp}/${result.xpCap}`}
             </p>
             {result.overrideNotes ? <p className="whitespace-pre-wrap text-xs">Diferenciações sugeridas: {result.overrideNotes}</p> : null}
 
