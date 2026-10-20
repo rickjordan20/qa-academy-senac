@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Consolidação por predominância (moda) das menções vigentes.
- * MODO PRÉVIA: este módulo apenas calcula e exibe a sugestão; ele NÃO grava
- * em indicator_evaluations. A ativação sobre os dados existentes depende de
- * autorização do instrutor responsável.
+ * Este módulo calcula e exibe a consolidação; a gravação na matriz ocorre no
+ * banco (consolidate_evaluation) a cada avaliação definitiva, com as mesmas regras.
  */
 
 export type Concept = "A" | "PA" | "NA";

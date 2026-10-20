@@ -631,41 +631,15 @@ export function useEvaluateSubmission() {
         if (upd.error) throw upd.error;
       }
 
-      // Indicadores A/PA/NA — grava na matriz para todos os alvos.
-      // Em grupo, o instrutor pode diferenciar integrantes com base em evidências reais.
-      if (input.decision === "evaluated" && input.run.classId && targets.length) {
-        const codeById = new Map(Object.entries(idByCode).map(([code, id]) => [id, code] as const));
-        for (const studentId of targets) {
-          const perStudent = overrides[studentId] ?? {};
-          const justified = Object.keys(perStudent).length > 0;
-          for (const [indicatorId, concept] of Object.entries(input.indicators)) {
-            const code = codeById.get(indicatorId) ?? "";
-            const finalConcept = perStudent[code] || concept;
-            if (!finalConcept) continue;
-            const note = justified && perStudent[code] && perStudent[code] !== concept
-              ? `${input.feedback}${input.feedback ? "\n\n" : ""}Diferenciação individual: ${input.overrideNotes ?? "com base nas evidências e na participação registrada."}`
-              : input.feedback;
-            const { error: evalErr } = await supabase.from("indicator_evaluations").upsert(
-              {
-                class_id: input.run.classId,
-                student_id: studentId,
-                indicator_id: indicatorId,
-                concept: finalConcept,
-                stage: "regular",
-                notes: note,
-                evaluated_by: input.instructorId,
-                evaluated_at: new Date().toISOString(),
-                source_mission_id: input.run.mission_id,
-                source_run_id: input.run.id,
-                source_evaluation_id: evaluationId,
-                invalidated_at: null,
-                invalidation_reason: "",
-              } as never,
-              { onConflict: "class_id,student_id,indicator_id" },
-            );
-            if (evalErr) throw evalErr;
-          }
-        }
+      // Matriz: consolidação contínua por predominância (no banco). Um voto por missão
+      // (versão vigente), diferenciação individual prevalece; empates, reduções de A e
+      // homologações docentes preservam a menção vigente.
+      if (input.decision === "evaluated" && input.run.classId && evaluationId && targets.length) {
+        const { error: consErr } = await supabase.rpc("consolidate_evaluation" as never, {
+          _evaluation_id: evaluationId,
+          _class_id: input.run.classId,
+        } as never);
+        if (consErr) throw consErr;
       }
 
 
