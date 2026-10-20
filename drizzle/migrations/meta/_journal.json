@@ -43,6 +43,13 @@
       "when": 1792012203941,
       "tag": "0005_cafe_tasks_guard_refactor",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792469178497,
+      "tag": "0006_migration",
+      "breakpoints": true
     }
   ]
 }

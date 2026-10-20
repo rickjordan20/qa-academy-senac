@@ -1867,6 +1867,66 @@ export type Database = {
           },
         ]
       }
+      indicator_homologations: {
+        Row: {
+          basis: Json
+          class_id: string
+          concept: Database["public"]["Enums"]["evaluation_concept"]
+          created_at: string
+          decided_at: string
+          decided_by: string
+          decision: string
+          id: string
+          indicator_id: string
+          is_current: boolean
+          reason: string
+          student_id: string
+        }
+        Insert: {
+          basis?: Json
+          class_id: string
+          concept: Database["public"]["Enums"]["evaluation_concept"]
+          created_at?: string
+          decided_at?: string
+          decided_by: string
+          decision: string
+          id?: string
+          indicator_id: string
+          is_current?: boolean
+          reason: string
+          student_id: string
+        }
+        Update: {
+          basis?: Json
+          class_id?: string
+          concept?: Database["public"]["Enums"]["evaluation_concept"]
+          created_at?: string
+          decided_at?: string
+          decided_by?: string
+          decision?: string
+          id?: string
+          indicator_id?: string
+          is_current?: boolean
+          reason?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indicator_homologations_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indicator_homologations_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       indicators: {
         Row: {
           code: string
