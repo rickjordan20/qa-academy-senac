@@ -34,9 +34,9 @@ export function ConsolidationPanel({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Consolidação por predominância (prévia)</CardTitle>
+        <CardTitle className="text-base">Consolidação por predominância</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Sugestão calculada pela menção mais frequente nas missões avaliadas. A matriz oficial ainda não é alterada.
+          A matriz é atualizada automaticamente pela menção mais frequente nas missões avaliadas. Empates, reduções de A e homologações aguardam a decisão docente.
         </p>
       </CardHeader>
       <CardContent className="space-y-2">

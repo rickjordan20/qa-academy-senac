@@ -687,6 +687,7 @@ export function useEvaluateSubmission() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["mission-submissions"] });
       void qc.invalidateQueries({ queryKey: ["class-evaluations"] });
+      void qc.invalidateQueries({ queryKey: ["indicator-consolidation"] });
       void qc.invalidateQueries({ queryKey: ["eval-history"] });
       void qc.invalidateQueries({ queryKey: ["my-evaluations"] });
       void qc.invalidateQueries({ queryKey: ["gam"] });
