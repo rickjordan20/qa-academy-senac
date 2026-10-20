@@ -2838,6 +2838,20 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      consolidate_evaluation: {
+        Args: { _class_id: string; _evaluation_id: string }
+        Returns: Json
+      }
+      consolidate_indicator_cell: {
+        Args: {
+          _actor: string
+          _class_id: string
+          _evaluation_id: string
+          _indicator_id: string
+          _student_id: string
+        }
+        Returns: string
+      }
       cross_test_claim_bug: { Args: { _bug_id: string }; Returns: string }
       cross_test_report_bug:
         | {
@@ -3001,6 +3015,10 @@ export type Database = {
       qa_is_instructor_of: {
         Args: { _student: string; _viewer: string }
         Returns: boolean
+      }
+      restore_consolidation_batch: {
+        Args: { _batch: string; _class_id: string }
+        Returns: Json
       }
       shares_class: {
         Args: { _target: string; _viewer: string }
