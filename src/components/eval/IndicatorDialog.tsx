@@ -23,6 +23,114 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { analyzeIndicatorHistory } from "@/lib/pedagogical-analysis.functions";
+import { evidenceFingerprint } from "@/lib/pedagogical-analysis";
+import { useStudentView } from "@/lib/student-view";
+
+type AnalysisResult = Awaited<ReturnType<typeof analyzeIndicatorHistory>>;
+const analysisCache = new Map<string, { fp: string; result: AnalysisResult }>();
+
+function PedagogicalAnalysis(props: {
+  classId: string;
+  studentId: string;
+  indicatorId: string;
+  stage: Stage;
+  fingerprint: string;
+  onApply: (text: string) => void;
+}) {
+  const run = useServerFn(analyzeIndicatorHistory);
+  const view = useStudentView();
+  const key = `${props.classId}:${props.studentId}:${props.indicatorId}:${props.stage}`;
+  const cached = analysisCache.get(key);
+  const [result, setResult] = useState<AnalysisResult | null>(cached?.fp === props.fingerprint ? cached.result : null);
+  const [text, setText] = useState(result && result.ok ? result.feedback : "");
+  const [loading, setLoading] = useState(false);
+  const stale = !!result && analysisCache.get(key)?.fp !== props.fingerprint;
+
+  if (view) return null;
+
+  async function generate() {
+    setLoading(true);
+    try {
+      const r = await run({ data: { classId: props.classId, studentId: props.studentId, indicatorId: props.indicatorId, stage: props.stage } });
+      analysisCache.set(key, { fp: props.fingerprint, result: r });
+      setResult(r);
+      setText(r.ok ? r.feedback : "");
+      if (!r.ok) toast.error(r.error);
+    } catch (e) {
+      toast.error((e as Error).message || "Falha ao gerar análise.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!result)
+    return (
+      <Button size="sm" variant="outline" onClick={generate} disabled={loading}>
+        {loading ? "Analisando…" : "Analisar histórico e gerar feedback"}
+      </Button>
+    );
+
+  return (
+    <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3 text-sm">
+      <div className="font-semibold">Análise pedagógica – Indicador selecionado</div>
+      {stale && <p className="text-xs text-destructive">As evidências mudaram desde esta análise. Gere novamente.</p>}
+      <div className="flex flex-wrap items-center gap-3 text-xs">
+        <span className="flex items-center gap-1">Matriz: <ConceptBadge concept={result.matrixConcept} /></span>
+        <span>Predominância: A {result.counts.A} · PA {result.counts.PA} · NA {result.counts.NA} ({result.mode === "tie" ? "empate" : result.mode ?? "—"})</span>
+        {result.homologation && <span>Homologação docente: {result.homologation.concept}</span>}
+        {result.ok && (
+          <span className="flex items-center gap-1">
+            Sugestão pedagógica: {result.suggestedMention ? <ConceptBadge concept={result.suggestedMention} /> : "evidência insuficiente"}
+          </span>
+        )}
+      </div>
+      {result.ok ? (
+        <>
+          {result.aiUsed ? (
+            <Textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} />
+          ) : (
+            <p className="text-xs text-muted-foreground">Sem evidências suficientes para gerar feedback; a IA não foi acionada.</p>
+          )}
+          {result.sources.length > 0 && (
+            <div>
+              <div className="text-xs font-medium uppercase text-muted-foreground">Evidências utilizadas</div>
+              <ul className="list-disc pl-5 text-xs">
+                {result.sources.map((s) => (
+                  <li key={s.missionId}>{s.title} ({s.concept}) — {s.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {result.limitations.length > 0 && (
+            <ul className="list-disc pl-5 text-xs text-muted-foreground">
+              {result.limitations.map((l) => <li key={l}>{l}</li>)}
+            </ul>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Sugestão apenas: nada é salvo e nenhuma menção muda até você confirmar abaixo. Modelo: {result.model}.
+          </p>
+        </>
+      ) : (
+        <p className="text-xs text-destructive">{result.error}</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {result.ok && result.aiUsed && (
+          <Button size="sm" disabled={!text.trim()} onClick={() => { props.onApply(text.trim()); toast.success("Feedback aplicado (ainda não salvo)"); }}>
+            Aplicar feedback
+          </Button>
+        )}
+        <Button size="sm" variant="outline" onClick={generate} disabled={loading}>
+          {loading ? "Analisando…" : "Gerar novamente"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => { analysisCache.delete(key); setResult(null); setText(""); }}>
+          Descartar
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 type Props = {
   open: boolean;
@@ -127,6 +235,14 @@ export function IndicatorDialog({
                 ))}
               </div>
             </div>
+            <PedagogicalAnalysis
+              classId={classId}
+              studentId={student.id}
+              indicatorId={indicator.id}
+              stage={stage}
+              fingerprint={evidenceFingerprint([current, indHistory, indFeedbacks, origins?.map((o) => [o.id, o.is_current, o.version, o.member_overrides])])}
+              onApply={(t) => setNotes(t)}
+            />
             <Textarea
               placeholder="Observações da avaliação"
               value={notes}
