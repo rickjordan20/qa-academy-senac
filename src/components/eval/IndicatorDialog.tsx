@@ -48,7 +48,7 @@ function PedagogicalAnalysis(props: {
   const [loading, setLoading] = useState(false);
   const stale = !!result && analysisCache.get(key)?.fp !== props.fingerprint;
 
-  if (view?.active) return null;
+  if (view) return null;
 
   async function generate() {
     setLoading(true);
