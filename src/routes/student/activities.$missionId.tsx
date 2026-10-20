@@ -1,3 +1,4 @@
+import { personalizeMission, useRecoveryTargets } from "@/lib/recovery-personalization";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   evalStateNotice,
@@ -518,7 +519,7 @@ function StudentMissionPage() {
       ) : null}
 
       <MissionPlayer
-        mission={mission}
+        mission={personalizeMission(mission, recovery.target)}
         progress={progress}
         readOnly={readOnly}
         header={header}
