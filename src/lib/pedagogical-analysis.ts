@@ -56,7 +56,7 @@ export function buildAnalysisContext(input: AnalysisInput) {
       individual: v.individual,
       blocks: (e.block_results ?? [])
         .filter((b) => b.indicators?.[input.indicatorCode])
-        .map((b) => ({ title: b.title, result: b.indicators[input.indicatorCode], comment: clip(b.comment, 300) })),
+        .map((b) => ({ title: b.title, result: b.indicators[input.indicatorCode] ?? "", comment: clip(b.comment, 300) })),
       generalFeedback: clip(e.feedback),
     };
   });
