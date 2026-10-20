@@ -98,7 +98,15 @@ function EvaluatePage() {
     members.map((m) => m.id),
   ]);
 
-  const sections = useMemo(() => ((run?.mission?.sections ?? []) as Section[]).filter((s) => s.visible !== false), [run]);
+  // Recuperação personalizada: só os indicadores congelados na tentativa entram na correção.
+  const sections = useMemo(
+    () =>
+      filterSectionsByIndicators(
+        ((run?.mission?.sections ?? []) as Section[]).filter((s) => s.visible !== false),
+        (run as { target_indicator_codes?: string[] | null } | null)?.target_indicator_codes ?? null,
+      ),
+    [run],
+  );
   const indList = indicators ?? [];
   const byCode = useMemo(
     () => new Map(indList.map((i) => [i.code, i as { id: string; code: string; description: string }])),
