@@ -146,7 +146,7 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
       supabase.from("indicators").select("code, description, uc_code"),
       ids.length ? supabase.from("profiles").select("id, full_name, email").in("id", ids) : Promise.resolve({ data: [], error: null }),
       run.group_id ? supabase.from("cafe_tasks").select("assignee_id, status").eq("builder_run_id", run.id) : Promise.resolve({ data: [], error: null }),
-      run.group_id ? supabase.from("cafe_contributions").select("author_id").eq("builder_run_id", run.id) : Promise.resolve({ data: [], error: null }),
+      run.group_id ? supabase.from("cafe_contributions").select("student_id").eq("builder_run_id", run.id) : Promise.resolve({ data: [], error: null }),
     ]);
     for (const r of [entRes, indRes, profRes]) if (r.error) throw new Error("Falha ao carregar a entrega.");
     const names = new Map(((profRes.data ?? []) as { id: string; full_name: string | null; email: string }[]).map((p) => [p.id, p.full_name?.trim() || p.email]));
@@ -191,14 +191,14 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
     let group: EvalContext["group"] = null;
     if (run.group_id) {
       const tasks = (taskRes.data ?? []) as { assignee_id: string | null; status: string }[];
-      const contribs = (contribRes.data ?? []) as { author_id: string }[];
+      const contribs = (contribRes.data ?? []) as unknown as { student_id: string }[];
       const list: CtxMember[] = members.map((m) => ({
         id: m.id,
         name: names.get(m.id) ?? "Integrante",
         role: m.role,
         tasks_assigned: tasks.filter((t) => t.assignee_id === m.id).length,
         tasks_done: tasks.filter((t) => t.assignee_id === m.id && t.status === "done").length,
-        contributions: contribs.filter((c) => c.author_id === m.id).length,
+        contributions: contribs.filter((c) => c.student_id === m.id).length,
         entries: entries.filter((e) => e.author_id === m.id).length,
       }));
       group = { members: list };
