@@ -32,3 +32,6 @@
 - [x] Banco: edição por autor integrante, responsável e colaborador; gestão de responsáveis só autor/QA Líder/instrutor; campos de vínculo imutáveis; bloqueio pela avaliação da missão
 - [x] Quadro da missão e quadro do Café Central alinhados às permissões e ao bloqueio
 - [x] Testes do banco (tests/db/cafe_tasks_permissions.sql, desfeitos ao final)
+
+## Análise pedagógica por indicador
+- [x] Botão na avaliação individual, sugestão editável, fontes rastreáveis, sem gravação automática
