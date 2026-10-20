@@ -269,6 +269,22 @@ function EvaluatePage() {
           ) : null}
 
 
+          <AiMissionEvaluation
+            runId={run.id}
+            fingerprint={aiFingerprint}
+            form={{ xp, feedback, blockConcepts, blockComments, finals, memberOverrides, overrideNotes }}
+            touched={touched.current}
+            onApply={(n) => {
+              setXp(n.xp);
+              setFeedback(n.feedback);
+              setBlockConcepts(n.blockConcepts);
+              setBlockComments(n.blockComments);
+              setFinals(n.finals);
+              setMemberOverrides(n.memberOverrides);
+              setOverrideNotes(n.overrideNotes);
+            }}
+          />
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Avaliação por bloco</CardTitle>
