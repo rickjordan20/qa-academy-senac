@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { blockDef, entryFieldLabel, HIDDEN_ENTRY_KEYS, type Section } from "@/li
 import { loadMetricDisplayPairs } from "@/lib/load-metrics";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
 import { GroupParticipation } from "@/components/missions/GroupParticipation";
+import { AiMissionEvaluation } from "@/components/eval/AiMissionEvaluation";
+import { submissionFingerprint } from "@/lib/mission-ai-evaluation";
 
 import {
   answerSummary,
@@ -84,6 +86,17 @@ function EvaluatePage() {
   const [memberOverrides, setMemberOverrides] = useState<Record<string, Record<string, string>>>({});
   const [overrideNotes, setOverrideNotes] = useState("");
   const hydrated = useState<{ id: string | null }>({ id: null })[0];
+  // campos preenchidos/alterados pelo instrutor (a IA não os sobrescreve sem confirmação)
+  const touched = useRef(new Set<string>());
+  const mark = (field: string) => touched.current.add(field);
+  const submitLock = useRef(false);
+  const aiFingerprint = submissionFingerprint([
+    run?.answers ?? {},
+    run?.mission?.sections ?? [],
+    run?.mission?.base_xp ?? 0,
+    entries.map((e) => [e.id, e.section_id, e.title, e.data, e.link]),
+    members.map((m) => m.id),
+  ]);
 
   const sections = useMemo(() => ((run?.mission?.sections ?? []) as Section[]).filter((s) => s.visible !== false), [run]);
   const indList = indicators ?? [];
@@ -109,18 +122,25 @@ function EvaluatePage() {
     hydrated.id = run.id;
     setXp(String(run.xp_awarded ?? run.mission?.base_xp ?? 0));
     setFeedback(run.feedback ?? "");
+    if (run.feedback) mark("feedback");
+    if (run.xp_awarded != null) mark("xp");
     if (previous) {
       const bc: Record<string, Record<string, string>> = {};
       const cm: Record<string, string> = {};
       for (const b of previous.block_results ?? []) {
         bc[b.section_id] = b.indicators ?? {};
         cm[b.section_id] = b.comment ?? "";
+        for (const c of Object.keys(b.indicators ?? {})) mark(`block:${b.section_id}:${c}`);
+        if (b.comment) mark(`comment:${b.section_id}`);
       }
       setBlockConcepts(bc);
       setBlockComments(cm);
       setFinals({ ...(previous.indicator_finals ?? {}) });
+      for (const c of Object.keys(previous.indicator_finals ?? {})) mark(`final:${c}`);
       setMemberOverrides({ ...(previous.member_overrides ?? {}) });
+      for (const [sid, m] of Object.entries(previous.member_overrides ?? {})) for (const c of Object.keys(m ?? {})) mark(`member:${sid}:${c}`);
       setOverrideNotes(previous.override_notes ?? "");
+      if (previous.override_notes) mark("overrideNotes");
     }
   }, [run, previous, hydrated]);
 
@@ -156,6 +176,16 @@ function EvaluatePage() {
   }
 
   async function submit(decision: "draft" | "evaluated" | "revision") {
+    if (!run || !user || submitLock.current) return;
+    submitLock.current = true;
+    try {
+      await doSubmit(decision);
+    } finally {
+      submitLock.current = false;
+    }
+  }
+
+  async function doSubmit(decision: "draft" | "evaluated" | "revision") {
     if (!run || !user) return;
     const blocks: BlockResult[] = evaluatedBlocks.map((s) => ({
       section_id: s.id,
@@ -330,7 +360,7 @@ function EvaluatePage() {
                             </span>
                             <ConceptPicker
                               value={blockConcepts[s.id]?.[code]}
-                              onChange={(v) => setBlockConcept(s.id, code, v)}
+                              onChange={(v) => { mark(`block:${s.id}:${code}`); setBlockConcept(s.id, code, v); }}
                             />
                           </div>
                         );
@@ -339,7 +369,7 @@ function EvaluatePage() {
                         rows={2}
                         placeholder="Comentário deste bloco (opcional)"
                         value={blockComments[s.id] ?? ""}
-                        onChange={(e) => setBlockComments((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                        onChange={(e) => { mark(`comment:${s.id}`); setBlockComments((prev) => ({ ...prev, [s.id]: e.target.value })); }}
                       />
                     </div>
                   </div>
@@ -383,14 +413,14 @@ function EvaluatePage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setFinals((p) => ({ ...p, [code]: suggestion }))}
+                            onClick={() => { mark(`final:${code}`); setFinals((p) => ({ ...p, [code]: suggestion })); }}
                           >
                             Usar sugestão
                           </Button>
                         ) : null}
                         <ConceptPicker
                           value={finals[code]}
-                          onChange={(v) => setFinals((p) => ({ ...p, [code]: v }))}
+                          onChange={(v) => { mark(`final:${code}`); setFinals((p) => ({ ...p, [code]: v })); }}
                         />
                       </div>
                     </div>
@@ -432,7 +462,7 @@ function EvaluatePage() {
                               <ConceptPicker
                                 value={value}
                                 onChange={(v) =>
-                                  setMemberOverrides((prev) => {
+                                  (mark(`member:${m.id}:${code}`), setMemberOverrides)((prev) => {
                                     const forStudent = { ...(prev[m.id] ?? {}) };
                                     if (!v || v === groupConcept) delete forStudent[code];
                                     else forStudent[code] = v;
@@ -462,7 +492,7 @@ function EvaluatePage() {
                     <Textarea
                       rows={3}
                       value={overrideNotes}
-                      onChange={(e) => setOverrideNotes(e.target.value)}
+                      onChange={(e) => { mark("overrideNotes"); setOverrideNotes(e.target.value); }}
                       placeholder="Ex.: o integrante não possui registros/evidências das tarefas atribuídas."
                     />
                   </div>
@@ -478,7 +508,7 @@ function EvaluatePage() {
             <CardContent className="space-y-4">
               <div className="max-w-xs">
                 <label className="text-xs font-semibold text-muted-foreground">XP a conceder</label>
-                <Input type="number" min={0} value={xp} onChange={(e) => setXp(e.target.value)} />
+                <Input type="number" min={0} value={xp} onChange={(e) => { mark("xp"); setXp(e.target.value); }} />
                 <p className="mt-1 text-xs text-muted-foreground">
                   XP base da missão: {run.mission?.base_xp ?? 0}. O XP não define A/PA/NA.
                 </p>
@@ -486,12 +516,17 @@ function EvaluatePage() {
 
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Feedback para o aluno</label>
-                <Textarea rows={4} value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+                <Textarea rows={4} value={feedback} onChange={(e) => { mark("feedback"); setFeedback(e.target.value); }} />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button disabled={evaluate.isPending} onClick={() => submit("evaluated")}>
-                  {alreadyEvaluated ? "Concluir reavaliação" : "Concluir avaliação"}
+                <Button
+                  disabled={evaluate.isPending}
+                  onClick={() => {
+                    if (window.confirm("Aprovar e enviar esta avaliação ao estudante? Ela será registrada como definitiva.")) void submit("evaluated");
+                  }}
+                >
+                  {alreadyEvaluated ? "Aprovar e enviar reavaliação" : "Aprovar e enviar avaliação"}
                 </Button>
                 <Button variant="outline" disabled={evaluate.isPending} onClick={() => submit("draft")}>
                   Salvar rascunho
