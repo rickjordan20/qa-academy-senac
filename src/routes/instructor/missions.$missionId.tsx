@@ -139,6 +139,7 @@ function MissionBuilderPage() {
         base_xp: draft.base_xp,
         badge_code: draft.badge_code,
         indicator_codes: draft.indicator_codes,
+        personalize_by_pending_indicators: !!draft.personalize_by_pending_indicators,
         feature_ids: draft.feature_ids,
         sections: draft.sections,
         library_name: draft.library_name,
@@ -280,6 +281,17 @@ function MissionBuilderPage() {
             <p className="text-[11px] text-muted-foreground">
               Atividades assíncronas aparecem no módulo "Atividades Assíncronas" do aluno.
             </p>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Recuperação personalizada</Label>
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={!!draft.personalize_by_pending_indicators}
+                onChange={(e) => patch({ personalize_by_pending_indicators: e.target.checked })}
+              />
+              Mostrar ao aluno só blocos de indicadores com menção PA/NA na matriz
+            </label>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Ordem de exibição</Label>
