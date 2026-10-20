@@ -317,6 +317,7 @@ export type Database = {
           student_id: string | null
           submitted_at: string | null
           submitted_by: string | null
+          target_indicator_codes: string[] | null
           updated_at: string
           xp_awarded: number | null
         }
@@ -338,6 +339,7 @@ export type Database = {
           student_id?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
+          target_indicator_codes?: string[] | null
           updated_at?: string
           xp_awarded?: number | null
         }
@@ -359,6 +361,7 @@ export type Database = {
           student_id?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
+          target_indicator_codes?: string[] | null
           updated_at?: string
           xp_awarded?: number | null
         }
@@ -398,6 +401,7 @@ export type Database = {
           modality: string
           objective: string
           opens_at: string | null
+          personalize_by_pending_indicators: boolean
           position: number
           project: string
           sections: Json
@@ -426,6 +430,7 @@ export type Database = {
           modality?: string
           objective?: string
           opens_at?: string | null
+          personalize_by_pending_indicators?: boolean
           position?: number
           project?: string
           sections?: Json
@@ -454,6 +459,7 @@ export type Database = {
           modality?: string
           objective?: string
           opens_at?: string | null
+          personalize_by_pending_indicators?: boolean
           position?: number
           project?: string
           sections?: Json
@@ -2958,6 +2964,7 @@ export type Database = {
           modality: string
           objective: string
           opens_at: string | null
+          personalize_by_pending_indicators: boolean
           position: number
           project: string
           sections: Json
@@ -3015,6 +3022,26 @@ export type Database = {
       qa_is_instructor_of: {
         Args: { _student: string; _viewer: string }
         Returns: boolean
+      }
+      recovery_indicator_targets: {
+        Args: { _mission_id: string; _student_id: string }
+        Returns: {
+          code: string
+          concept: string
+          needs_review: boolean
+          shown: boolean
+        }[]
+      }
+      recovery_mission_preview: {
+        Args: { _mission_id: string }
+        Returns: {
+          code: string
+          concept: string
+          full_name: string
+          needs_review: boolean
+          shown: boolean
+          student_id: string
+        }[]
       }
       restore_consolidation_batch: {
         Args: { _batch: string; _class_id: string }

@@ -98,6 +98,8 @@ export type BuilderMission = {
   base_xp: number;
   badge_code: string | null;
   indicator_codes: string[];
+  /** Exibe ao aluno só blocos de indicadores com menção PA/NA. */
+  personalize_by_pending_indicators?: boolean;
   feature_ids: string[];
   sections: Section[];
   is_library_template: boolean;
@@ -119,6 +121,8 @@ export type MissionRun = {
   submitted_at: string | null;
   /** awaiting | in_review | evaluated | revision (reabre a edição para o aluno) */
   eval_status?: string | null;
+  /** Recuperação personalizada: indicadores PA/NA congelados no início. */
+  target_indicator_codes?: string[] | null;
   created_at: string;
 };
 
