@@ -1,6 +1,6 @@
 -- Teste de integração da consolidação contínua por predominância.
 -- Tudo roda numa transação desfeita no final (ROLLBACK): nenhum dado real permanece alterado.
--- Uso: psql -v ON_ERROR_STOP=1 -f tests/db/indicator_consolidation_flow.sql
+-- Uso: requer papel com escrita (o sandbox é somente leitura); foi executado via migração que aborta ao final (nada persiste).
 BEGIN;
 CREATE TEMP TABLE _r(n int, name text, ok boolean, info text) ON COMMIT DROP;
 DO $$
@@ -9,7 +9,7 @@ DECLARE
   s1 uuid := '67eb761e-d604-44af-9464-f75effd98e43';
   s2 uuid := 'c595db2d-6bab-4063-ad23-1464e9599c7a';
   ind uuid := (SELECT id FROM indicators WHERE code='I1' ORDER BY position LIMIT 1);
-  m uuid[] := ARRAY(SELECT id FROM builder_missions ORDER BY created_at LIMIT 6);
+  m uuid[] := ARRAY(SELECT bm.id FROM builder_missions bm WHERE NOT EXISTS (SELECT 1 FROM builder_mission_runs r WHERE r.mission_id=bm.id AND r.student_id IN ('67eb761e-d604-44af-9464-f75effd98e43','c595db2d-6bab-4063-ad23-1464e9599c7a')) ORDER BY bm.created_at LIMIT 6);
   cls uuid; grp uuid; run uuid; ev uuid; c text; st text; x int; n int := 0;
   xp0 int := (SELECT count(*) FROM gam_xp_events);
   hist0 int; snap_before jsonb;
