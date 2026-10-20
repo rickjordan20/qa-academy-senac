@@ -95,6 +95,7 @@ function StudentMissionPage() {
   const myClassIds = Array.from(new Set((groups ?? []).map((g) => g.class_id as string)));
 
   const { data: run } = useMyRun(mission ?? null, userId, groupId);
+  const recovery = useRecoveryTargets(mission ?? null, run ?? null, userId);
   const start = useStartRun(mission!, userId!, groupId);
   const save = useSaveRun(missionId);
   const submitRun = useSubmitRun();
