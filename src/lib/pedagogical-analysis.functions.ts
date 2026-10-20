@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildAnalysisContext, sanitizeAnswer, type AiAnswer, type SourceEval } from "@/lib/pedagogical-analysis";
 import type { Concept, Homologation } from "@/lib/indicator-consolidation";
 
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "google/gemini-3.1-flash-lite";
 const UUID = /^[0-9a-f-]{36}$/i;
 
 const SYSTEM = `Você é um docente avaliador do SENAC (UC10, QA). Escreva em português brasileiro, dirigindo-se diretamente ao estudante ("você"), com tom acolhedor, objetivo e profissional.
