@@ -1792,10 +1792,69 @@ export type Database = {
           },
         ]
       }
+      indicator_consolidation_snapshots: {
+        Row: {
+          batch: string
+          class_id: string
+          concept_after:
+            | Database["public"]["Enums"]["evaluation_concept"]
+            | null
+          concept_before:
+            | Database["public"]["Enums"]["evaluation_concept"]
+            | null
+          created_at: string
+          evaluation_id: string
+          id: string
+          indicator_id: string
+          mode_counts: Json
+          outcome: string
+          row_before: Json
+          student_id: string
+        }
+        Insert: {
+          batch: string
+          class_id: string
+          concept_after?:
+            | Database["public"]["Enums"]["evaluation_concept"]
+            | null
+          concept_before?:
+            | Database["public"]["Enums"]["evaluation_concept"]
+            | null
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          indicator_id: string
+          mode_counts?: Json
+          outcome: string
+          row_before: Json
+          student_id: string
+        }
+        Update: {
+          batch?: string
+          class_id?: string
+          concept_after?:
+            | Database["public"]["Enums"]["evaluation_concept"]
+            | null
+          concept_before?:
+            | Database["public"]["Enums"]["evaluation_concept"]
+            | null
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          indicator_id?: string
+          mode_counts?: Json
+          outcome?: string
+          row_before?: Json
+          student_id?: string
+        }
+        Relationships: []
+      }
       indicator_evaluations: {
         Row: {
           class_id: string
           concept: Database["public"]["Enums"]["evaluation_concept"] | null
+          consolidation_counts: Json | null
+          consolidation_status: string | null
           created_at: string
           evaluated_at: string | null
           evaluated_by: string | null
@@ -1815,6 +1874,8 @@ export type Database = {
         Insert: {
           class_id: string
           concept?: Database["public"]["Enums"]["evaluation_concept"] | null
+          consolidation_counts?: Json | null
+          consolidation_status?: string | null
           created_at?: string
           evaluated_at?: string | null
           evaluated_by?: string | null
@@ -1834,6 +1895,8 @@ export type Database = {
         Update: {
           class_id?: string
           concept?: Database["public"]["Enums"]["evaluation_concept"] | null
+          consolidation_counts?: Json | null
+          consolidation_status?: string | null
           created_at?: string
           evaluated_at?: string | null
           evaluated_by?: string | null
