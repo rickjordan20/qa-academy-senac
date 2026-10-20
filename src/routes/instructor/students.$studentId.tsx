@@ -7,6 +7,7 @@ import { useAdminClasses, useAdminGroups, useRoster, ENROLLMENT_STATUS, labelOf 
 import { useStudentDossier, useEvalHistory, useStudentEvaluationAck } from "@/lib/assessment";
 import { useIndicators } from "@/lib/uc10";
 import { AuditList } from "@/components/admin/AuditList";
+import { ConsolidationPanel } from "@/components/assessments/ConsolidationPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -205,6 +206,15 @@ function Student360() {
           </CardContent>
         </Card>
       </div>
+
+      <ConsolidationPanel
+        studentId={studentId}
+        classId={enrollment?.class_id ?? null}
+        indicators={indicators ?? []}
+        instructorId={user?.id ?? null}
+      />
+
+
 
       <div className="flex flex-wrap gap-3 text-sm">
         <Link to="/instructor/dossier" className="text-accent hover:underline">
