@@ -50,6 +50,13 @@
       "when": 1792469178497,
       "tag": "0006_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792469584467,
+      "tag": "0007_activate_indicator_consolidation_uc10",
+      "breakpoints": true
     }
   ]
 }
