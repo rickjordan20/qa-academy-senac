@@ -98,7 +98,7 @@ export function consolidate(
 
   const max = Math.max(...CONCEPTS.map((c) => counts[c]));
   const leaders = CONCEPTS.filter((c) => counts[c] === max);
-  const mode: Concept | "tie" = leaders.length > 1 ? "tie" : leaders[0];
+  const mode: Concept | "tie" = leaders.length > 1 ? "tie" : (leaders[0] as Concept);
 
   // Decisão docente vigente nunca é sobrescrita automaticamente.
   if (homologation) {
