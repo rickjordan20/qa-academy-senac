@@ -35,7 +35,22 @@ export type EvalContext = {
   indicators: { code: string; description: string }[];
   blocks: CtxBlock[];
   group: { members: CtxMember[] } | null;
+  /** Recuperação personalizada: indicadores congelados na tentativa (null = missão convencional). */
+  recovery_indicator_codes?: string[] | null;
 };
+
+/**
+ * Restringe blocos aos indicadores liberados na tentativa. Blocos sem nenhum
+ * indicador liberado saem; em blocos com vários indicadores, só ficam os liberados.
+ * `target` null/undefined = missão convencional (sem alteração).
+ */
+export function scopeBlocksToTarget<T extends { indicator_codes?: string[] }>(blocks: T[], target: string[] | null | undefined): T[] {
+  if (!target) return blocks;
+  const set = new Set(target);
+  return blocks
+    .map((b) => ({ ...b, indicator_codes: (b.indicator_codes ?? []).filter((c) => set.has(c)) }))
+    .filter((b) => b.indicator_codes.length > 0);
+}
 
 export type AiBlock = {
   section_id: string;
