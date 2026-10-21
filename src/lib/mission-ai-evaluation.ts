@@ -148,7 +148,7 @@ export function sanitizeEvaluation(ai: AiAnswer, rawCtx: EvalContext): CleanEval
     if (b.indicator_codes.some((c) => !indicators[c])) needs = true;
     if (!evidence) bAlerts.push("Bloco sem respostas ou registros: revisão docente necessária.");
     if (!a) bAlerts.push("A IA não analisou este bloco.");
-    for (const s of Array.isArray(a?.alerts) ? a!.alerts : []) if (typeof s === "string" && s.trim()) bAlerts.push(s.trim());
+    for (const s of Array.isArray(a?.alerts) ? a!.alerts : []) if (typeof s === "string" && s.trim() && !mentionsHidden(s)) bAlerts.push(s.trim());
     const xpMax = Math.max(0, Math.floor(b.xp_max || 0));
     return {
       section_id: b.section_id,
