@@ -4,6 +4,7 @@ import {
   missionXpCap,
   sanitizeEvaluation,
   scopeBlocksToTarget,
+  oversizedStatements,
   type AiAnswer,
   type CtxBlock,
   type CtxMember,
@@ -15,13 +16,21 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const HIDDEN = new Set(["id", "section_id", "parent_id", "feature_id"]);
 
 const SYSTEM = `Você é um docente avaliador do SENAC (UC10, Qualidade de Software). Avalie a entrega de uma missão BLOCO A BLOCO, em português brasileiro, falando diretamente ao estudante ("você"), com tom justo, flexível, acolhedor e fundamentado.
+PROCEDIMENTO OBRIGATÓRIO (nesta ordem):
+1. INTERPRETAR O ENUNCIADO de cada bloco antes de ler respostas: título/objetivo da missão, description, instructions (enunciado completo), questions (perguntas com id e obrigatoriedade), códigos, exemplos, dados, quantidades mínimas e CRITÉRIO DE CORREÇÃO do próprio enunciado. Distinga requisitos obrigatórios, exemplos ilustrativos, orientações e atividades opcionais (required=false) ou supervisionadas.
+2. ANALISAR CADA QUESTÃO/REGISTRO SEPARADAMENTE: o que foi pedido, a resposta correspondente, acertos, erros técnicos comprovados, acertos parciais, requisitos não atendidos. Diferencie ausência de resposta, resposta incompleta e resposta incorreta. Verifique todos os campos, registros e anexos antes de afirmar ausência de evidência.
+3. SÓ ENTÃO consolidar a menção (A, PA ou NA) de cada indicador do bloco, com justificativa objetiva baseada no critério do enunciado.
+4. Por último, general_feedback, coerente com as menções dos blocos.
 Regras:
-- Use SOMENTE os dados fornecidos. Não invente respostas, entregas, resultados ou participações.
-- Para cada bloco avalie apenas os indicadores listados nele (A, PA ou NA). Considere compreensão, correção técnica, objetivos do bloco, qualidade das evidências, esforço.
-- Não penalize excessivamente pequenos erros que não comprometam a competência. Não atribua A ou PA sem evidência mínima.
+- Use SOMENTE os dados fornecidos. Não invente respostas, entregas, resultados, participações, arquivos, funções, critérios ou exigências que não constem do enunciado. Não considere erro algo que não foi solicitado.
+- Código no enunciado: use EXATAMENTE o código fornecido no bloco como referência (é didático, não é o código da QA Academy). Avalie a cobertura dos caminhos/condições que o enunciado pede. Não exija outros arquivos, funções ou acesso ao código da plataforma.
+- Não afirme que um teste foi executado se houver só descrição teórica, salvo se o enunciado aceitar.
+- Bloco opcional ou supervisionado (required=false) sem registros: mention = null, needs_review = true; nunca NA punitivo e nunca A automático.
+- Postura justa e flexível: valorize evidências reais de aprendizagem; não penalize pequenas falhas de redação/formatação que não comprometam a competência; não exija perfeição. Não atribua A ou PA sem evidência mínima.
 - Se não houver evidência suficiente, mention = null e needs_review = true (revisão docente necessária).
+- Para cada bloco avalie apenas os indicadores listados nele.
 - XP do bloco entre 0 e xp_max do bloco, proporcional à qualidade.
-- feedback do bloco: 30 a 80 palavras, específico. general_feedback: 60 a 140 palavras, consolidado.
+- feedback do bloco: 30 a 100 palavras, específico (acertos e o que melhorar, citando as questões). general_feedback: 60 a 160 palavras, individualizado, acolhedor e profissional, sem requisitos inexistentes e sem contradizer os blocos.
 - Missão em grupo: avalie a entrega coletiva. NÃO trate ausência de registros no Kanban/tarefas como ausência de participação; considere todas as evidências (registros, contribuições, tarefas). Só sugira member_overrides quando houver evidência clara e diferente para o integrante; se não for possível distinguir contribuições, NÃO sugira override e registre um alerta pedindo revisão docente.
 - evidence_used: cite títulos/rótulos reais dos registros ou respostas usados.
 Responda em JSON.`;
@@ -41,9 +50,23 @@ const SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["section_id", "indicators", "xp", "feedback", "evidence_used", "needs_review", "alerts"],
+        required: ["section_id", "question_analysis", "indicators", "xp", "feedback", "evidence_used", "needs_review", "alerts"],
         properties: {
           section_id: { type: "string" },
+          // Análise questão a questão ANTES da menção do bloco
+          question_analysis: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["question", "status", "note"],
+              properties: {
+                question: { type: "string" },
+                status: { type: "string", enum: ["atendida", "parcial", "incorreta", "sem_resposta"] },
+                note: { type: "string" },
+              },
+            },
+          },
           indicators: {
             type: "array",
             items: {
@@ -92,8 +115,9 @@ type Sec = {
   body?: string;
   visible?: boolean;
   xp?: number;
+  required?: boolean;
   indicator_codes?: string[];
-  items?: { id: string; label?: string; key?: string }[];
+  items?: { id: string; label?: string; key?: string; required?: boolean }[];
   reportFields?: { id: string; key?: string; label?: string }[];
 };
 
@@ -165,6 +189,10 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
       (run.builder_missions.sections ?? []).filter((s) => s.visible !== false && (s.indicator_codes ?? []).length > 0),
       target,
     );
+    const tooLong = oversizedStatements(sections);
+    if (tooLong.length) {
+      return { ok: false as const, error: `Enunciado longo demais para análise fundamentada (${tooLong.join("; ")}). Avalie manualmente ou reduza o enunciado.` };
+    }
     const blocks: CtxBlock[] = sections.map((s) => {
       const labels = new Map<string, string>();
       for (const it of [...(s.items ?? []), ...(s.reportFields ?? [])]) {
@@ -176,9 +204,12 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
         section_id: s.id,
         title: s.title,
         kind: s.kind,
-        description: short(s.description, 600),
-        instructions: short(s.body, 1200),
+        // Enunciado completo (limite verificado antes; nunca truncado em silêncio)
+        description: String(s.description ?? "").trim(),
+        instructions: String(s.body ?? "").trim(),
         indicator_codes: s.indicator_codes ?? [],
+        required: s.required !== false,
+        questions: (s.items ?? []).map((it) => ({ id: it.id, label: String(it.label ?? it.id), required: it.required !== false })),
         xp_max: Math.max(0, Number(s.xp) || 0),
         answers: Object.entries(ans)
           .map(([k, v]) => ({ label: labels.get(k) ?? k, value: short(v) }))
