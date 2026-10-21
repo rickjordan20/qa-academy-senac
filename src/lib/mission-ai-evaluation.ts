@@ -35,7 +35,22 @@ export type EvalContext = {
   indicators: { code: string; description: string }[];
   blocks: CtxBlock[];
   group: { members: CtxMember[] } | null;
+  /** Recuperação personalizada: indicadores congelados na tentativa (null = missão convencional). */
+  recovery_indicator_codes?: string[] | null;
 };
+
+/**
+ * Restringe blocos aos indicadores liberados na tentativa. Blocos sem nenhum
+ * indicador liberado saem; em blocos com vários indicadores, só ficam os liberados.
+ * `target` null/undefined = missão convencional (sem alteração).
+ */
+export function scopeBlocksToTarget<T extends { indicator_codes?: string[] }>(blocks: T[], target: string[] | null | undefined): T[] {
+  if (!target) return blocks;
+  const set = new Set(target);
+  return blocks
+    .map((b) => ({ ...b, indicator_codes: (b.indicator_codes ?? []).filter((c) => set.has(c)) }))
+    .filter((b) => b.indicator_codes.length > 0);
+}
 
 export type AiBlock = {
   section_id: string;
@@ -104,8 +119,15 @@ export function hasEvidence(b: CtxBlock) {
 }
 
 /** Valida a resposta da IA contra o contexto real; descarta o que não existir. */
-export function sanitizeEvaluation(ai: AiAnswer, ctx: EvalContext): CleanEvaluation {
-  const alerts: string[] = (Array.isArray(ai?.alerts) ? ai.alerts : []).filter((s) => typeof s === "string" && s.trim()).slice(0, 8);
+export function sanitizeEvaluation(ai: AiAnswer, rawCtx: EvalContext): CleanEvaluation {
+  // Defesa em profundidade: mesmo que o contexto traga blocos ocultos, só os liberados contam.
+  const ctx: EvalContext = { ...rawCtx, blocks: scopeBlocksToTarget(rawCtx.blocks, rawCtx.recovery_indicator_codes) };
+  const target = rawCtx.recovery_indicator_codes ? new Set(rawCtx.recovery_indicator_codes) : null;
+  const hidden = target ? ["I1", "I2", "I3", "I4", "I5", "I6"].filter((c) => !target.has(c)) : [];
+  const mentionsHidden = (s: string) => hidden.some((c) => new RegExp(`\\b${c}\\b`).test(s));
+  const alerts: string[] = (Array.isArray(ai?.alerts) ? ai.alerts : [])
+    .filter((s) => typeof s === "string" && s.trim() && !mentionsHidden(s))
+    .slice(0, 8);
   const aiById = new Map((Array.isArray(ai?.blocks) ? ai.blocks : []).map((b) => [b?.section_id, b]));
   const blocks: CleanBlock[] = ctx.blocks.map((b) => {
     const a = aiById.get(b.section_id);
@@ -126,7 +148,7 @@ export function sanitizeEvaluation(ai: AiAnswer, ctx: EvalContext): CleanEvaluat
     if (b.indicator_codes.some((c) => !indicators[c])) needs = true;
     if (!evidence) bAlerts.push("Bloco sem respostas ou registros: revisão docente necessária.");
     if (!a) bAlerts.push("A IA não analisou este bloco.");
-    for (const s of Array.isArray(a?.alerts) ? a!.alerts : []) if (typeof s === "string" && s.trim()) bAlerts.push(s.trim());
+    for (const s of Array.isArray(a?.alerts) ? a!.alerts : []) if (typeof s === "string" && s.trim() && !mentionsHidden(s)) bAlerts.push(s.trim());
     const xpMax = Math.max(0, Math.floor(b.xp_max || 0));
     return {
       section_id: b.section_id,
@@ -177,7 +199,13 @@ export function sanitizeEvaluation(ai: AiAnswer, ctx: EvalContext): CleanEvaluat
     finals,
     xp,
     xpCap,
-    generalFeedback: typeof ai?.general_feedback === "string" ? ai.general_feedback.trim() : "",
+    // Recuperação: remove frases que citem indicadores dispensados.
+    generalFeedback:
+      typeof ai?.general_feedback === "string"
+        ? (hidden.length
+            ? (ai.general_feedback.match(/[^.!?]+[.!?]*/g) ?? []).filter((s) => !mentionsHidden(s)).join("").trim()
+            : ai.general_feedback.trim())
+        : "",
     memberOverrides,
     overrideNotes: reasons.join("\n"),
     alerts,
