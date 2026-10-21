@@ -50,9 +50,23 @@ const SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["section_id", "indicators", "xp", "feedback", "evidence_used", "needs_review", "alerts"],
+        required: ["section_id", "question_analysis", "indicators", "xp", "feedback", "evidence_used", "needs_review", "alerts"],
         properties: {
           section_id: { type: "string" },
+          // Análise questão a questão ANTES da menção do bloco
+          question_analysis: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["question", "status", "note"],
+              properties: {
+                question: { type: "string" },
+                status: { type: "string", enum: ["atendida", "parcial", "incorreta", "sem_resposta"] },
+                note: { type: "string" },
+              },
+            },
+          },
           indicators: {
             type: "array",
             items: {

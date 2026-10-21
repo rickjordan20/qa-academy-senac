@@ -58,6 +58,7 @@ export function scopeBlocksToTarget<T extends { indicator_codes?: string[] }>(bl
 
 export type AiBlock = {
   section_id: string;
+  question_analysis?: { question: string; status: string; note: string }[];
   indicators: { code: string; mention: string | null; justification: string }[];
   xp: number;
   feedback: string;
