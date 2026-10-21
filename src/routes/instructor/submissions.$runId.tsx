@@ -97,6 +97,9 @@ function EvaluatePage() {
     run?.mission?.base_xp ?? 0,
     entries.map((e) => [e.id, e.section_id, e.title, e.data, e.link]),
     members.map((m) => m.id),
+    // recuperação: análises antigas (sem filtro por indicador) ficam inválidas
+    "recovery-scope-v2",
+    (run as { target_indicator_codes?: string[] | null } | null)?.target_indicator_codes ?? null,
   ]);
 
   // Recuperação personalizada: só os indicadores congelados na tentativa entram na correção.
