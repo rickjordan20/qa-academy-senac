@@ -199,7 +199,13 @@ export function sanitizeEvaluation(ai: AiAnswer, rawCtx: EvalContext): CleanEval
     finals,
     xp,
     xpCap,
-    generalFeedback: typeof ai?.general_feedback === "string" ? ai.general_feedback.trim() : "",
+    // Recuperação: remove frases que citem indicadores dispensados.
+    generalFeedback:
+      typeof ai?.general_feedback === "string"
+        ? (hidden.length
+            ? (ai.general_feedback.match(/[^.!?]+[.!?]*/g) ?? []).filter((s) => !mentionsHidden(s)).join("").trim()
+            : ai.general_feedback.trim())
+        : "",
     memberOverrides,
     overrideNotes: reasons.join("\n"),
     alerts,

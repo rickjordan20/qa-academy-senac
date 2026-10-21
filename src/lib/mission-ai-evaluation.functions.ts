@@ -104,14 +104,15 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const runRes = await supabase
       .from("builder_mission_runs")
-      .select("id, mission_id, student_id, group_id, answers, submitted_at, eval_status, builder_missions(*)")
+      .select("id, mission_id, student_id, group_id, answers, submitted_at, eval_status, target_indicator_codes, builder_missions(*)")
       .eq("id", data.runId)
       .maybeSingle();
     if (runRes.error || !runRes.data) throw new Error("Entrega não encontrada.");
     const run = runRes.data as unknown as {
       id: string; mission_id: string; student_id: string | null; group_id: string | null;
       answers: Record<string, Record<string, unknown>> | null; submitted_at: string | null;
-      builder_missions: { title: string; objective: string; description: string; base_xp: number; sections: Sec[] } | null;
+      target_indicator_codes: string[] | null;
+      builder_missions: { title: string; objective: string; description: string; base_xp: number; sections: Sec[]; personalize_by_pending_indicators?: boolean } | null;
     };
     if (!run.builder_missions) throw new Error("Missão vinculada não encontrada.");
     if (!run.submitted_at) throw new Error("Esta entrega ainda não foi enviada para avaliação.");
@@ -152,7 +153,12 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
     const names = new Map(((profRes.data ?? []) as { id: string; full_name: string | null; email: string }[]).map((p) => [p.id, p.full_name?.trim() || p.email]));
     const entries = (entRes.data ?? []) as { id: string; section_id: string; kind: string; title: string; author_id: string; data: Record<string, unknown> | null; link: string | null }[];
 
-    const sections = (run.builder_missions.sections ?? []).filter((s) => s.visible !== false && (s.indicator_codes ?? []).length > 0);
+    // Recuperação personalizada: usa o conjunto CONGELADO da tentativa (nunca recalcula pela matriz atual).
+    const target = run.builder_missions.personalize_by_pending_indicators ? (run.target_indicator_codes ?? []) : null;
+    const sections = scopeBlocksToTarget(
+      (run.builder_missions.sections ?? []).filter((s) => s.visible !== false && (s.indicator_codes ?? []).length > 0),
+      target,
+    );
     const blocks: CtxBlock[] = sections.map((s) => {
       const labels = new Map<string, string>();
       for (const it of [...(s.items ?? []), ...(s.reportFields ?? [])]) {
