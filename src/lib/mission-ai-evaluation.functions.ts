@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   missionXpCap,
   sanitizeEvaluation,
+  scopeBlocksToTarget,
   type AiAnswer,
   type CtxBlock,
   type CtxMember,
@@ -24,6 +25,11 @@ Regras:
 - Missão em grupo: avalie a entrega coletiva. NÃO trate ausência de registros no Kanban/tarefas como ausência de participação; considere todas as evidências (registros, contribuições, tarefas). Só sugira member_overrides quando houver evidência clara e diferente para o integrante; se não for possível distinguir contribuições, NÃO sugira override e registre um alerta pedindo revisão docente.
 - evidence_used: cite títulos/rótulos reais dos registros ou respostas usados.
 Responda em JSON.`;
+
+const RECOVERY = (codes: string[]) => `RECUPERAÇÃO INDIVIDUAL: este estudante recebeu SOMENTE os blocos dos indicadores ${codes.join(", ")} (pendentes em PA/NA). Os demais indicadores já foram atendidos e NÃO fazem parte desta tentativa.
+- Avalie e comente exclusivamente ${codes.join(", ")}. Não cite, não cobre e não atribua menção a nenhum outro indicador.
+- Não afirme que o estudante deixou de fazer atividades que não lhe foram disponibilizadas.
+- general_feedback: reconheça acertos e avanços nesses indicadores, aponte dificuldades reais e orientações de melhoria, com linguagem acolhedora e individualizada.`;
 
 const SCHEMA = {
   type: "object",
@@ -222,6 +228,7 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
       indicators: ((indRes.data ?? []) as { code: string; description: string }[]).filter((i) => codes.has(i.code)).map((i) => ({ code: i.code, description: i.description })),
       blocks,
       group,
+      recovery_indicator_codes: target,
     };
 
     if (!blocks.length) return { ok: false as const, error: "Nenhum bloco desta missão possui indicadores associados." };
@@ -242,7 +249,7 @@ export const evaluateMissionWithAi = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: MODEL,
           messages: [
-            { role: "system", content: SYSTEM },
+            { role: "system", content: target ? `${SYSTEM}\n${RECOVERY(target)}` : SYSTEM },
             { role: "user", content: `Entrega (json):\n${JSON.stringify(ctx)}` },
           ],
           response_format: { type: "json_schema", json_schema: { name: "avaliacao", strict: true, schema: SCHEMA } },
