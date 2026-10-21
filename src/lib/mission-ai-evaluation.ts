@@ -16,6 +16,10 @@ export type CtxBlock = {
   instructions: string;
   indicator_codes: string[];
   xp_max: number;
+  /** Bloco obrigatório (false = opcional/supervisionado: sem evidência não gera NA). */
+  required?: boolean;
+  /** Perguntas/campos estruturados do enunciado, com identificador. */
+  questions?: { id: string; label: string; required: boolean }[];
   answers: { label: string; value: string }[];
   entries: { title: string; kind: string; author: string | null; data: Record<string, string>; link: string | null }[];
 };
@@ -141,12 +145,16 @@ export function sanitizeEvaluation(ai: AiAnswer, rawCtx: EvalContext): CleanEval
       if (it.mention && CONCEPTS.has(it.mention)) {
         // Sem evidência mínima não se atribui A/PA.
         if (!evidence && it.mention !== "NA") continue;
+        // Bloco opcional/supervisionado sem evidência: nunca NA punitivo.
+        if (!evidence && b.required === false) continue;
         indicators[it.code] = it.mention as Concept;
       }
     }
     let needs = !a || !!a.needs_review || !evidence;
     if (b.indicator_codes.some((c) => !indicators[c])) needs = true;
-    if (!evidence) bAlerts.push("Bloco sem respostas ou registros: revisão docente necessária.");
+    if (!evidence) bAlerts.push(b.required === false
+      ? "Bloco opcional/supervisionado sem registros: revisão docente necessária (sem NA automático)."
+      : "Bloco sem respostas ou registros: revisão docente necessária.");
     if (!a) bAlerts.push("A IA não analisou este bloco.");
     for (const s of Array.isArray(a?.alerts) ? a!.alerts : []) if (typeof s === "string" && s.trim() && !mentionsHidden(s)) bAlerts.push(s.trim());
     const xpMax = Math.max(0, Math.floor(b.xp_max || 0));
@@ -298,4 +306,17 @@ export function submissionFingerprint(parts: unknown): string {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
   return String(h >>> 0);
+}
+
+/** Limites do enunciado enviados à IA. Acima disso a análise é bloqueada (sem truncar em silêncio). */
+export const STATEMENT_LIMITS = { description: 4000, instructions: 10000, question: 1500 } as const;
+
+/** Lista os blocos cujo enunciado excede o limite (para impedir avaliação com instruções incompletas). */
+export function oversizedStatements(secs: { title: string; description?: string; body?: string; items?: { label?: string }[] }[]): string[] {
+  return secs
+    .filter((s) =>
+      String(s.description ?? "").trim().length > STATEMENT_LIMITS.description ||
+      String(s.body ?? "").trim().length > STATEMENT_LIMITS.instructions ||
+      (s.items ?? []).some((i) => String(i.label ?? "").length > STATEMENT_LIMITS.question))
+    .map((s) => s.title);
 }
