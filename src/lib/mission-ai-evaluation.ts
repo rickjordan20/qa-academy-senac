@@ -119,8 +119,15 @@ export function hasEvidence(b: CtxBlock) {
 }
 
 /** Valida a resposta da IA contra o contexto real; descarta o que não existir. */
-export function sanitizeEvaluation(ai: AiAnswer, ctx: EvalContext): CleanEvaluation {
-  const alerts: string[] = (Array.isArray(ai?.alerts) ? ai.alerts : []).filter((s) => typeof s === "string" && s.trim()).slice(0, 8);
+export function sanitizeEvaluation(ai: AiAnswer, rawCtx: EvalContext): CleanEvaluation {
+  // Defesa em profundidade: mesmo que o contexto traga blocos ocultos, só os liberados contam.
+  const ctx: EvalContext = { ...rawCtx, blocks: scopeBlocksToTarget(rawCtx.blocks, rawCtx.recovery_indicator_codes) };
+  const target = rawCtx.recovery_indicator_codes ? new Set(rawCtx.recovery_indicator_codes) : null;
+  const hidden = target ? ["I1", "I2", "I3", "I4", "I5", "I6"].filter((c) => !target.has(c)) : [];
+  const mentionsHidden = (s: string) => hidden.some((c) => new RegExp(`\\b${c}\\b`).test(s));
+  const alerts: string[] = (Array.isArray(ai?.alerts) ? ai.alerts : [])
+    .filter((s) => typeof s === "string" && s.trim() && !mentionsHidden(s))
+    .slice(0, 8);
   const aiById = new Map((Array.isArray(ai?.blocks) ? ai.blocks : []).map((b) => [b?.section_id, b]));
   const blocks: CleanBlock[] = ctx.blocks.map((b) => {
     const a = aiById.get(b.section_id);
