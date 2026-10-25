@@ -9,18 +9,17 @@ import {
 
   useClassEvaluations,
   useClassStudents,
-  useConfirmUcResult,
   useUcResults,
   type EvaluationRow,
   type IndicatorRow,
   type StudentInfo,
 } from "@/lib/assessment";
 import { ClassPicker } from "@/components/eval/ClassPicker";
+import { ClosureControls } from "@/components/eval/ClosureControls";
 import { IndicatorDialog } from "@/components/eval/IndicatorDialog";
 import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/instructor/evaluations")({
   head: () => ({
@@ -45,11 +44,10 @@ function EvaluationsPage() {
   const [classId, setClassId] = useState<string | null>(null);
   const active = classId ?? classes?.[0]?.id ?? null;
 
-  const { data: indicators } = useClassIndicators(active);
+  const { data: indicators, ucCode, ucMissing } = useClassIndicators(active);
   const { data: students } = useClassStudents(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: results } = useUcResults(active);
-  const confirmResult = useConfirmUcResult(active);
 
   const [cell, setCell] = useState<{ student: StudentInfo; indicator: IndicatorRow } | null>(null);
 
@@ -60,16 +58,6 @@ function EvaluationsPage() {
   const resultMap = new Map((results ?? []).map((r) => [r.student_id, r]));
   const forStudent = (sid: string) =>
     new Map(inds.map((i) => [i.id, evMap.get(`${sid}:${i.id}`)!]).filter(([, v]) => !!v) as [string, EvaluationRow][]);
-
-  async function confirm(sid: string, value: "D" | "ND") {
-    if (!user) return;
-    try {
-      await confirmResult.mutateAsync({ studentId: sid, finalResult: value, confirmedBy: user.id });
-      toast.success(`Resultado ${value} confirmado`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  }
 
   function exportCsv() {
     const rows: (string | number)[][] = [
@@ -107,10 +95,15 @@ function EvaluationsPage() {
       </div>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
+      {ucMissing && (
+        <p className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          Não foi possível identificar a UC desta turma (ou ela não tem indicadores cadastrados). As operações sobre indicadores estão bloqueadas para evitar registros na UC errada.
+        </p>
+      )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Alunos e indicadores I1 – I6</CardTitle>
+          <CardTitle className="text-base">Alunos e indicadores {ucCode ?? ""}</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -149,40 +142,24 @@ function EvaluationsPage() {
                       {sit.label}
                       {pend.length > 0 && (
                         <span className="block text-muted-foreground">
-                          Indicadores NA: {pend.map((p) => p.code).join(", ")}
+                          Indicadores pendentes (PA/NA): {pend.map((p) => `${p.code} (${map.get(p.id)?.concept})`).join(", ")}
                         </span>
                       )}
                     </td>
                     <td className="p-2">
-                      {result?.final_result ? (
-                        <span className="rounded-md border border-border px-2 py-0.5 text-xs font-semibold">
-                          {result.final_result}
+                      {!result?.final_result && (
+                        <span className="mb-1 block text-xs text-muted-foreground">
+                          Sugestão: {sit.suggestion ?? "—"}
                         </span>
-                      ) : (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs text-muted-foreground">
-                            Sugestão: {sit.suggestion ?? "—"}
-                          </span>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={sit.suggestion !== "D"}
-                              onClick={() => confirm(s.id, "D")}
-                            >
-                              D
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={!sit.recoveryDone}
-                              onClick={() => confirm(s.id, "ND")}
-                            >
-                              ND
-                            </Button>
-                          </div>
-                        </div>
                       )}
+                      <ClosureControls
+                        compact
+                        classId={active}
+                        studentId={s.id}
+                        indicators={inds}
+                        byIndicator={map}
+                        result={result}
+                      />
                     </td>
                   </tr>
                 );
@@ -200,8 +177,9 @@ function EvaluationsPage() {
         </CardContent>
       </Card>
 
-      {cell && active && (
+      {cell && active && !ucMissing && (
         <IndicatorDialog
+          ucResult={resultMap.get(cell.student.id)}
           open={!!cell}
           onOpenChange={(v) => !v && setCell(null)}
           classId={active}

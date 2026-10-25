@@ -6,7 +6,6 @@ import {
   ucSituation,
   useClassEvaluations,
   useClassStudents,
-  useConfirmUcResult,
   useUcResults,
   type EvaluationRow,
   type IndicatorRow,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/assessment";
 import { useIndicatorOrigins } from "@/lib/mission-submissions";
 import { ClassPicker } from "@/components/eval/ClassPicker";
+import { ClosureControls } from "@/components/eval/ClosureControls";
 import { IndicatorDialog } from "@/components/eval/IndicatorDialog";
 import { ConceptBadge } from "@/components/ConceptBadge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/instructor/final")({
         content: "Módulo da Aula 21 para avaliação final individual dos indicadores I1–I6.",
       },
       { property: "og:title", content: "Avaliação final (Aula 21) | QA Academy" },
-      { property: "og:description", content: "Feche a UC10 com avaliação final por indicador." },
+      { property: "og:description", content: "Feche a UC da turma com avaliação final por indicador." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -42,11 +42,10 @@ function FinalPage() {
   const { data: classes } = useMyClasses(user?.id ?? null);
   const [classId, setClassId] = useState<string | null>(null);
   const active = classId ?? classes?.[0]?.id ?? null;
-  const { data: indicators } = useClassIndicators(active);
+  const { data: indicators, ucCode, ucMissing } = useClassIndicators(active);
   const { data: students } = useClassStudents(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: results } = useUcResults(active);
-  const confirmResult = useConfirmUcResult(active);
   const [selected, setSelected] = useState<StudentInfo | null>(null);
   const [cell, setCell] = useState<IndicatorRow | null>(null);
 
@@ -71,6 +70,11 @@ function FinalPage() {
       </p>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
+      {ucMissing && (
+        <p className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          Não foi possível identificar a UC desta turma (ou ela não tem indicadores cadastrados). As operações sobre indicadores estão bloqueadas para evitar registros na UC errada.
+        </p>
+      )}
 
       <div className="mb-4 flex flex-wrap gap-2">
         {(students ?? []).map((s) => (
@@ -173,7 +177,7 @@ function FinalPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Resultado da UC10</CardTitle>
+                <CardTitle className="text-base">Resultado da {ucCode ?? "UC"}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p>
@@ -189,32 +193,15 @@ function FinalPage() {
                   Resultado confirmado:{" "}
                   <span className="font-semibold">{result?.final_result ?? "não confirmado"}</span>
                 </p>
-                <div className="flex gap-2">
-                  {(["D", "ND"] as const).map((v) => (
-                    <Button
-                      key={v}
-                      variant={result?.final_result === v ? "default" : "outline"}
-                      disabled={v === "D" && situation.pending.length > 0}
-                      onClick={async () => {
-                        if (!user) return;
-                        try {
-                          await confirmResult.mutateAsync({
-                            studentId: student.id,
-                            finalResult: v,
-                            confirmedBy: user.id,
-                          });
-                          toast.success(`Resultado ${v} confirmado`);
-                        } catch (e) {
-                          toast.error((e as Error).message);
-                        }
-                      }}
-                    >
-                      {v === "D" ? "D – Desenvolvido" : "ND – Não Desenvolvido"}
-                    </Button>
-                  ))}
-                </div>
+                <ClosureControls
+                  classId={active}
+                  studentId={student.id}
+                  indicators={inds}
+                  byIndicator={evMap}
+                  result={result}
+                />
                 <p className="text-xs text-muted-foreground">
-                  D exige A em todos os indicadores: se houver evidências suficientes, revise e justifique os indicadores em PA/NA antes. A decisão é sempre do instrutor.
+                  D exige A em todos os indicadores, sem exceção: se houver evidências suficientes, revise e justifique os indicadores em PA/NA antes. ND antes da Recuperação Final só como encerramento excepcional, com justificativa registrada.
                 </p>
               </CardContent>
             </Card>
