@@ -52,10 +52,31 @@ describe("fluxo de avaliação UC10", () => {
     expect(s.suggestion).toBeNull();
   });
 
-  it("B2 — PA em todos os indicadores mantém Avaliação Final em aberto, não recuperação", () => {
+  it("B2 — PA é menção válida de fechamento e leva à Recuperação Final", () => {
     const s = ucSituation(inds, map(inds.map((i) => ev(i.id, "PA", "regular"))));
-    expect(s.key).toBe("final_open");
-    expect(s.pending).toHaveLength(0);
+    expect(s.key).toBe("needs_recovery");
+    expect(s.pending).toHaveLength(6);
+  });
+
+  it("G — PA mantido após recuperação permanece PA e sugere ND", () => {
+    const rows = all("A").map((r) => (r.indicator_id === "I2" ? ev("I2", "PA", "recuperacao") : r));
+    const m = map(rows);
+    const s = ucSituation(inds, m);
+    expect(m.get("I2")?.concept).toBe("PA");
+    expect(s.key).toBe("ready_nd");
+    expect(s.suggestion).toBe("ND");
+  });
+
+  it("H — PA na Avaliação Final sem recuperação não gera sugestão automática", () => {
+    const rows = all("A").map((r) => (r.indicator_id === "I4" ? ev("I4", "PA") : r));
+    const s = ucSituation(inds, map(rows));
+    expect(s.key).toBe("needs_recovery");
+    expect(s.suggestion).toBeNull();
+  });
+
+  it("I — revisão manual do instrutor para A em todos sugere D", () => {
+    const rows = all("A").map((r) => (r.indicator_id === "I2" ? ev("I2", "A", "final") : r));
+    expect(ucSituation(inds, map(rows)).suggestion).toBe("D");
   });
 
   it("C — um NA na Avaliação Final exige Recuperação Final e bloqueia ND", () => {
