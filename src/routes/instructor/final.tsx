@@ -66,7 +66,7 @@ function FinalPage() {
     <div>
       <h1 className="mb-1 text-2xl font-bold">Avaliação final – Aula 21</h1>
       <p className="mb-4 text-sm text-muted-foreground">
-        Analise a evolução do aluno, feche cada indicador em A ou NA e, quando houver pendência,
+        Analise a evolução do aluno, feche cada indicador em A, PA ou NA e, quando houver pendência,
         conduza a Recuperação Final antes de confirmar o resultado.
       </p>
 
