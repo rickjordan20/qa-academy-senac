@@ -6,7 +6,7 @@ import type { Concept, Homologation } from "@/lib/indicator-consolidation";
 const MODEL = "google/gemini-3.1-flash-lite";
 const UUID = /^[0-9a-f-]{36}$/i;
 
-const SYSTEM = `Você é um docente avaliador do SENAC (UC10, QA). Escreva em português brasileiro, dirigindo-se diretamente ao estudante ("você"), com tom acolhedor, objetivo e profissional.
+const SYSTEM = `Você é um docente avaliador do SENAC (Qualidade de Software). Escreva em português brasileiro, dirigindo-se diretamente ao estudante ("você"), com tom acolhedor, objetivo e profissional.
 Regras: use SOMENTE os dados fornecidos; não invente missões, entregas ou resultados; não atribua competências sem evidência; reconheça avanços e esforço; aponte dificuldades sem exagero; justifique pedagogicamente a menção sugerida; avaliação formativa e justa. Diferenciação individual prevalece sobre a menção do grupo. Interprete qualitativamente comentários dos blocos e feedbacks, não só contagens.
 Feedback com 80 a 140 palavras (menos se houver pouca evidência). Se a evidência for insuficiente, suggested_mention = null e diga isso no texto.
 Em evidence_used cite apenas mission_id existentes no contexto. Responda em JSON.`;
@@ -42,16 +42,19 @@ export const analyzeIndicatorHistory = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     // Autorização no servidor (não confia no frontend)
-    const [instr, view, enr, ind] = await Promise.all([
+    const [instr, view, enr, ind, cls] = await Promise.all([
       supabase.rpc("is_class_instructor", { _class_id: data.classId, _user_id: userId }),
       supabase.rpc("in_student_view" as never, { _user_id: userId } as never),
       supabase.from("enrollments").select("id").eq("class_id", data.classId).eq("student_id", data.studentId).maybeSingle(),
       supabase.from("indicators").select("id, code, description, uc_code").eq("id", data.indicatorId).maybeSingle(),
+      supabase.from("classes").select("uc_code").eq("id", data.classId).maybeSingle(),
     ]);
     if (instr.error || instr.data !== true) throw new Error("Apenas o instrutor da turma pode gerar a análise.");
     if (view.error || view.data === true) throw new Error("Indisponível no modo \"Ver como aluno\".");
     if (!enr.data) throw new Error("Estudante não matriculado nesta turma.");
-    if (!ind.data || ind.data.uc_code !== "UC10") throw new Error("Indicador não pertence à UC10.");
+    const classUc = (cls.data?.uc_code ?? "").trim();
+    if (!classUc) throw new Error("UC da turma não identificada.");
+    if (!ind.data || ind.data.uc_code !== classUc) throw new Error("Indicador não pertence à UC da turma.");
 
     // Evidências carregadas no servidor: somente versões vigentes e definitivas
     const [evRes, matRes, homRes, fbRes, hiRes] = await Promise.all([

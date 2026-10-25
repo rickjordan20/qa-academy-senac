@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyClasses } from "@/lib/uc10";
+import { useClassIndicators, useMyClasses } from "@/lib/uc10";
 import {
   ucSituation,
   useClassEvaluations,
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/instructor/recovery")({
       { title: "Recuperação | QA Academy" },
       {
         name: "description",
-        content: "Operação Resgate: atividades individuais para os indicadores pendentes da UC10.",
+        content: "Operação Resgate: atividades individuais para os indicadores pendentes (PA/NA) da UC.",
       },
       { property: "og:title", content: "Recuperação | QA Academy" },
       { property: "og:description", content: "Planos de recuperação por indicador pendente." },
@@ -42,7 +42,7 @@ function RecoveryPage() {
   const { data: classes } = useMyClasses(user?.id ?? null);
   const [classId, setClassId] = useState<string | null>(null);
   const active = classId ?? classes?.[0]?.id ?? null;
-  const { data: indicators } = useIndicators();
+  const { data: indicators, ucCode, ucMissing } = useClassIndicators(active);
   const { data: students } = useClassStudents(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: plans } = useRecoveryPlans(active);
@@ -57,7 +57,7 @@ function RecoveryPage() {
     new Map<string, EvaluationRow>(
       (evaluations ?? []).filter((e) => e.student_id === sid).map((e) => [e.indicator_id, e]),
     );
-  /** Recuperação Final é exclusiva de indicadores fechados em NA (regra central). */
+  /** Recuperação Final considera indicadores em PA ou NA. */
   const recoveryFor = (sid: string) => {
     const sit = ucSituation(inds, evFor(sid), resultMap.get(sid));
     const eligible = sit.key === "needs_recovery" || sit.key === "in_recovery";
@@ -69,12 +69,17 @@ function RecoveryPage() {
     <div>
       <h1 className="mb-1 text-2xl font-bold">Recuperação Final</h1>
       <p className="mb-4 text-sm text-muted-foreground">
-        Somente indicadores fechados em NA na Avaliação Final entram na Recuperação Final. PA é
-        etapa formativa e não envia o aluno para recuperação. A avaliação anterior é sempre
-        preservada no histórico.
+        Indicadores em PA ou NA podem integrar a Recuperação Final. A recuperação não garante
+        a mudança para A: a nova menção (A, PA ou NA) depende das evidências apresentadas e da
+        avaliação do instrutor. A avaliação anterior é sempre preservada no histórico.
       </p>
 
       <ClassPicker classes={classes} value={active} onChange={setClassId} />
+      {ucMissing && (
+        <p className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          Não foi possível identificar a UC desta turma (ou ela não tem indicadores cadastrados). As operações sobre indicadores estão bloqueadas para evitar registros na UC errada.
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

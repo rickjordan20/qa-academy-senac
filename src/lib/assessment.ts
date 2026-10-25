@@ -241,6 +241,65 @@ export function ucSituation(
   };
 }
 
+/* ---------------- Fechamento D/ND (regra única Matriz + Avaliação Final) ---- */
+
+export const ND_EXCEPTIONAL_MIN_CHARS = 20;
+
+export type ClosureOptions = {
+  /** D só com A em todos os indicadores — sem exceção. */
+  d: { allowed: boolean; reason: string | null };
+  /** ND regular após a Recuperação Final; antes disso, só como encerramento excepcional. */
+  nd: { allowed: boolean; exceptional: boolean; reason: string | null };
+};
+
+export function closureOptions(
+  indicators: IndicatorRow[],
+  byIndicator: Map<string, EvaluationRow>,
+): ClosureOptions {
+  if (indicators.length === 0) {
+    const reason = "UC da turma sem indicadores identificados.";
+    return { d: { allowed: false, reason }, nd: { allowed: false, exceptional: false, reason } };
+  }
+  const concepts = indicators.map((i) => byIndicator.get(i.id)?.concept ?? null);
+  if (concepts.some((c) => !c)) {
+    const reason = "Há indicadores sem menção.";
+    return { d: { allowed: false, reason }, nd: { allowed: false, exceptional: false, reason } };
+  }
+  const pending = indicators.filter((i) => byIndicator.get(i.id)?.concept !== "A");
+  if (pending.length === 0)
+    return {
+      d: { allowed: true, reason: null },
+      nd: { allowed: false, exceptional: false, reason: "Todos os indicadores estão em A." },
+    };
+  const recovered = pending.every((i) => byIndicator.get(i.id)?.stage === "recuperacao");
+  return {
+    d: { allowed: false, reason: `D exige A em todos os indicadores (pendentes: ${pending.map((p) => p.code).join(", ")}).` },
+    nd: recovered
+      ? { allowed: true, exceptional: false, reason: null }
+      : {
+          allowed: true,
+          exceptional: true,
+          reason: "Recuperação Final ainda não avaliada: ND só como encerramento excepcional, com justificativa.",
+        },
+  };
+}
+
+/** Divergência entre o resultado já homologado e as menções atuais (nunca corrige sozinho). */
+export function closureDivergence(
+  indicators: IndicatorRow[],
+  byIndicator: Map<string, EvaluationRow>,
+  result: UcResult | null | undefined,
+): string | null {
+  if (!result?.final_result || indicators.length === 0) return null;
+  const concepts = indicators.map((i) => byIndicator.get(i.id)?.concept ?? null);
+  const allA = concepts.every((c) => c === "A");
+  if (result.final_result === "D" && !allA)
+    return "Resultado D homologado, mas há indicadores que não estão em A. Reanalise e homologue novamente.";
+  if (result.final_result === "ND" && allA)
+    return "Resultado ND homologado, mas todos os indicadores estão em A. Reanalise e homologue novamente.";
+  return null;
+}
+
 /* ---------------- Próxima ação (derivada da situação, sem nova regra) ------- */
 
 export type NextAction = { label: string; to: string | null; tone: "urgent" | "todo" | "done" };

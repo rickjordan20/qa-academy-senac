@@ -34,7 +34,7 @@ import {
   type Section,
 } from "@/lib/mission-builder";
 import { useBadgeCatalog } from "@/lib/gamification";
-import { useIndicators } from "@/lib/uc10";
+import { useClassIndicators } from "@/lib/uc10";
 import { RecoveryPreview } from "@/components/missions/RecoveryPreview";
 import { groupByModule, useFeatures, useModules, type AppProject } from "@/lib/inventory";
 
@@ -71,7 +71,7 @@ function MissionBuilderPage() {
   const { data: classes } = useInstructorClasses(user?.id ?? null);
   const { data: assignments } = useMissionAssignments(missionId);
   const { data: runs } = useMissionRunsForInstructor(missionId);
-  const { data: indicators } = useIndicators();
+  const { data: indicators, ucMissing: ucMissingBuilder } = useClassIndicators(assignments?.[0]?.class_id ?? classes?.[0]?.id ?? null);
   const { data: badges } = useBadgeCatalog();
   const update = useUpdateMission();
   const setAssignments = useSetAssignments(missionId);
@@ -351,7 +351,7 @@ function MissionBuilderPage() {
           </div>
 
           <div className="sm:col-span-3 space-y-1">
-            <Label className="text-xs">Indicadores da UC10</Label>
+            <Label className="text-xs">Indicadores da UC{ucMissingBuilder ? " — UC da turma não identificada" : ""}</Label>
             <div className="flex flex-wrap gap-2">
               {(indicators ?? []).map((i) => {
                 const code = (i as { code: string }).code;

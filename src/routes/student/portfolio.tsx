@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyEnrollment } from "@/lib/uc10";
+import { useMyEnrollment } from "@/lib/uc10";
+import { useClassIndicators } from "@/lib/uc10";
 import { useMyGroups } from "@/lib/cafe";
 import {
   useFeedbacks,
@@ -37,7 +38,7 @@ function PortfolioPage() {
   const { data: enrollment } = useMyEnrollment(user?.id ?? null);
   const { data: dossier } = useStudentDossier(user?.id ?? null);
   const { data: feedbacks } = useFeedbacks(user?.id ?? null);
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useClassIndicators(enrollment?.class_id ?? null);
   const { data: evaluations } = useClassEvaluations(enrollment?.class_id ?? null);
   const { data: groups } = useMyGroups(user?.id ?? null);
   const group = groups?.[0] ?? null;

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useAdminClasses, useAdminGroups, useRoster, ENROLLMENT_STATUS, labelOf } from "@/lib/admin";
 import { useStudentDossier, useEvalHistory, useStudentEvaluationAck } from "@/lib/assessment";
-import { useIndicators } from "@/lib/uc10";
+import { useClassIndicators } from "@/lib/uc10";
 import { AuditList } from "@/components/admin/AuditList";
 import { ConsolidationPanel } from "@/components/assessments/ConsolidationPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,10 +46,10 @@ function Student360() {
   const { data: groups } = useAdminGroups(classIds);
   const { data: dossier } = useStudentDossier(studentId);
   const { data: history } = useEvalHistory(studentId);
-  const { data: indicators } = useIndicators();
   const { data: evalAck } = useStudentEvaluationAck(studentId);
 
   const enrollment = (roster ?? []).find((r) => r.student_id === studentId) ?? null;
+  const { data: indicators } = useClassIndicators(enrollment?.class_id ?? null);
   const group =
     (groups ?? []).find(
       (g) => g.qa_lead_id === studentId || (g.group_members ?? []).some((m) => m.student_id === studentId),

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyClasses } from "@/lib/uc10";
+import { useClassIndicators, useMyClasses } from "@/lib/uc10";
 import {
   nextAction,
   ucSituation,
@@ -46,7 +46,7 @@ function DossierPage() {
   const [studentId, setStudentId] = useState<string | null>(null);
   const student = (students ?? []).find((s) => s.id === studentId) ?? students?.[0] ?? null;
 
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useClassIndicators(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: dossier } = useStudentDossier(student?.id ?? null);
   const { data: history } = useEvalHistory(student?.id ?? null);

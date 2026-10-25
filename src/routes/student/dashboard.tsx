@@ -3,7 +3,8 @@ import { GraduationCap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useMyGroups } from "@/lib/cafe";
 import { XpOverview } from "@/components/gam/XpOverview";
-import { useIndicators, useMyEnrollment, useMyEvaluations } from "@/lib/uc10";
+import { useMyEnrollment, useMyEvaluations } from "@/lib/uc10";
+import { useClassIndicators } from "@/lib/uc10";
 import { useMyEvaluationAck } from "@/lib/assessment";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +29,7 @@ function StudentDashboard() {
   const { user, profile } = useAuth();
   const { data: enrollment } = useMyEnrollment(user?.id ?? null);
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useClassIndicators(enrollment?.class_id ?? null);
   const { data: groups } = useMyGroups(user?.id ?? null);
   const { data: evalAck } = useMyEvaluationAck(user?.id ?? null);
 

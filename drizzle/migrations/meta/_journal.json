@@ -71,6 +71,13 @@
       "when": 1792522021898,
       "tag": "0009_recovery_personalized_indicators",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792934892712,
+      "tag": "0010_uc_closure_guards",
+      "breakpoints": true
     }
   ]
 }

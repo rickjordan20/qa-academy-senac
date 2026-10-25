@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyEvaluations } from "@/lib/uc10";
+import { useMyIndicators, useMyEvaluations } from "@/lib/uc10";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/student/progress")({
 
 function ProgressPage() {
   const { user } = useAuth();
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useMyIndicators(user?.id ?? null);
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
 
   const total = indicators?.length ?? 0;

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyEvaluations } from "@/lib/uc10";
+import { useMyIndicators, useMyEvaluations } from "@/lib/uc10";
 import { ConceptBadge, type Concept } from "@/components/ConceptBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/student/journey")({
 
 function JourneyPage() {
   const { user } = useAuth();
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useMyIndicators(user?.id ?? null);
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
   const byIndicator = new Map((evaluations ?? []).map((e) => [e.indicator_id, e]));
 
