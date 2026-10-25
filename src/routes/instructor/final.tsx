@@ -211,6 +211,7 @@ function FinalPage() {
 
       {recoveryCell && student && active && (
         <IndicatorDialog
+          ucResult={result}
           open={!!recoveryCell}
           onOpenChange={(v) => !v && setRecoveryCell(null)}
           classId={active}
@@ -223,6 +224,7 @@ function FinalPage() {
 
       {cell && student && active && (
         <IndicatorDialog
+          ucResult={result}
           open={!!cell}
           onOpenChange={(v) => !v && setCell(null)}
           classId={active}

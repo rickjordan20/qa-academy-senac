@@ -142,6 +142,8 @@ type Props = {
   defaultStage?: Stage;
   /** Menções permitidas (padrão A/PA/NA). */
   concepts?: Concept[];
+  /** Resultado D/ND já homologado: alterações viram revisão excepcional. */
+  ucResult?: UcResult | null;
 };
 
 export function IndicatorDialog({
@@ -153,7 +155,10 @@ export function IndicatorDialog({
   current,
   defaultStage = "regular",
   concepts = ["A", "PA", "NA"],
+  ucResult,
 }: Props) {
+  const closed = !!ucResult?.final_result;
+  const [exceptional, setExceptional] = useState(false);
   const { user } = useAuth();
   const [stage, setStage] = useState<Stage>(defaultStage);
   const [notes, setNotes] = useState(current?.notes ?? "");
@@ -179,6 +184,16 @@ export function IndicatorDialog({
       toast.error("Justifique a alteração da menção nas observações antes de salvar.");
       return;
     }
+    if (closed) {
+      if (!exceptional) {
+        toast.error("UC já encerrada: marque a revisão excepcional para alterar.");
+        return;
+      }
+      if (notes.trim().length < ND_EXCEPTIONAL_MIN_CHARS) {
+        toast.error(`Revisão excepcional exige justificativa (mín. ${ND_EXCEPTIONAL_MIN_CHARS} caracteres).`);
+        return;
+      }
+    }
     try {
       await upsert.mutateAsync({
         studentId: student.id,
@@ -189,6 +204,11 @@ export function IndicatorDialog({
         evaluatedBy: user.id,
       });
       toast.success(`${indicator.code}: ${concept} registrado`);
+      if (closed)
+        toast.warning(
+          `O resultado ${ucResult!.final_result} homologado foi mantido. Confira se continua coerente e homologue novamente se necessário.`,
+        );
+      setExceptional(false);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -252,9 +272,25 @@ export function IndicatorDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
+            {closed && (
+              <div className="rounded-md border border-warning/50 bg-warning/10 p-3 text-xs">
+                <p className="mb-2 font-medium">
+                  UC encerrada com resultado {ucResult!.final_result}. Alterações são revisões excepcionais: exigem
+                  justificativa e não mudam o resultado homologado.
+                </p>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={exceptional}
+                    onChange={(e) => setExceptional(e.target.checked)}
+                  />
+                  Confirmo que esta é uma revisão excepcional, justificada nas observações.
+                </label>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {concepts.map((c) => (
-                <Button key={c} onClick={() => evaluate(c)} disabled={upsert.isPending}>
+                <Button key={c} onClick={() => evaluate(c)} disabled={upsert.isPending || (closed && !exceptional)}>
                   {c} – {CONCEPT_LABELS[c]}
                 </Button>
               ))}
