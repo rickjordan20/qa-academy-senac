@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyClasses } from "@/lib/uc10";
+import { useClassIndicators, useMyClasses } from "@/lib/uc10";
 import { useInstructorGroups } from "@/lib/cafe";
 import {
   useClassEvaluations,
@@ -119,7 +119,7 @@ export function IndividualPortfolio({
   name: string;
 }) {
   const { data: dossier } = useStudentDossier(studentId);
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useClassIndicators(classId);
   const { data: evaluations } = useClassEvaluations(classId);
   const { data: feedbacks } = useFeedbacks(studentId);
   const inds = (indicators ?? []) as IndicatorRow[];

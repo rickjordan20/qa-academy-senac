@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyEvaluations } from "@/lib/uc10";
+import { useMyIndicators, useMyEvaluations } from "@/lib/uc10";
 import {
   stageLabel,
   useEvalHistory,
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/student/evaluation")({
 
 function EvaluationPage() {
   const { user } = useAuth();
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useMyIndicators(user?.id ?? null);
   const { data: evaluations } = useMyEvaluations(user?.id ?? null);
   const { data: feedbacks } = useFeedbacks(user?.id ?? null);
   const { data: history } = useEvalHistory(user?.id ?? null);

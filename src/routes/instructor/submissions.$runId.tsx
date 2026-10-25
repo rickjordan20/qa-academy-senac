@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
-import { useIndicators } from "@/lib/uc10";
+import { useClassIndicators } from "@/lib/uc10";
 import { blockDef, entryFieldLabel, HIDDEN_ENTRY_KEYS, type Section } from "@/lib/mission-builder";
 import { loadMetricDisplayPairs } from "@/lib/load-metrics";
 import { SubmissionDetail } from "@/routes/student/missions.$runId";
@@ -71,11 +71,11 @@ function EvaluatePage() {
   const { runId } = Route.useParams();
   const { user } = useAuth();
   const { data } = useSubmission(runId);
-  const { data: indicators } = useIndicators();
   const { data: history } = useRunEvaluations(runId);
   const run = data?.run ?? null;
   const members = data?.members ?? [];
   const entries = data?.entries ?? [];
+  const { data: indicators } = useClassIndicators(run?.classId ?? null);
   const { data: current } = useIndicatorResults(run?.classId ?? null, run?.student_id ?? null);
   const evaluate = useEvaluateSubmission();
 

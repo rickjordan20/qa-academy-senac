@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useIndicators, useMyClasses } from "@/lib/uc10";
+import { useClassIndicators, useMyClasses } from "@/lib/uc10";
 import {
   ucSituation,
   useClassEvaluations,
@@ -42,7 +42,7 @@ function FinalPage() {
   const { data: classes } = useMyClasses(user?.id ?? null);
   const [classId, setClassId] = useState<string | null>(null);
   const active = classId ?? classes?.[0]?.id ?? null;
-  const { data: indicators } = useIndicators();
+  const { data: indicators } = useClassIndicators(active);
   const { data: students } = useClassStudents(active);
   const { data: evaluations } = useClassEvaluations(active);
   const { data: results } = useUcResults(active);

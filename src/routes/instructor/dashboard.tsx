@@ -41,7 +41,6 @@ export const Route = createFileRoute("/instructor/dashboard")({
 function InstructorDashboard() {
   const { user } = useAuth();
   const { data: classes } = useMyClasses(user?.id ?? null);
-  const { data: indicators } = useIndicators();
   const { data: submissions } = useAllSubmissions();
   const { data: pendingXp } = usePendingXpQueue();
   const { data: ranking } = useIndividualRanking(true);
@@ -50,6 +49,13 @@ function InstructorDashboard() {
   const [classId, setClassId] = useState<string>("all");
   const allIds = useMemo(() => (classes ?? []).map((c) => c.id), [classes]);
   const scopedIds = classId === "all" ? allIds : [classId];
+  const scopedUcs = useMemo(
+    () => [...new Set((classes ?? []).filter((c) => scopedIds.includes(c.id)).map((c) => (c.uc_code ?? "").trim()))],
+    [classes, scopedIds],
+  );
+  // Só usa indicadores quando todas as turmas do recorte são da mesma UC identificada.
+  const dashboardUc = scopedUcs.length === 1 && scopedUcs[0] ? scopedUcs[0] : null;
+  const { data: indicators } = useIndicators(dashboardUc);
 
   const { data: overview, isLoading } = useInstructorOverview(
     scopedIds,
