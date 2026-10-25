@@ -351,7 +351,7 @@ function MissionBuilderPage() {
           </div>
 
           <div className="sm:col-span-3 space-y-1">
-            <Label className="text-xs">Indicadores da UC10</Label>
+            <Label className="text-xs">Indicadores da UC{ucMissingBuilder ? " — UC da turma não identificada" : ""}</Label>
             <div className="flex flex-wrap gap-2">
               {(indicators ?? []).map((i) => {
                 const code = (i as { code: string }).code;
