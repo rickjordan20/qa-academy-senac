@@ -145,7 +145,7 @@ type Props = {
   /** Menções permitidas (padrão A/PA/NA). */
   concepts?: Concept[];
   /** Resultado D/ND já homologado: alterações viram revisão excepcional. */
-  ucResult?: UcResult | null;
+  ucResult?: UcResult | null | undefined;
 };
 
 export function IndicatorDialog({

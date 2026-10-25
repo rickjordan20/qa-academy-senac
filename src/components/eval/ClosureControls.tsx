@@ -27,7 +27,7 @@ type Props = {
   indicators: IndicatorRow[];
   byIndicator: Map<string, EvaluationRow>;
   result: UcResult | null | undefined;
-  compact?: boolean;
+  compact?: boolean | undefined;
 };
 
 /** Botões D/ND com a mesma regra na Matriz e na Avaliação Final. */
