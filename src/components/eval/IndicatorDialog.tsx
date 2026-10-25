@@ -140,7 +140,7 @@ type Props = {
   indicator: IndicatorRow;
   current: EvaluationRow | undefined;
   defaultStage?: Stage;
-  /** Menções permitidas: no fechamento da UC apenas A/NA. */
+  /** Menções permitidas (padrão A/PA/NA). */
   concepts?: Concept[];
 };
 
@@ -175,6 +175,10 @@ export function IndicatorDialog({
 
   async function evaluate(concept: Concept) {
     if (!user) return;
+    if (current?.concept && current.concept !== concept && !notes.trim()) {
+      toast.error("Justifique a alteração da menção nas observações antes de salvar.");
+      return;
+    }
     try {
       await upsert.mutateAsync({
         studentId: student.id,
@@ -257,9 +261,7 @@ export function IndicatorDialog({
             </div>
             <p className="text-xs text-muted-foreground">
               Cada avaliação registrada é guardada no histórico; a anterior nunca é apagada.
-              {concepts.length === 2
-                ? " No fechamento da UC o indicador recebe apenas A (atendido) ou NA (não atendido), com base no conjunto das evidências."
-                : " Durante as missões as menções são formativas: PA ou NA podem evoluir com novas evidências."}
+              {" Menções A, PA ou NA valem em qualquer etapa, inclusive após a recuperação. Alterar a menção exige justificativa."}
             </p>
           </TabsContent>
 

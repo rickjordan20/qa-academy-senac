@@ -122,7 +122,7 @@ function FinalPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  Nesta etapa cada indicador recebe apenas A ou NA.
+                  Cada indicador fecha em A, PA ou NA conforme as evidências. Nenhuma menção é convertida automaticamente.
                 </p>
                 {inds.map((i) => (
                   <button
@@ -148,8 +148,7 @@ function FinalPage() {
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <p className="text-xs text-muted-foreground">
-                    Somente os indicadores não atendidos. Registre a nova evidência e avalie
-                    novamente em A ou NA.
+                    Indicadores em PA ou NA. Avalie a recuperação em A, PA ou NA; sem evidência suficiente para A, a menção permanece.
                   </p>
                   {situation.pending.map((i) => (
                     <button
@@ -195,7 +194,7 @@ function FinalPage() {
                     <Button
                       key={v}
                       variant={result?.final_result === v ? "default" : "outline"}
-                      disabled={v === "ND" && situation.pending.length > 0 && !situation.recoveryDone}
+                      disabled={v === "D" && situation.pending.length > 0}
                       onClick={async () => {
                         if (!user) return;
                         try {
@@ -215,8 +214,7 @@ function FinalPage() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  ND só fica disponível após a Recuperação Final. A confirmação é sempre do
-                  instrutor.
+                  D exige A em todos os indicadores: se houver evidências suficientes, revise e justifique os indicadores em PA/NA antes. A decisão é sempre do instrutor.
                 </p>
               </CardContent>
             </Card>
@@ -233,7 +231,6 @@ function FinalPage() {
           indicator={recoveryCell}
           current={evMap.get(recoveryCell.id)}
           defaultStage="recuperacao"
-          concepts={["A", "NA"]}
         />
       )}
 
@@ -246,7 +243,6 @@ function FinalPage() {
           indicator={cell}
           current={evMap.get(cell.id)}
           defaultStage="final"
-          concepts={["A", "NA"]}
         />
       )}
     </div>
