@@ -35,3 +35,10 @@
 
 ## Análise pedagógica por indicador
 - [x] Botão na avaliação individual, sugestão editável, fontes rastreáveis, sem gravação automática
+
+## Fechamento da UC e multi-UC
+- [x] Matriz: "Indicadores pendentes (PA/NA)" com menção real
+- [x] D/ND unificados (D só com todos A; ND antecipado excepcional com justificativa e auditoria)
+- [x] Orientações da Recuperação (PA/NA, sem garantia de A)
+- [x] UC dinâmica pela turma, sem fallback UC10; aviso e bloqueio quando não identificada
+- [x] Pós-fechamento: revisão excepcional justificada, resultado preservado e divergência sinalizada
