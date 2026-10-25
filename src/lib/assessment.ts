@@ -183,10 +183,10 @@ export type UcSituation = {
 };
 
 /**
- * Regra única de status da UC.
- * Fechamento (etapa final/recuperação) só aceita A ou NA.
- * Todos A -> D. Algum NA antes da recuperação -> Necessita Recuperação Final.
- * Algum NA depois da recuperação -> ND. Confirmação é sempre manual.
+ * Regra única de status da UC (vale para qualquer UC).
+ * Indicadores fecham em A, PA ou NA — nenhuma menção é convertida.
+ * Todos A -> sugere D. PA/NA antes da recuperação -> Necessita Recuperação Final.
+ * PA/NA depois da recuperação -> sugere ND. Confirmação é sempre do instrutor.
  */
 export function ucSituation(
   indicators: IndicatorRow[],
@@ -194,18 +194,20 @@ export function ucSituation(
   result?: UcResult | undefined,
 ): UcSituation {
   const rows = indicators.map((i) => byIndicator.get(i.id));
-  const closedRows = rows.filter((r) => r?.concept === "A" || r?.concept === "NA");
-  const na = indicators.filter((i) => byIndicator.get(i.id)?.concept === "NA");
-  const recoveryDone =
-    na.length > 0 && na.every((i) => byIndicator.get(i.id)?.stage === "recuperacao");
-  const inRecovery =
-    na.length > 0 && na.some((i) => byIndicator.get(i.id)?.stage === "recuperacao");
+  const pending = indicators.filter((i) => {
+    const c = byIndicator.get(i.id)?.concept;
+    return c === "PA" || c === "NA";
+  });
+  const inRec = (i: IndicatorRow) => byIndicator.get(i.id)?.stage === "recuperacao";
+  const recoveryDone = pending.length > 0 && pending.every(inRec);
+  const inRecovery = pending.length > 0 && pending.some(inRec);
+  const codes = pending.map((i) => i.code).join(", ");
 
   if (result?.final_result) {
     return {
       key: result.final_result,
       label: result.final_result === "D" ? "Desenvolvido" : "Não Desenvolvido",
-      pending: na,
+      pending,
       suggestion: result.final_result,
       recoveryDone,
     };
@@ -215,36 +217,25 @@ export function ucSituation(
   if (evaluated === 0)
     return { key: "not_evaluated", label: "Não avaliado", pending: [], suggestion: null, recoveryDone: false };
 
-  if (indicators.length === 0 || closedRows.length < indicators.length)
-    return {
-      key: evaluated < indicators.length ? "in_progress" : "final_open",
-      label:
-        evaluated < indicators.length
-          ? "Em andamento"
-          : "Avaliação Final (fechar cada indicador em A ou NA)",
-      pending: na,
-      suggestion: null,
-      recoveryDone: false,
-    };
+  if (indicators.length === 0 || evaluated < indicators.length)
+    return { key: "in_progress", label: "Em andamento", pending, suggestion: null, recoveryDone: false };
 
-  if (na.length === 0)
+  if (pending.length === 0)
     return { key: "ready_d", label: "Todos os indicadores atendidos", pending: [], suggestion: "D", recoveryDone: false };
 
   if (recoveryDone)
     return {
       key: "ready_nd",
-      label: `Recuperação Final concluída com pendência — ${na.map((i) => i.code).join(", ")}`,
-      pending: na,
+      label: `Recuperação Final concluída com PA/NA — ${codes}`,
+      pending,
       suggestion: "ND",
       recoveryDone: true,
     };
 
   return {
     key: inRecovery ? "in_recovery" : "needs_recovery",
-    label: `${inRecovery ? "Em Recuperação Final" : "Necessita Recuperação Final"} — ${na
-      .map((i) => i.code)
-      .join(", ")}`,
-    pending: na,
+    label: `${inRecovery ? "Em Recuperação Final" : "Necessita Recuperação Final"} — ${codes}`,
+    pending,
     suggestion: null,
     recoveryDone: false,
   };
@@ -284,7 +275,7 @@ export function nextAction(
     case "in_progress":
       return { label: "Continuar a avaliação formativa dos indicadores", to: "/instructor/evaluations", tone: "todo" };
     case "final_open":
-      return { label: "Realizar fechamento da Avaliação Final (A ou NA)", to: "/instructor/final", tone: "todo" };
+      return { label: "Realizar fechamento da Avaliação Final", to: "/instructor/final", tone: "todo" };
     case "needs_recovery":
       return {
         label: `Abrir Recuperação Final — ${situation.pending.map((p) => p.code).join(", ")}`,
